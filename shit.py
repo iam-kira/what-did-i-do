@@ -144,9 +144,6 @@ class Lexer:
             return Token(TT_INT, int(num_str))
         else:
             return Token(TT_FLOAT, float(num_str))
-        
-        
-        
 # RUN
 #######################################
 def run(filename, text):
