@@ -1,6 +1,5 @@
 import shit
 
-
 while True:
     text = input("shell :> ")
     result, error = shit.run('<stdin>', text)
