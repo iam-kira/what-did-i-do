@@ -14,34 +14,38 @@ A tiny interpreted programming language written in Python from scratch.
 
 ## Current status
 
-| Component   | Status              |
-|-------------|---------------------|
-| Lexer       | ✅ Complete          |
-| Parser      | 🔧 In progress (AST + precedence parsing scaffolded) |
-| Interpreter | ❌ Not implemented yet |
+- **Lexer** — ✅ Complete
+- **Parser** — ✅ Implemented (AST + precedence parsing)
+- **Interpreter** — ✅ Implemented (runtime evaluation + variable state)
 
 ---
 
-## Supported syntax (Lexer)
+## Supported syntax
 
 - **Integer & float literals** — `42`, `3.14`
+- **Identifiers & declarations** — `x`, `var x = 10`, `x = x + 1`
 - **Arithmetic operators** — `+`, `-`, `*`, `/`
+- **Comparisons** — `==`, `!=`, `<`, `<=`, `>`, `>=`
 - **Parentheses** — `(`, `)`
-- **Whitespace** — ignored
+- **Multiple statements** — newline or `;` separated
+- **Whitespace** — ignored (except newline as statement separator)
 
 ---
 
 ## Error handling
 
-- `IllegalCharError` — reported with filename and line number for any unrecognized character
+- `IllegalCharError` — unrecognized character in lexer
+- `InvalidSyntaxError` — parse-time grammar error
+- `RTError` — runtime error (undefined variable, division by zero)
 
 ---
 
 ## Project structure
 
-```
-shit.py      # Core language: Lexer, Tokens, Errors, run()
+```text
+shit.py      # Core language: Lexer, Parser, AST, Interpreter, run()
 shell.py     # Interactive REPL
+tests/       # Pytest suite for lexer/parser/interpreter
 ```
 
 ---
@@ -54,16 +58,25 @@ python shell.py
 
 Example session:
 
-```
+```text
 shell :> 1 + 2 * 3
-[INT:1, PLUS, INT:2, MUL, INT:3]
+7
 
 shell :> 3.14 + 1
-[FLOAT:3.14, PLUS, INT:1]
+4.14
+
+shell :> var x = 10
+10
+
+shell :> x = x + 5
+15
+
+shell :> x
+15
 
 shell :> $
 Illegal Character: '$'
-File <stdin>, line 1
+File <stdin>, line 1, col 1
 ```
 
 ---

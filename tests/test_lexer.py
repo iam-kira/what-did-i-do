@@ -29,6 +29,19 @@ def test_lexer_identifiers_keywords_and_ops():
     ]
 
 
+def test_lexer_newline_tokenization():
+    lexer = shit.Lexer('<stdin>', '1\n2')
+    tokens, error = lexer.make_tokens()
+
+    assert error is None
+    assert token_types(tokens) == [
+        shit.TT_INT,
+        shit.TT_NEWLINE,
+        shit.TT_INT,
+        shit.TT_EOF,
+    ]
+
+
 def test_lexer_illegal_char_error():
     lexer = shit.Lexer('<stdin>', '1 $ 2')
     tokens, error = lexer.make_tokens()

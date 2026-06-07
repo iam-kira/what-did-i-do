@@ -23,4 +23,8 @@ while True:
     if error:
         print(error.as_string())
     elif result is not None:
-        print(result)
+        if isinstance(result, list):
+            for value in result:
+                print(value)
+        else:
+            print(result)

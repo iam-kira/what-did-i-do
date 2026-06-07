@@ -36,6 +36,11 @@ class InvalidSyntaxError(Error):
         super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
 
 
+class RTError(Error):
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__(pos_start, pos_end, 'Runtime Error', details)
+
+
 # POSITION
 ########################################
 class Position:
@@ -80,6 +85,7 @@ TT_LTE = 'LTE'
 TT_GTE = 'GTE'
 TT_LPAREN = 'LPAREN'
 TT_RPAREN = 'RPAREN'
+TT_NEWLINE = 'NEWLINE'
 TT_EOF = 'EOF'
 
 
@@ -123,7 +129,10 @@ class Lexer:
         tokens = []
 
         while self.current_char is not None:
-            if self.current_char in ' \t\n':
+            if self.current_char in ' \t':
+                self.advance()
+            elif self.current_char in '\n;':
+                tokens.append(Token(TT_NEWLINE, pos_start=self.pos))
                 self.advance()
             elif self.current_char in DIGITS:
                 tokens.append(self.make_number())
@@ -297,6 +306,16 @@ class UnaryOpNode:
         return f'({self.op_tok}, {self.node})'
 
 
+class ListNode:
+    def __init__(self, element_nodes, pos_start, pos_end):
+        self.element_nodes = element_nodes
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return f'{self.element_nodes}'
+
+
 # PARSE RESULT
 ######################################
 class ParseResult:
@@ -340,12 +359,41 @@ class Parser:
         return None
 
     def parse(self):
-        res = self.statement()
+        res = self.statements()
         if not res.error and self.current_tok.type != TT_EOF:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected operator")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected end of input')
             )
         return res
+
+    def statements(self):
+        res = ParseResult()
+        statements = []
+        pos_start = self.current_tok.pos_start.copy()
+
+        while self.current_tok.type == TT_NEWLINE:
+            self.advance()
+
+        if self.current_tok.type == TT_EOF:
+            return res.success(ListNode([], pos_start, self.current_tok.pos_end.copy()))
+
+        statement = res.register(self.statement())
+        if res.error:
+            return res
+        statements.append(statement)
+
+        while self.current_tok.type == TT_NEWLINE:
+            self.advance()
+            while self.current_tok.type == TT_NEWLINE:
+                self.advance()
+            if self.current_tok.type == TT_EOF:
+                break
+            statement = res.register(self.statement())
+            if res.error:
+                return res
+            statements.append(statement)
+
+        return res.success(ListNode(statements, pos_start, self.current_tok.pos_end.copy()))
 
     def statement(self):
         res = ParseResult()
@@ -429,7 +477,8 @@ class Parser:
                 self.advance()
                 return res.success(expr)
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')'"))
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')'")
+            )
 
         return res.failure(
             InvalidSyntaxError(tok.pos_start, tok.pos_end, 'Expected int, float, identifier, +, -, or (')
@@ -452,8 +501,211 @@ class Parser:
         return res.success(left)
 
 
+# RUNTIME RESULT
+######################################
+class RTResult:
+    def __init__(self):
+        self.value = None
+        self.error = None
+
+    def register(self, res):
+        if res.error:
+            self.error = res.error
+        return res.value
+
+    def success(self, value):
+        self.value = value
+        return self
+
+    def failure(self, error):
+        self.error = error
+        return self
+
+
+# VALUES
+######################################
+class Number:
+    def __init__(self, value):
+        self.value = value
+        self.pos_start = None
+        self.pos_end = None
+
+    def set_pos(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+
+    def copy(self):
+        value_copy = Number(self.value)
+        value_copy.set_pos(self.pos_start, self.pos_end)
+        return value_copy
+
+    def added_to(self, other):
+        return Number(self.value + other.value), None
+
+    def subbed_by(self, other):
+        return Number(self.value - other.value), None
+
+    def multed_by(self, other):
+        return Number(self.value * other.value), None
+
+    def dived_by(self, other):
+        if other.value == 0:
+            return None, RTError(other.pos_start, other.pos_end, 'Division by zero')
+        return Number(self.value / other.value), None
+
+    def compare_eq(self, other):
+        return Number(1 if self.value == other.value else 0), None
+
+    def compare_ne(self, other):
+        return Number(1 if self.value != other.value else 0), None
+
+    def compare_lt(self, other):
+        return Number(1 if self.value < other.value else 0), None
+
+    def compare_gt(self, other):
+        return Number(1 if self.value > other.value else 0), None
+
+    def compare_lte(self, other):
+        return Number(1 if self.value <= other.value else 0), None
+
+    def compare_gte(self, other):
+        return Number(1 if self.value >= other.value else 0), None
+
+    def __repr__(self):
+        if isinstance(self.value, float) and self.value.is_integer():
+            return str(int(self.value))
+        return str(self.value)
+
+
+# SYMBOL TABLE
+######################################
+class SymbolTable:
+    def __init__(self):
+        self.symbols = {}
+
+    def get(self, name):
+        return self.symbols.get(name)
+
+    def set(self, name, value):
+        self.symbols[name] = value
+
+    def exists(self, name):
+        return name in self.symbols
+
+
+# INTERPRETER
+######################################
+class Interpreter:
+    def __init__(self, symbol_table):
+        self.symbol_table = symbol_table
+
+    def visit(self, node):
+        method_name = f'visit_{type(node).__name__}'
+        method = getattr(self, method_name, self.no_visit_method)
+        return method(node)
+
+    def no_visit_method(self, node):
+        raise Exception(f'No visit_{type(node).__name__} method defined')
+
+    def visit_NumberNode(self, node):
+        return RTResult().success(Number(node.tok.value).set_pos(node.pos_start, node.pos_end))
+
+    def visit_VarAccessNode(self, node):
+        res = RTResult()
+        var_name = node.var_name_tok.value
+        value = self.symbol_table.get(var_name)
+
+        if value is None:
+            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined"))
+
+        return res.success(value.copy().set_pos(node.pos_start, node.pos_end))
+
+    def visit_VarAssignNode(self, node):
+        res = RTResult()
+        var_name = node.var_name_tok.value
+        value = res.register(self.visit(node.value_node))
+        if res.error:
+            return res
+
+        if not node.is_declaration and not self.symbol_table.exists(var_name):
+            return res.failure(
+                RTError(node.pos_start, node.pos_end, f"Cannot assign to undefined variable '{var_name}'")
+            )
+
+        self.symbol_table.set(var_name, value.copy())
+        return res.success(value)
+
+    def visit_UnaryOpNode(self, node):
+        res = RTResult()
+        number = res.register(self.visit(node.node))
+        if res.error:
+            return res
+
+        if node.op_tok.type == TT_MINUS:
+            number, error = Number(0).subbed_by(number)
+        else:
+            number, error = number, None
+
+        if error:
+            return res.failure(error)
+
+        return res.success(number.set_pos(node.pos_start, node.pos_end))
+
+    def visit_BinOpNode(self, node):
+        res = RTResult()
+        left = res.register(self.visit(node.left_node))
+        if res.error:
+            return res
+        right = res.register(self.visit(node.right_node))
+        if res.error:
+            return res
+
+        if node.op_tok.type == TT_PLUS:
+            result, error = left.added_to(right)
+        elif node.op_tok.type == TT_MINUS:
+            result, error = left.subbed_by(right)
+        elif node.op_tok.type == TT_MUL:
+            result, error = left.multed_by(right)
+        elif node.op_tok.type == TT_DIV:
+            result, error = left.dived_by(right)
+        elif node.op_tok.type == TT_EE:
+            result, error = left.compare_eq(right)
+        elif node.op_tok.type == TT_NE:
+            result, error = left.compare_ne(right)
+        elif node.op_tok.type == TT_LT:
+            result, error = left.compare_lt(right)
+        elif node.op_tok.type == TT_GT:
+            result, error = left.compare_gt(right)
+        elif node.op_tok.type == TT_LTE:
+            result, error = left.compare_lte(right)
+        elif node.op_tok.type == TT_GTE:
+            result, error = left.compare_gte(right)
+        else:
+            return res.failure(RTError(node.pos_start, node.pos_end, 'Unknown binary operator'))
+
+        if error:
+            return res.failure(error)
+
+        return res.success(result.set_pos(node.pos_start, node.pos_end))
+
+    def visit_ListNode(self, node):
+        res = RTResult()
+        values = []
+
+        for element in node.element_nodes:
+            values.append(res.register(self.visit(element)))
+            if res.error:
+                return res
+
+        return res.success(values)
+
+
 # RUN
 #######################################
+global_symbol_table = SymbolTable()
+
+
 def run(filename, text):
     lexer = Lexer(filename, text)
     tokens, error = lexer.make_tokens()
@@ -462,5 +714,15 @@ def run(filename, text):
 
     parser = Parser(tokens)
     ast = parser.parse()
+    if ast.error:
+        return None, ast.error
 
-    return ast.node, ast.error
+    interpreter = Interpreter(global_symbol_table)
+    result = interpreter.visit(ast.node)
+    if result.error:
+        return None, result.error
+
+    values = result.value
+    if len(values) == 1:
+        return values[0], None
+    return values, None
