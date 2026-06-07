@@ -1,4 +1,4 @@
-# shit 💩
+# shit 💩 - what-did-i-do 🤔
 
 A tiny interpreted programming language written in Python from scratch.
 
