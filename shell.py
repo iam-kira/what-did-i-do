@@ -1,8 +1,26 @@
 import shit
 
 while True:
-    text = input("shell :> ")
+    try:
+        text = input("shell :> ")
+    except KeyboardInterrupt:
+        print("\nInterrupted. Type 'exit' to quit.")
+        continue
+    except EOFError:
+        print("\nbye!")
+        break
+
+    clean = text.strip()
+    if not clean:
+        continue
+
+    if clean.lower() in ('quit', 'exit', ':q'):
+        print('bye!')
+        break
+
     result, error = shit.run('<stdin>', text)
-    
-    if error: print(error.as_string())
-    else: print(result)
+
+    if error:
+        print(error.as_string())
+    elif result is not None:
+        print(result)
