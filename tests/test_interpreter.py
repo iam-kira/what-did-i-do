@@ -82,3 +82,28 @@ def test_interpreter_if_without_else_yields_zero():
 
     assert error is None
     assert repr(result) == '0'
+
+
+def test_interpreter_while_counts_up():
+    reset_symbols()
+    result, error = shit.run('<stdin>', 'var i = 0\nwhile i < 5 then\n  i = i + 1\nend\ni')
+
+    assert error is None
+    assert [repr(value) for value in result] == ['0', '5', '5']
+
+
+def test_interpreter_while_body_never_runs():
+    reset_symbols()
+    result, error = shit.run('<stdin>', 'var i = 9\nwhile i < 5 then\n  i = i + 1\nend')
+
+    assert error is None
+    assert [repr(value) for value in result] == ['9', '0']
+
+
+def test_interpreter_while_with_nested_if():
+    reset_symbols()
+    src = 'var i = 0\nvar big = 0\nwhile i < 6 then\n  if i > 2 then\n    big = big + 1\n  end\n  i = i + 1\nend\nbig'
+    result, error = shit.run('<stdin>', src)
+
+    assert error is None
+    assert repr(result[-1]) == '3'

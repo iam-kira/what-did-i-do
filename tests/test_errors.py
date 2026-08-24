@@ -37,3 +37,10 @@ def test_if_missing_end_is_syntax_error():
 
     assert result is None
     assert "Expected 'end'" in error.as_string()
+
+
+def test_while_missing_then_is_syntax_error():
+    result, error = shit.run('<stdin>', 'while 1\n  2\nend')
+
+    assert result is None
+    assert "Expected 'then'" in error.as_string()

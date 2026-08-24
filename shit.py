@@ -3,7 +3,7 @@
 DIGITS = '0123456789'
 LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 LETTERS_DIGITS = LETTERS + DIGITS + '_'
-KEYWORDS = ['var', 'if', 'then', 'elif', 'else', 'end']
+KEYWORDS = ['var', 'if', 'then', 'elif', 'else', 'end', 'while']
 
 
 # ERROR
@@ -320,6 +320,17 @@ class IfNode:
         return f'(if {self.cases} else {self.else_case})'
 
 
+class WhileNode:
+    def __init__(self, condition_node, body_node, pos_start, pos_end):
+        self.condition_node = condition_node
+        self.body_node = body_node
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return f'(while {self.condition_node} then {self.body_node})'
+
+
 class ListNode:
     def __init__(self, element_nodes, pos_start, pos_end):
         self.element_nodes = element_nodes
@@ -420,6 +431,9 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, 'if'):
             return self.if_expr()
 
+        if self.current_tok.matches(TT_KEYWORD, 'while'):
+            return self.while_expr()
+
         if self.current_tok.matches(TT_KEYWORD, 'var'):
             self.advance()
             if self.current_tok.type != TT_IDENTIFIER:
@@ -497,6 +511,34 @@ class Parser:
         pos_end = self.current_tok.pos_end.copy()
         self.advance()
         return res.success(IfNode(cases, else_case, pos_start, pos_end))
+
+    def while_expr(self):
+        res = ParseResult()
+        pos_start = self.current_tok.pos_start.copy()
+        self.advance()
+
+        condition = res.register(self.expr())
+        if res.error:
+            return res
+
+        if not self.current_tok.matches(TT_KEYWORD, 'then'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'then'")
+            )
+        self.advance()
+
+        body = res.register(self.statements(('end',)))
+        if res.error:
+            return res
+
+        if not self.current_tok.matches(TT_KEYWORD, 'end'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'end'")
+            )
+
+        pos_end = self.current_tok.pos_end.copy()
+        self.advance()
+        return res.success(WhileNode(condition, body, pos_start, pos_end))
 
     def expr(self):
         return self.bin_op(self.arith_expr, (TT_EE, TT_NE, TT_LT, TT_GT, TT_LTE, TT_GTE))
@@ -776,6 +818,23 @@ class Interpreter:
             return res.success(value)
 
         return res.success(Number(0).set_pos(node.pos_start, node.pos_end))
+
+    def visit_WhileNode(self, node):
+        res = RTResult()
+        value = Number(0).set_pos(node.pos_start, node.pos_end)
+
+        while True:
+            cond_value = res.register(self.visit(node.condition_node))
+            if res.error:
+                return res
+            if not cond_value.is_true():
+                break
+
+            value = self.run_block(res, node.body_node)
+            if res.error:
+                return res
+
+        return res.success(value)
 
     def run_block(self, res, body):
         # a block evaluates to its last statement's value, 0 when empty
