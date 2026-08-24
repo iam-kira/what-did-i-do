@@ -456,6 +456,48 @@ class Parser:
             return res
         return res.success(expr)
 
+    def if_expr(self):
+        res = ParseResult()
+        cases = []
+        else_case = None
+        pos_start = self.current_tok.pos_start.copy()
+
+        while True:
+            self.advance()  # past 'if' / 'elif'
+
+            condition = res.register(self.expr())
+            if res.error:
+                return res
+
+            if not self.current_tok.matches(TT_KEYWORD, 'then'):
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'then'")
+                )
+            self.advance()
+
+            body = res.register(self.statements(('elif', 'else', 'end')))
+            if res.error:
+                return res
+            cases.append((condition, body))
+
+            if not self.current_tok.matches(TT_KEYWORD, 'elif'):
+                break
+
+        if self.current_tok.matches(TT_KEYWORD, 'else'):
+            self.advance()
+            else_case = res.register(self.statements(('end',)))
+            if res.error:
+                return res
+
+        if not self.current_tok.matches(TT_KEYWORD, 'end'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'end'")
+            )
+
+        pos_end = self.current_tok.pos_end.copy()
+        self.advance()
+        return res.success(IfNode(cases, else_case, pos_start, pos_end))
+
     def expr(self):
         return self.bin_op(self.arith_expr, (TT_EE, TT_NE, TT_LT, TT_GT, TT_LTE, TT_GTE))
 
@@ -594,6 +636,9 @@ class Number:
     def compare_gte(self, other):
         return Number(1 if self.value >= other.value else 0), None
 
+    def is_true(self):
+        return self.value != 0
+
     def __repr__(self):
         if isinstance(self.value, float) and self.value.is_integer():
             return str(int(self.value))
@@ -710,6 +755,34 @@ class Interpreter:
             return res.failure(error)
 
         return res.success(result.set_pos(node.pos_start, node.pos_end))
+
+    def visit_IfNode(self, node):
+        res = RTResult()
+
+        for condition, body in node.cases:
+            cond_value = res.register(self.visit(condition))
+            if res.error:
+                return res
+            if cond_value.is_true():
+                value = self.run_block(res, body)
+                if res.error:
+                    return res
+                return res.success(value)
+
+        if node.else_case is not None:
+            value = self.run_block(res, node.else_case)
+            if res.error:
+                return res
+            return res.success(value)
+
+        return res.success(Number(0).set_pos(node.pos_start, node.pos_end))
+
+    def run_block(self, res, body):
+        # a block evaluates to its last statement's value, 0 when empty
+        values = res.register(self.visit(body))
+        if res.error:
+            return None
+        return values[-1] if values else Number(0).set_pos(body.pos_start, body.pos_end)
 
     def visit_ListNode(self, node):
         res = RTResult()

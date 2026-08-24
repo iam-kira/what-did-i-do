@@ -23,3 +23,17 @@ def test_invalid_syntax_error_from_incomplete_input():
     assert result is None
     assert isinstance(error, shit.InvalidSyntaxError)
     assert 'Invalid Syntax' in error.as_string()
+
+
+def test_if_missing_then_is_syntax_error():
+    result, error = shit.run('<stdin>', 'if 1\n  2\nend')
+
+    assert result is None
+    assert "Expected 'then'" in error.as_string()
+
+
+def test_if_missing_end_is_syntax_error():
+    result, error = shit.run('<stdin>', 'if 1 then\n  2')
+
+    assert result is None
+    assert "Expected 'end'" in error.as_string()
