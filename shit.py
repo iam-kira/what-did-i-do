@@ -3,7 +3,7 @@
 DIGITS = '0123456789'
 LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 LETTERS_DIGITS = LETTERS + DIGITS + '_'
-KEYWORDS = ['var']
+KEYWORDS = ['var', 'if', 'then', 'elif', 'else', 'end']
 
 
 # ERROR
@@ -309,6 +309,17 @@ class UnaryOpNode:
         return f'({self.op_tok}, {self.node})'
 
 
+class IfNode:
+    def __init__(self, cases, else_case, pos_start, pos_end):
+        self.cases = cases  # list of (condition_node, body_node)
+        self.else_case = else_case
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return f'(if {self.cases} else {self.else_case})'
+
+
 class ListNode:
     def __init__(self, element_nodes, pos_start, pos_end):
         self.element_nodes = element_nodes
@@ -369,7 +380,7 @@ class Parser:
             )
         return res
 
-    def statements(self):
+    def statements(self, stop_keywords=()):
         res = ParseResult()
         statements = []
         pos_start = self.current_tok.pos_start.copy()
@@ -377,7 +388,7 @@ class Parser:
         while self.current_tok.type == TT_NEWLINE:
             self.advance()
 
-        if self.current_tok.type == TT_EOF:
+        if self.at_block_end(stop_keywords):
             return res.success(ListNode([], pos_start, self.current_tok.pos_end.copy()))
 
         statement = res.register(self.statement())
@@ -389,7 +400,7 @@ class Parser:
             self.advance()
             while self.current_tok.type == TT_NEWLINE:
                 self.advance()
-            if self.current_tok.type == TT_EOF:
+            if self.at_block_end(stop_keywords):
                 break
             statement = res.register(self.statement())
             if res.error:
@@ -398,8 +409,16 @@ class Parser:
 
         return res.success(ListNode(statements, pos_start, self.current_tok.pos_end.copy()))
 
+    def at_block_end(self, stop_keywords):
+        if self.current_tok.type == TT_EOF:
+            return True
+        return self.current_tok.type == TT_KEYWORD and self.current_tok.value in stop_keywords
+
     def statement(self):
         res = ParseResult()
+
+        if self.current_tok.matches(TT_KEYWORD, 'if'):
+            return self.if_expr()
 
         if self.current_tok.matches(TT_KEYWORD, 'var'):
             self.advance()

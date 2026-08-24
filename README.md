@@ -132,3 +132,17 @@ pip install pytest
 pytest -q
 ```
 
+---
+
+## Contributing
+
+PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup, how the
+pipeline fits together, and a list of what needs doing.
+
+---
+
+## License
+
+[MIT](LICENSE)
+
+
