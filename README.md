@@ -13,7 +13,7 @@ A tiny interpreted programming language written in Python from scratch.
 
 ## What is shit?
 
-**shit** is a toy/learning language with a REPL shell. It currently supports arithmetic expressions over integers and floats. The goal is to grow it into a fully interpreted language with variables, control flow, and functions.
+**shit** is a toy/learning language with a REPL shell. It supports arithmetic over integers and floats, variables, `if` / `while` control flow, and user-defined functions.
 
 ---
 
