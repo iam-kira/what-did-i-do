@@ -17,6 +17,8 @@ A tiny interpreted programming language written in Python from scratch.
 - **Lexer** — ✅ Complete
 - **Parser** — ✅ Implemented (AST + precedence parsing)
 - **Interpreter** — ✅ Implemented (runtime evaluation + variable state)
+- **CLI** — ✅ Run `.shit` files or the REPL
+- **Control flow & functions** — 🚧 Not yet (`if`, `while`, `fun`)
 
 ---
 
@@ -43,17 +45,53 @@ A tiny interpreted programming language written in Python from scratch.
 ## Project structure
 
 ```text
-shit.py      # Core language: Lexer, Parser, AST, Interpreter, run()
-shell.py     # Interactive REPL
-tests/       # Pytest suite for lexer/parser/interpreter
+shit.py        # Core language: Lexer, Parser, AST, Interpreter, run(), CLI
+shell.py       # Interactive REPL
+example.shit   # Sample program
+tests/         # Pytest suite for lexer/parser/interpreter
 ```
+
+---
+
+## Install
+
+Requires Python 3.9+. No dependencies.
+
+```bash
+git clone https://github.com/iam-kira/what-did-i-do
+cd what-did-i-do
+```
+
+---
+
+## Run a program
+
+Write a file and run it:
+
+```bash
+python shit.py example.shit
+```
+
+`example.shit`:
+
+```text
+var x = 10
+var y = 3.5
+x + y
+x = x * 2
+x
+x > y
+```
+
+Every statement's value is printed, one per line — there is no `print` builtin yet.
 
 ---
 
 ## Run the REPL
 
 ```bash
-python shell.py
+python shit.py
+# or: python shell.py
 ```
 
 Example session:
@@ -84,6 +122,7 @@ File <stdin>, line 1, col 1
 ## Run tests
 
 ```bash
+pip install pytest
 pytest -q
 ```
 

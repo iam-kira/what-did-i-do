@@ -726,3 +726,37 @@ def run(filename, text):
     if len(values) == 1:
         return values[0], None
     return values, None
+
+
+# CLI
+#######################################
+def main(argv=None):
+    import sys
+    argv = sys.argv[1:] if argv is None else argv
+
+    if not argv:
+        import shell  # noqa: F401  (running shell.py starts the REPL)
+        return 0
+
+    path = argv[0]
+    try:
+        with open(path, encoding='utf-8') as f:
+            source = f.read()
+    except OSError as e:
+        print(f'shit: cannot read {path}: {e.strerror}')
+        return 1
+
+    result, error = run(path, source)
+    if error:
+        print(error.as_string())
+        return 1
+
+    # ponytail: echoes every statement's value; drop this once there's a print builtin
+    for value in (result if isinstance(result, list) else [result]):
+        if value is not None:
+            print(value)
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
