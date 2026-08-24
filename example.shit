@@ -1,6 +1,7 @@
 var x = 10
+# comments are ignored
 var y = 3.5
-x + y
+x + y   # so are trailing ones
 x = x * 2
 x
 x > y

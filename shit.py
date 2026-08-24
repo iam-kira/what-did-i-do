@@ -134,6 +134,9 @@ class Lexer:
             elif self.current_char in '\n;':
                 tokens.append(Token(TT_NEWLINE, pos_start=self.pos))
                 self.advance()
+            elif self.current_char == '#':
+                while self.current_char is not None and self.current_char != '\n':
+                    self.advance()
             elif self.current_char in DIGITS:
                 tokens.append(self.make_number())
             elif self.current_char in LETTERS or self.current_char == '_':
@@ -706,7 +709,7 @@ class Interpreter:
 global_symbol_table = SymbolTable()
 
 
-def run(filename, text):
+def run(filename, text, symbol_table=None):
     lexer = Lexer(filename, text)
     tokens, error = lexer.make_tokens()
     if error:
@@ -717,7 +720,7 @@ def run(filename, text):
     if ast.error:
         return None, ast.error
 
-    interpreter = Interpreter(global_symbol_table)
+    interpreter = Interpreter(symbol_table if symbol_table is not None else global_symbol_table)
     result = interpreter.visit(ast.node)
     if result.error:
         return None, result.error

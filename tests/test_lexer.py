@@ -48,3 +48,19 @@ def test_lexer_illegal_char_error():
 
     assert tokens == []
     assert isinstance(error, shit.IllegalCharError)
+
+
+def test_lexer_skips_comments_but_keeps_newline():
+    lexer = shit.Lexer('<stdin>', '1 # a comment\n2')
+    tokens, error = lexer.make_tokens()
+
+    assert error is None
+    assert token_types(tokens) == ['INT', 'NEWLINE', 'INT', 'EOF']
+
+
+def test_lexer_comment_only_source():
+    lexer = shit.Lexer('<stdin>', '# nothing but a comment')
+    tokens, error = lexer.make_tokens()
+
+    assert error is None
+    assert token_types(tokens) == ['EOF']

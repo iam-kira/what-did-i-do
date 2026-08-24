@@ -46,3 +46,14 @@ def test_interpreter_division_by_zero_error():
     assert result is None
     assert isinstance(error, shit.RTError)
     assert 'Division by zero' in error.as_string()
+
+
+def test_run_uses_supplied_symbol_table_and_leaves_global_alone():
+    reset_symbols()
+    table = shit.SymbolTable()
+    result, error = shit.run('<stdin>', 'var z = 99', table)
+
+    assert error is None
+    assert repr(result) == '99'
+    assert table.exists('z')
+    assert not shit.global_symbol_table.exists('z')

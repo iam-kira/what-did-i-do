@@ -1,5 +1,10 @@
 # shit 💩 - what-did-i-do 🤔
 
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Status](https://img.shields.io/badge/status-WIP-orange)](https://github.com/iam-kira/what-did-i-do)
+[![Stars](https://img.shields.io/github/stars/iam-kira/what-did-i-do?style=flat)](https://github.com/iam-kira/what-did-i-do/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/iam-kira/what-did-i-do)](https://github.com/iam-kira/what-did-i-do/commits)
+
 A tiny interpreted programming language written in Python from scratch.
 
 > 😆OK - I thought I can write some programming language, well it wasn't too easy as expected lol. So, That day I started doing it and completed with lexer and parser part, and thought to move on to the interpreter part.. ok ok still on the way xD.
@@ -30,6 +35,7 @@ A tiny interpreted programming language written in Python from scratch.
 - **Comparisons** — `==`, `!=`, `<`, `<=`, `>`, `>=`
 - **Parentheses** — `(`, `)`
 - **Multiple statements** — newline or `;` separated
+- **Comments** — `#` to end of line
 - **Whitespace** — ignored (except newline as statement separator)
 
 ---
