@@ -44,3 +44,24 @@ def test_while_missing_then_is_syntax_error():
 
     assert result is None
     assert "Expected 'then'" in error.as_string()
+
+
+def test_call_with_wrong_arg_count_is_runtime_error():
+    result, error = shit.run('<stdin>', 'fun add(a, b) then\n  a + b\nend\nadd(1)')
+
+    assert result is None
+    assert 'takes 2 argument(s), got 1' in error.as_string()
+
+
+def test_calling_a_number_is_runtime_error():
+    result, error = shit.run('<stdin>', 'var x = 3\nx(1)')
+
+    assert result is None
+    assert 'is not a function' in error.as_string()
+
+
+def test_arithmetic_on_a_function_is_runtime_error():
+    result, error = shit.run('<stdin>', 'fun f() then\n  1\nend\nf + 1')
+
+    assert result is None
+    assert 'Illegal operation' in error.as_string()

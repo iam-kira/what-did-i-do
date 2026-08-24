@@ -107,3 +107,37 @@ def test_interpreter_while_with_nested_if():
 
     assert error is None
     assert repr(result[-1]) == '3'
+
+
+def test_interpreter_function_call_returns_last_value():
+    reset_symbols()
+    result, error = shit.run('<stdin>', 'fun add(a, b) then\n  a + b\nend\nadd(2, 3)')
+
+    assert error is None
+    assert repr(result[-1]) == '5'
+
+
+def test_interpreter_function_sees_globals_but_args_shadow():
+    reset_symbols()
+    src = 'var k = 100\nfun bump(k) then\n  k + 1\nend\nbump(1)\nk'
+    result, error = shit.run('<stdin>', src)
+
+    assert error is None
+    assert [repr(value) for value in result[-2:]] == ['2', '100']
+
+
+def test_interpreter_function_with_loop_body():
+    reset_symbols()
+    src = 'fun sum_to(n) then\n  var i = 0\n  var total = 0\n  while i < n then\n    total = total + i\n    i = i + 1\n  end\n  total\nend\nsum_to(5)'
+    result, error = shit.run('<stdin>', src)
+
+    assert error is None
+    assert repr(result[-1]) == '10'
+
+
+def test_interpreter_zero_arg_function():
+    reset_symbols()
+    result, error = shit.run('<stdin>', 'fun two() then\n  2\nend\ntwo() * 3')
+
+    assert error is None
+    assert repr(result[-1]) == '6'

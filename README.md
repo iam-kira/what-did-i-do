@@ -23,7 +23,8 @@ A tiny interpreted programming language written in Python from scratch.
 - **Parser** — ✅ Implemented (AST + precedence parsing)
 - **Interpreter** — ✅ Implemented (runtime evaluation + variable state)
 - **CLI** — ✅ Run `.shit` files or the REPL
-- **Control flow & functions** — 🚧 Not yet (`if`, `while`, `fun`)
+- **Control flow** — ✅ `if` / `elif` / `else`, `while`
+- **Functions** — ✅ `fun name(a, b) then ... end`, calls, recursion
 
 ---
 
@@ -35,6 +36,8 @@ A tiny interpreted programming language written in Python from scratch.
 - **Comparisons** — `==`, `!=`, `<`, `<=`, `>`, `>=`
 - **Parentheses** — `(`, `)`
 - **Multiple statements** — newline or `;` separated
+- **Control flow** — `if <cond> then ... elif ... else ... end`, `while <cond> then ... end`
+- **Functions** — `fun add(a, b) then a + b end`, called as `add(1, 2)`
 - **Comments** — `#` to end of line
 - **Whitespace** — ignored (except newline as statement separator)
 

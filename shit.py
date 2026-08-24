@@ -3,7 +3,7 @@
 DIGITS = '0123456789'
 LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 LETTERS_DIGITS = LETTERS + DIGITS + '_'
-KEYWORDS = ['var', 'if', 'then', 'elif', 'else', 'end', 'while']
+KEYWORDS = ['var', 'if', 'then', 'elif', 'else', 'end', 'while', 'fun']
 
 
 # ERROR
@@ -85,6 +85,7 @@ TT_LTE = 'LTE'
 TT_GTE = 'GTE'
 TT_LPAREN = 'LPAREN'
 TT_RPAREN = 'RPAREN'
+TT_COMMA = 'COMMA'
 TT_NEWLINE = 'NEWLINE'
 TT_EOF = 'EOF'
 
@@ -158,6 +159,9 @@ class Lexer:
                 self.advance()
             elif self.current_char == ')':
                 tokens.append(Token(TT_RPAREN, pos_start=self.pos))
+                self.advance()
+            elif self.current_char == ',':
+                tokens.append(Token(TT_COMMA, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '!':
                 token, error = self.make_not_equals()
@@ -331,6 +335,30 @@ class WhileNode:
         return f'(while {self.condition_node} then {self.body_node})'
 
 
+class FuncDefNode:
+    def __init__(self, var_name_tok, arg_name_toks, body_node, pos_start, pos_end):
+        self.var_name_tok = var_name_tok
+        self.arg_name_toks = arg_name_toks
+        self.body_node = body_node
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        args = ', '.join(str(tok.value) for tok in self.arg_name_toks)
+        return f'(fun {self.var_name_tok.value}({args}))'
+
+
+class CallNode:
+    def __init__(self, node_to_call, arg_nodes, pos_end):
+        self.node_to_call = node_to_call
+        self.arg_nodes = arg_nodes
+        self.pos_start = self.node_to_call.pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return f'({self.node_to_call} call {self.arg_nodes})'
+
+
 class ListNode:
     def __init__(self, element_nodes, pos_start, pos_end):
         self.element_nodes = element_nodes
@@ -433,6 +461,9 @@ class Parser:
 
         if self.current_tok.matches(TT_KEYWORD, 'while'):
             return self.while_expr()
+
+        if self.current_tok.matches(TT_KEYWORD, 'fun'):
+            return self.func_def()
 
         if self.current_tok.matches(TT_KEYWORD, 'var'):
             self.advance()
@@ -540,6 +571,90 @@ class Parser:
         self.advance()
         return res.success(WhileNode(condition, body, pos_start, pos_end))
 
+    def func_def(self):
+        res = ParseResult()
+        pos_start = self.current_tok.pos_start.copy()
+        self.advance()
+
+        if self.current_tok.type != TT_IDENTIFIER:
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected function name')
+            )
+        var_name_tok = self.current_tok
+        self.advance()
+
+        if self.current_tok.type != TT_LPAREN:
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '('")
+            )
+        self.advance()
+
+        arg_name_toks = []
+        if self.current_tok.type == TT_IDENTIFIER:
+            arg_name_toks.append(self.current_tok)
+            self.advance()
+
+            while self.current_tok.type == TT_COMMA:
+                self.advance()
+                if self.current_tok.type != TT_IDENTIFIER:
+                    return res.failure(
+                        InvalidSyntaxError(
+                            self.current_tok.pos_start, self.current_tok.pos_end, 'Expected parameter name'
+                        )
+                    )
+                arg_name_toks.append(self.current_tok)
+                self.advance()
+
+        if self.current_tok.type != TT_RPAREN:
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ')'")
+            )
+        self.advance()
+
+        if not self.current_tok.matches(TT_KEYWORD, 'then'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'then'")
+            )
+        self.advance()
+
+        body = res.register(self.statements(('end',)))
+        if res.error:
+            return res
+
+        if not self.current_tok.matches(TT_KEYWORD, 'end'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'end'")
+            )
+
+        pos_end = self.current_tok.pos_end.copy()
+        self.advance()
+        return res.success(FuncDefNode(var_name_tok, arg_name_toks, body, pos_start, pos_end))
+
+    def call(self, node):
+        res = ParseResult()
+        self.advance()  # past '('
+
+        arg_nodes = []
+        if self.current_tok.type != TT_RPAREN:
+            arg_nodes.append(res.register(self.expr()))
+            if res.error:
+                return res
+
+            while self.current_tok.type == TT_COMMA:
+                self.advance()
+                arg_nodes.append(res.register(self.expr()))
+                if res.error:
+                    return res
+
+        if self.current_tok.type != TT_RPAREN:
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or ')'")
+            )
+
+        pos_end = self.current_tok.pos_end.copy()
+        self.advance()
+        return res.success(CallNode(node, arg_nodes, pos_end))
+
     def expr(self):
         return self.bin_op(self.arith_expr, (TT_EE, TT_NE, TT_LT, TT_GT, TT_LTE, TT_GTE))
 
@@ -572,6 +687,8 @@ class Parser:
 
         if tok.type == TT_IDENTIFIER:
             self.advance()
+            if self.current_tok.type == TT_LPAREN:
+                return self.call(VarAccessNode(tok))
             return res.success(VarAccessNode(tok))
 
         if tok.type == TT_LPAREN:
@@ -687,20 +804,48 @@ class Number:
         return str(self.value)
 
 
+class Function:
+    def __init__(self, name, arg_names, body_node):
+        self.name = name
+        self.arg_names = arg_names
+        self.body_node = body_node
+        self.pos_start = None
+        self.pos_end = None
+
+    def set_pos(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+
+    def copy(self):
+        return Function(self.name, self.arg_names, self.body_node).set_pos(self.pos_start, self.pos_end)
+
+    def is_true(self):
+        return True
+
+    def __repr__(self):
+        return f'<function {self.name}>'
+
+
 # SYMBOL TABLE
 ######################################
 class SymbolTable:
-    def __init__(self):
+    def __init__(self, parent=None):
         self.symbols = {}
+        self.parent = parent
 
     def get(self, name):
-        return self.symbols.get(name)
+        if name in self.symbols:
+            return self.symbols[name]
+        return self.parent.get(name) if self.parent else None
 
     def set(self, name, value):
         self.symbols[name] = value
 
     def exists(self, name):
-        return name in self.symbols
+        if name in self.symbols:
+            return True
+        return self.parent.exists(name) if self.parent else False
 
 
 # INTERPRETER
@@ -751,6 +896,9 @@ class Interpreter:
         if res.error:
             return res
 
+        if not isinstance(number, Number):
+            return res.failure(RTError(node.pos_start, node.pos_end, 'Illegal operation on a function'))
+
         if node.op_tok.type == TT_MINUS:
             number, error = Number(0).subbed_by(number)
         else:
@@ -769,6 +917,9 @@ class Interpreter:
         right = res.register(self.visit(node.right_node))
         if res.error:
             return res
+
+        if not isinstance(left, Number) or not isinstance(right, Number):
+            return res.failure(RTError(node.pos_start, node.pos_end, 'Illegal operation on a function'))
 
         if node.op_tok.type == TT_PLUS:
             result, error = left.added_to(right)
@@ -835,6 +986,58 @@ class Interpreter:
                 return res
 
         return res.success(value)
+
+    def visit_FuncDefNode(self, node):
+        res = RTResult()
+        func_name = node.var_name_tok.value
+        arg_names = [tok.value for tok in node.arg_name_toks]
+        func = Function(func_name, arg_names, node.body_node).set_pos(node.pos_start, node.pos_end)
+
+        self.symbol_table.set(func_name, func)
+        return res.success(func)
+
+    def visit_CallNode(self, node):
+        res = RTResult()
+
+        func = res.register(self.visit(node.node_to_call))
+        if res.error:
+            return res
+
+        if not isinstance(func, Function):
+            return res.failure(RTError(node.pos_start, node.pos_end, f'{func} is not a function'))
+
+        args = []
+        for arg_node in node.arg_nodes:
+            args.append(res.register(self.visit(arg_node)))
+            if res.error:
+                return res
+
+        if len(args) != len(func.arg_names):
+            return res.failure(
+                RTError(
+                    node.pos_start,
+                    node.pos_end,
+                    f"'{func.name}' takes {len(func.arg_names)} argument(s), got {len(args)}",
+                )
+            )
+
+        # ponytail: assignment inside a call writes to the local scope, so a
+        # function shadows outer names instead of mutating them. Add explicit
+        # scope resolution in SymbolTable.set if that ever bites.
+        call_table = SymbolTable(parent=self.symbol_table)
+        for name, value in zip(func.arg_names, args):
+            call_table.set(name, value.copy())
+
+        outer_table = self.symbol_table
+        self.symbol_table = call_table
+        try:
+            value = self.run_block(res, func.body_node)
+        finally:
+            self.symbol_table = outer_table
+
+        if res.error:
+            return res
+        return res.success(value.set_pos(node.pos_start, node.pos_end))
 
     def run_block(self, res, body):
         # a block evaluates to its last statement's value, 0 when empty
