@@ -13,7 +13,7 @@ LETTERS_DIGITS = LETTERS + DIGITS + '_'
 KEYWORDS = [
     'var', 'if', 'then', 'elif', 'else', 'end', 'while', 'fun',
     'and', 'or', 'not', 'true', 'false', 'null',
-    'for', 'to', 'step', 'break', 'continue', 'return',
+    'for', 'to', 'step', 'in', 'break', 'continue', 'return',
 ]
 
 
@@ -113,6 +113,10 @@ TT_DIV = 'DIV'
 TT_MOD = 'MOD'
 TT_POW = 'POW'
 TT_EQ = 'EQ'
+TT_PLUS_EQ = 'PLUS_EQ'
+TT_MINUS_EQ = 'MINUS_EQ'
+TT_MUL_EQ = 'MUL_EQ'
+TT_DIV_EQ = 'DIV_EQ'
 TT_EE = 'EE'
 TT_NE = 'NE'
 TT_LT = 'LT'
@@ -185,17 +189,13 @@ class Lexer:
             elif self.current_char in LETTERS or self.current_char == '_':
                 tokens.append(self.make_identifier())
             elif self.current_char == '+':
-                tokens.append(Token(TT_PLUS, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_maybe_eq(TT_PLUS, TT_PLUS_EQ))
             elif self.current_char == '-':
-                tokens.append(Token(TT_MINUS, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_maybe_eq(TT_MINUS, TT_MINUS_EQ))
             elif self.current_char == '*':
-                tokens.append(Token(TT_MUL, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_maybe_eq(TT_MUL, TT_MUL_EQ))
             elif self.current_char == '/':
-                tokens.append(Token(TT_DIV, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_maybe_eq(TT_DIV, TT_DIV_EQ))
             elif self.current_char == '%':
                 tokens.append(Token(TT_MOD, pos_start=self.pos))
                 self.advance()
@@ -293,6 +293,18 @@ class Lexer:
 
         token_type = TT_KEYWORD if ident in KEYWORDS else TT_IDENTIFIER
         return Token(token_type, ident, pos_start, self.pos)
+
+    def make_maybe_eq(self, plain_type, eq_type):
+        """'+' or '+=' - one method for every operator with a compound form."""
+        pos_start = self.pos.copy()
+        self.advance()
+
+        token_type = plain_type
+        if self.current_char == '=':
+            self.advance()
+            token_type = eq_type
+
+        return Token(token_type, pos_start=pos_start, pos_end=self.pos)
 
     def make_not_equals(self):
         pos_start = self.pos.copy()
@@ -465,6 +477,29 @@ class ForNode:
         return f'(for {self.var_name_tok.value} = {self.start_node} to {self.end_node})'
 
 
+class ForInNode:
+    def __init__(self, var_name_tok, iterable_node, body_node, pos_start, pos_end):
+        self.var_name_tok = var_name_tok
+        self.iterable_node = iterable_node
+        self.body_node = body_node
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return f'(for {self.var_name_tok.value} in {self.iterable_node})'
+
+
+class IndexAssignNode:
+    def __init__(self, index_node, value_node):
+        self.index_node = index_node
+        self.value_node = value_node
+        self.pos_start = index_node.pos_start
+        self.pos_end = value_node.pos_end
+
+    def __repr__(self):
+        return f'({self.index_node} = {self.value_node})'
+
+
 class ReturnNode:
     def __init__(self, node_to_return, pos_start, pos_end):
         self.node_to_return = node_to_return
@@ -550,6 +585,15 @@ class ParseResult:
 
 # PARSER
 ######################################
+ASSIGN_OPS = {
+    TT_EQ: None,
+    TT_PLUS_EQ: TT_PLUS,
+    TT_MINUS_EQ: TT_MINUS,
+    TT_MUL_EQ: TT_MUL,
+    TT_DIV_EQ: TT_DIV,
+}
+
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -676,20 +720,37 @@ class Parser:
                 return res
             return res.success(VarAssignNode(var_name, expr, is_declaration=True))
 
-        if self.current_tok.type == TT_IDENTIFIER and self.peek() and self.peek().type == TT_EQ:
-            var_name = self.current_tok
-            self.advance()
-            self.advance()
-
-            expr = res.register(self.expr())
-            if res.error:
-                return res
-            return res.success(VarAssignNode(var_name, expr, is_declaration=False))
-
         expr = res.register(self.expr())
         if res.error:
             return res
+
+        if self.current_tok.type in ASSIGN_OPS:
+            return self.assignment(res, expr)
+
         return res.success(expr)
+
+    def assignment(self, res, target):
+        """Turn `target = value` into an assignment; `x += 1` desugars to `x = x + 1`."""
+        op_tok = self.current_tok
+        self.advance()
+
+        value = res.register(self.expr())
+        if res.error:
+            return res
+
+        if op_tok.type != TT_EQ:
+            binop_tok = Token(ASSIGN_OPS[op_tok.type], pos_start=op_tok.pos_start, pos_end=op_tok.pos_end)
+            value = BinOpNode(target, binop_tok, value)
+
+        if isinstance(target, VarAccessNode):
+            return res.success(VarAssignNode(target.var_name_tok, value, is_declaration=False))
+
+        if isinstance(target, IndexNode):
+            return res.success(IndexAssignNode(target, value))
+
+        return res.failure(
+            InvalidSyntaxError(target.pos_start, target.pos_end, 'Cannot assign to this expression')
+        )
 
     def if_expr(self):
         res = ParseResult()
@@ -773,9 +834,33 @@ class Parser:
         var_name_tok = self.current_tok
         self.advance()
 
+        if self.current_tok.matches(TT_KEYWORD, 'in'):
+            self.advance()
+            iterable_node = res.register(self.expr())
+            if res.error:
+                return res
+
+            if not self.current_tok.matches(TT_KEYWORD, 'then'):
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'then'")
+                )
+            self.advance()
+
+            body = res.register(self.statements(('end',)))
+            if res.error:
+                return res
+
+            if not self.current_tok.matches(TT_KEYWORD, 'end'):
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'end'")
+                )
+            pos_end = self.current_tok.pos_end.copy()
+            self.advance()
+            return res.success(ForInNode(var_name_tok, iterable_node, body, pos_start, pos_end))
+
         if self.current_tok.type != TT_EQ:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '='")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'in' or '='")
             )
         self.advance()
 
@@ -1207,6 +1292,11 @@ class Value:
             self.pos_start, index.pos_end, f'{type(self).__name__.lower()} is not indexable'
         )
 
+    def set_index(self, index, value):
+        return RTError(
+            self.pos_start, index.pos_end, f'Cannot assign into a {type(self).__name__.lower()}'
+        )
+
     def length(self):
         return None
 
@@ -1402,6 +1492,14 @@ class List(Value):
 
     def get_index(self, index):
         return index_into(self, self.elements, index, None)
+
+    def set_index(self, index, value):
+        _, error = index_into(self, self.elements, index, None)
+        if error:
+            return error
+        i = index.value if index.value >= 0 else index.value + len(self.elements)
+        self.elements[i] = value
+        return None
 
     def length(self):
         return len(self.elements)
@@ -1909,6 +2007,99 @@ class Interpreter:
             self.loop_depth -= 1
 
         return res.success(value)
+
+    def visit_ForInNode(self, node):
+        res = RTResult()
+
+        iterable = res.register(self.visit(node.iterable_node))
+        if res.error:
+            return res
+
+        if isinstance(iterable, List):
+            items = list(iterable.elements)
+        elif isinstance(iterable, String):
+            items = [String(char) for char in iterable.value]
+        else:
+            return res.failure(
+                RTError(
+                    node.iterable_node.pos_start,
+                    node.iterable_node.pos_end,
+                    f'Cannot iterate over a {type(iterable).__name__.lower()}',
+                )
+            )
+
+        var_name = node.var_name_tok.value
+        value = Number(0).set_pos(node.pos_start, node.pos_end)
+
+        self.loop_depth += 1
+        try:
+            for item in items:
+                self.symbol_table.set(var_name, item.copy().set_pos(node.pos_start, node.pos_end))
+
+                body_value = self.run_block(res, node.body_node)
+                if res.error:
+                    return res
+                if res.func_return_value is not None:
+                    return res
+                if res.loop_should_break:
+                    res.loop_should_break = False
+                    break
+                if res.loop_should_continue:
+                    res.loop_should_continue = False
+                    continue
+                value = body_value
+        finally:
+            self.loop_depth -= 1
+
+        return res.success(value)
+
+    def visit_IndexAssignNode(self, node):
+        res = RTResult()
+
+        value = res.register(self.visit(node.value_node))
+        if res.error:
+            return res
+
+        # walk to the container itself rather than a copy, so the write sticks
+        container = res.register(self.resolve_container(node.index_node.target_node))
+        if res.error:
+            return res
+
+        index = res.register(self.visit(node.index_node.index_node))
+        if res.error:
+            return res
+
+        error = container.set_index(index, value.copy())
+        if error:
+            return res.failure(error)
+        return res.success(value)
+
+    def resolve_container(self, node):
+        """Evaluate an assignment target to the live object, not a copy."""
+        res = RTResult()
+
+        if isinstance(node, VarAccessNode):
+            var_name = node.var_name_tok.value
+            value = self.symbol_table.get(var_name)
+            if value is None:
+                return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined"))
+            return res.success(value)
+
+        if isinstance(node, IndexNode):
+            container = res.register(self.resolve_container(node.target_node))
+            if res.error:
+                return res
+            index = res.register(self.visit(node.index_node))
+            if res.error:
+                return res
+            value, error = container.get_index(index)
+            if error:
+                return res.failure(error)
+            return res.success(value)
+
+        return res.failure(
+            RTError(node.pos_start, node.pos_end, 'Cannot assign into this expression')
+        )
 
     def visit_ReturnNode(self, node):
         res = RTResult()
