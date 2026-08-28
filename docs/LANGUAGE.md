@@ -28,6 +28,17 @@ shit does not speak Python. Same ideas, worse names.
 Every block opens with `ong` and closes with `bet`. No exceptions, no braces,
 no significant whitespace.
 
+A newline ends a statement, except inside `(`, `[` or `{` — so a long call or
+pile can spread over as many lines as it likes:
+
+```text
+stash total = smol(
+    1,
+    2 + 3,
+    4
+)
+```
+
 ---
 
 ## Values
@@ -300,6 +311,12 @@ Return the new value, or keep the state in a closure like `counter` above.
 | `yap(value)` | print a line, gives back `0` |
 | `beg(prompt?)` | read a line as a yap; the prompt is optional |
 | `summon(path)` | run another file here, so its chores and stashes land in this scope |
+| `slurp(path)` | read a whole file as a yap |
+| `spill(path, text)` | write a file, replacing it; gives back how much it wrote |
+| `dribble(path, text)` | same, but appends |
+| `isthere(path)` | `1` if the path exists |
+| `handed()` | a pile of the arguments the program was given |
+| `bounce(code?)` | stop the program with an exit code; no `risky` catches it |
 
 **Everything**
 

@@ -76,6 +76,7 @@ It reads multi-line blocks — an unfinished one keeps prompting with `...  >`.
 Other ways in:
 
 ```bash
+python shit.py prog.shit a b        # a and b land in handed()
 python shit.py --tokens prog.shit   # token stream
 python shit.py --ast prog.shit      # parse tree
 python shit.py --help
@@ -92,6 +93,7 @@ python shit.py --help
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, workflow, and what needs doing |
 | [example.shit](example.shit) | A program using most of the language |
 | [examples/calc.shit](examples/calc.shit) | A calculator written in shit: tokeniser, precedence-climbing parser, evaluator |
+| [examples/wc.shit](examples/wc.shit) | A word counter you can actually run on a file |
 
 ---
 
@@ -103,13 +105,14 @@ python shit.py --help
 - **Control flow** — `fr`/`orfr`/`whatever`, `keep`, `grind ... til`, `grind ... among`, `bail`, `skip`, `yeet`
 - **Scoping** — lexical, with working closures and outer-variable mutation
 - **Operators** — `+ - * / % ^`, comparisons, `also`/`orelse`/`nah`, indexing, compound assignment
-- **33 builtins** — printing, input, maths, slicing, sorting, splitting, joining, type checks
+- **39 builtins** — printing, input, files, maths, slicing, sorting, splitting, joining, type checks
+- **Scriptable** — `handed()` for arguments, `slurp`/`spill` for files, `bounce(code)` for exit status
 - **Higher-order chores** — `eachof`, `keepif`, `smoosh`, and `sortof` with a key chore
 - **Objects, sort of** — a chore returning a bag of chores over captured state
 - **Imports** — `summon("lib.shit")`, with cycle detection
 - **Error handling** — `risky` / `whoops` / `oops`, catching anything the runtime throws
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **416 tests**, including a robustness sweep that asserts no input ever raises a Python error
+- **436 tests**, including a robustness sweep that asserts no input ever raises a Python error
 
 ---
 

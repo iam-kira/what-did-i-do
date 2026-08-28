@@ -51,6 +51,14 @@ class InvalidSyntaxError(Error):
         super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
 
 
+class BounceError(Error):
+    """Raised by bounce(). Unwinds like an error but no risky may catch it."""
+
+    def __init__(self, pos_start, pos_end, code):
+        super().__init__(pos_start, pos_end, 'Bounced', f'exit code {code}')
+        self.code = code
+
+
 class RTError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Runtime Error', details)
@@ -168,11 +176,17 @@ class Token:
 # LEXER
 ######################################
 class Lexer:
+    OPENERS = '(['
+    CLOSERS = ')]'
+
     def __init__(self, filename, text):
         self.text = text
         self.filename = filename
         self.pos = Position(-1, 0, -1, filename, text)
         self.current_char = None
+        # how deep inside brackets we are; newlines in here join lines instead
+        # of ending statements, the way every other language does it
+        self.depth = 0
         self.advance()
 
     def advance(self):
@@ -186,7 +200,8 @@ class Lexer:
             if self.current_char in ' \t':
                 self.advance()
             elif self.current_char in '\n;':
-                tokens.append(Token(TT_NEWLINE, pos_start=self.pos))
+                if not (self.depth and self.current_char == '\n'):
+                    tokens.append(Token(TT_NEWLINE, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '#':
                 while self.current_char is not None and self.current_char != '\n':
@@ -219,24 +234,30 @@ class Lexer:
                 tokens.append(token)
             elif self.current_char == '{':
                 tokens.append(Token(TT_LCURLY, pos_start=self.pos))
+                self.depth += 1
                 self.advance()
             elif self.current_char == '}':
                 tokens.append(Token(TT_RCURLY, pos_start=self.pos))
+                self.depth = max(0, self.depth - 1)
                 self.advance()
             elif self.current_char == ':':
                 tokens.append(Token(TT_COLON, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '[':
                 tokens.append(Token(TT_LSQUARE, pos_start=self.pos))
+                self.depth += 1
                 self.advance()
             elif self.current_char == ']':
                 tokens.append(Token(TT_RSQUARE, pos_start=self.pos))
+                self.depth = max(0, self.depth - 1)
                 self.advance()
             elif self.current_char == '(':
                 tokens.append(Token(TT_LPAREN, pos_start=self.pos))
+                self.depth += 1
                 self.advance()
             elif self.current_char == ')':
                 tokens.append(Token(TT_RPAREN, pos_start=self.pos))
+                self.depth = max(0, self.depth - 1)
                 self.advance()
             elif self.current_char == ',':
                 tokens.append(Token(TT_COMMA, pos_start=self.pos))
@@ -2542,6 +2563,76 @@ def bi_summon(args, node, interpreter):
     return Number(0), None
 
 
+# set by main() so a program can see what it was handed
+SCRIPT_ARGS = []
+
+
+def _path_of(args, node, who):
+    error = _need(node, args[0], String, 'yap', who)
+    if error:
+        return None, error
+    return args[0].value, None
+
+
+def bi_slurp(args, node):
+    target, error = _path_of(args, node, 'slurp')
+    if error:
+        return None, error
+    try:
+        with open(target, encoding='utf-8') as handle:
+            return String(handle.read()), None
+    except OSError as exc:
+        return None, RTError(node.pos_start, node.pos_end, f"Cannot slurp '{target}': {exc.strerror}")
+    except UnicodeDecodeError:
+        return None, RTError(node.pos_start, node.pos_end, f"'{target}' is not text")
+
+
+def _write(args, node, who, mode):
+    target, error = _path_of(args, node, who)
+    if error:
+        return None, error
+    error = _need(node, args[1], String, 'yap', who)
+    if error:
+        return None, error
+    try:
+        with open(target, mode, encoding='utf-8') as handle:
+            handle.write(args[1].value)
+    except OSError as exc:
+        return None, RTError(node.pos_start, node.pos_end, f"Cannot {who} '{target}': {exc.strerror}")
+    return Number(len(args[1].value)), None
+
+
+def bi_spill(args, node):
+    return _write(args, node, 'spill', 'w')
+
+
+def bi_dribble(args, node):
+    return _write(args, node, 'dribble', 'a')
+
+
+def bi_isthere(args, node):
+    import os
+
+    target, error = _path_of(args, node, 'isthere')
+    if error:
+        return None, error
+    return Number(1 if os.path.exists(target) else 0), None
+
+
+def bi_handed(args, node):
+    return List([String(arg) for arg in SCRIPT_ARGS]), None
+
+
+def bi_bounce(args, node):
+    code = 0
+    if args[0] is not None:
+        error = _need(node, args[0], Number, 'math', 'bounce')
+        if error:
+            return None, error
+        code = int(args[0].value)
+    return None, BounceError(node.pos_start, node.pos_end, code)
+
+
 def bi_whatis(args, node):
     return String(args[0].TYPE_NAME), None
 
@@ -2591,6 +2682,12 @@ BUILTINS = {
     'labels': (['bag'], bi_labels),
     'goods': (['bag'], bi_goods),
     'summon': (['path'], bi_summon),
+    'slurp': (['path'], bi_slurp),
+    'spill': (['path', 'text'], bi_spill),
+    'dribble': (['path', 'text'], bi_dribble),
+    'isthere': (['path'], bi_isthere),
+    'handed': ([], bi_handed),
+    'bounce': (['?code'], bi_bounce),
     'whatis': (['value'], bi_whatis),
     'is_math': (['value'], bi_is_num),
     'is_yap': (['value'], bi_is_str),
@@ -3091,7 +3188,7 @@ class Interpreter:
             return res.success(value)
 
         caught = res.error
-        if not isinstance(caught, RTError):
+        if isinstance(caught, BounceError) or not isinstance(caught, RTError):
             return res
 
         # the whoops runs with the error bound to a name, in its own result
@@ -3266,7 +3363,7 @@ USAGE = """shit - a language with regrettable keywords
 
 usage:
   python shit.py                 open the REPL
-  python shit.py FILE            run a program
+  python shit.py FILE [ARG...]   run a program, passing it the extra args
   python shit.py --tokens FILE   show the token stream, then stop
   python shit.py --ast FILE      show the parse tree, then stop
   python shit.py --help          this
@@ -3293,12 +3390,15 @@ def main(argv=None):
         print(USAGE, end='')
         return 2
 
-    if len(paths) != 1:
-        print('shit: expected exactly one file')
+    if not paths:
+        print('shit: expected a file')
         print(USAGE, end='')
         return 2
 
+    # everything after the program name belongs to the program
     path = paths[0]
+    global SCRIPT_ARGS
+    SCRIPT_ARGS = paths[1:]
     try:
         with open(path, encoding='utf-8') as handle:
             source = handle.read()
@@ -3310,6 +3410,8 @@ def main(argv=None):
         return dump(path, source, ast='--ast' in flags)
 
     result, error = run(path, source)
+    if isinstance(error, BounceError):
+        return error.code
     if error:
         print(error.as_string())
         return 1

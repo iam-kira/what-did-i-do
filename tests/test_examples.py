@@ -30,3 +30,29 @@ def test_calculator_example(capsys):
         "4 $ 2 -> nope: I do not know what '$' is",
         '(1 + 2 -> nope: missing )',
     ]
+
+
+def test_word_count_example_reads_a_file(tmp_path, capsys):
+    sample = tmp_path / 'sample.txt'
+    sample.write_text('one two three\nfour five\n', encoding='utf-8')
+
+    exit_code = shit.main([os.path.join(REPO, 'examples', 'wc.shit'), str(sample)])
+    out = capsys.readouterr().out.strip()
+
+    assert exit_code == 0
+    assert '5 words' in out
+    assert '24 chars' in out
+
+
+def test_word_count_example_complains_with_no_file(capsys):
+    exit_code = shit.main([os.path.join(REPO, 'examples', 'wc.shit')])
+
+    assert exit_code == 2
+    assert 'give me a file' in capsys.readouterr().out
+
+
+def test_word_count_example_survives_a_missing_file(tmp_path, capsys):
+    exit_code = shit.main([os.path.join(REPO, 'examples', 'wc.shit'), str(tmp_path / 'gone.txt')])
+
+    assert exit_code == 0
+    assert 'not there' in capsys.readouterr().out

@@ -56,6 +56,8 @@ Roughly in order:
 - [ ] `whatever` branch on a loop, or `do ... keep`
 - [ ] Real user-defined types - a bag of chores works but has no identity or dot access
 - [ ] A `--time` flag, or anything resembling a profiler
+- [ ] Directory listing, so a script can walk more than one named file
+- [ ] `slurp` reads the whole file; no streaming and no binary
 - [ ] Speed: every value copies on read. Measured, it is fine for a toy -
       fib(19) plus a 200k-iteration loop runs in about 1.6s - so measure
       before optimising anything here

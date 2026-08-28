@@ -1,0 +1,18 @@
+# a word counter you could actually use: python shit.py wc.shit somefile.txt
+stash files = handed()
+
+fr howmany(files) == 0 ong
+    yap("give me a file")
+    bounce(2)
+bet
+
+grind path among files ong
+    fr nah isthere(path) ong
+        yap("{path}: not there")
+        skip
+    bet
+
+    stash text = slurp(path)
+    stash words = shred(text)
+    yap("{path}: {howmany(shred(text, "\n"))} lines, {howmany(words)} words, {howmany(text)} chars")
+bet

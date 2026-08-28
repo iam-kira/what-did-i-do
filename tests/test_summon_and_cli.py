@@ -107,9 +107,21 @@ def test_unknown_flag_exits_two(capsys):
     assert 'unknown option' in capsys.readouterr().out
 
 
-def test_two_files_is_an_error(capsys):
-    assert shit.main(['a.shit', 'b.shit']) == 2
-    assert 'exactly one file' in capsys.readouterr().out
+def test_no_file_is_an_error(capsys):
+    assert shit.main(['--ast']) == 2
+    assert 'expected a file' in capsys.readouterr().out
+
+
+def test_extra_arguments_are_handed_to_the_program(tmp_path, capsys):
+    program = write(tmp_path, 'p.shit', 'yap(handed())\n')
+    assert shit.main([program, 'one', 'two']) == 0
+    assert capsys.readouterr().out == '["one", "two"]\n'
+
+
+def test_a_program_with_no_extra_arguments_gets_an_empty_pile(tmp_path, capsys):
+    program = write(tmp_path, 'p.shit', 'yap(howmany(handed()))\n')
+    assert shit.main([program]) == 0
+    assert capsys.readouterr().out == '0\n'
 
 
 # --- token positions ---
