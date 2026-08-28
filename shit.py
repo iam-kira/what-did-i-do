@@ -140,6 +140,8 @@ class Token:
     def __init__(self, type_, value=None, pos_start=None, pos_end=None):
         self.type = type_
         self.value = value
+        self.pos_start = None
+        self.pos_end = None
 
         if pos_start:
             self.pos_start = pos_start.copy()
@@ -473,7 +475,7 @@ class IfNode:
         self.pos_end = pos_end
 
     def __repr__(self):
-        return f'(if {self.cases} else {self.else_case})'
+        return f'(fr {self.cases} whatever {self.else_case})'
 
 
 class WhileNode:
@@ -484,7 +486,7 @@ class WhileNode:
         self.pos_end = pos_end
 
     def __repr__(self):
-        return f'(while {self.condition_node} then {self.body_node})'
+        return f'(keep {self.condition_node} ong {self.body_node})'
 
 
 class ForNode:
@@ -498,7 +500,7 @@ class ForNode:
         self.pos_end = pos_end
 
     def __repr__(self):
-        return f'(for {self.var_name_tok.value} = {self.start_node} to {self.end_node})'
+        return f'(grind {self.var_name_tok.value} = {self.start_node} til {self.end_node})'
 
 
 class ForInNode:
@@ -510,7 +512,7 @@ class ForInNode:
         self.pos_end = pos_end
 
     def __repr__(self):
-        return f'(for {self.var_name_tok.value} in {self.iterable_node})'
+        return f'(grind {self.var_name_tok.value} among {self.iterable_node})'
 
 
 class IndexAssignNode:
@@ -531,7 +533,7 @@ class ReturnNode:
         self.pos_end = pos_end
 
     def __repr__(self):
-        return f'(return {self.node_to_return})'
+        return f'(yeet {self.node_to_return})'
 
 
 class ContinueNode:
@@ -540,7 +542,7 @@ class ContinueNode:
         self.pos_end = pos_end
 
     def __repr__(self):
-        return '(continue)'
+        return '(skip)'
 
 
 class BreakNode:
@@ -549,7 +551,7 @@ class BreakNode:
         self.pos_end = pos_end
 
     def __repr__(self):
-        return '(break)'
+        return '(bail)'
 
 
 class FuncDefNode:
@@ -562,7 +564,7 @@ class FuncDefNode:
 
     def __repr__(self):
         args = ', '.join(str(tok.value) for tok in self.arg_name_toks)
-        return f'(fun {self.var_name_tok.value}({args}))'
+        return f'(chore {self.var_name_tok.value}({args}))'
 
 
 class CallNode:
@@ -1801,19 +1803,25 @@ class Function(BaseFunction):
 
 
 class BuiltInFunction(BaseFunction):
-    def __init__(self, name, arg_names, fn):
+    def __init__(self, name, arg_names, fn, wants_interpreter=False):
         super().__init__(name, arg_names)
         self.fn = fn
+        self.wants_interpreter = wants_interpreter
 
     def copy(self):
-        return BuiltInFunction(self.name, self.arg_names, self.fn).set_pos(self.pos_start, self.pos_end)
+        return BuiltInFunction(self.name, self.arg_names, self.fn, self.wants_interpreter).set_pos(
+            self.pos_start, self.pos_end
+        )
 
     def execute(self, args, interpreter, node):
         res = RTResult()
         count = len(self.fixed_names)
         # missing optionals arrive as None; anything past the fixed names rides along
         args = list(args[:count]) + [None] * (count - len(args)) + list(args[count:])
-        value, error = self.fn(args, node)
+        if self.wants_interpreter:
+            value, error = self.fn(args, node, interpreter)
+        else:
+            value, error = self.fn(args, node)
         if error:
             return res.failure(error)
         return res.success(value)
@@ -2087,6 +2095,52 @@ def bi_goods(args, node):
     return List([value.copy() for value in args[0].goods()]), None
 
 
+# files currently being summoned, so a cycle reports instead of recursing forever
+_summoning = set()
+
+
+def bi_summon(args, node, interpreter):
+    import os
+
+    error = _need(node, args[0], String, 'yap', 'summon')
+    if error:
+        return None, error
+
+    target = args[0].value
+    here = node.pos_start.filename
+    base = os.path.dirname(os.path.abspath(here)) if os.path.exists(here) else os.getcwd()
+    full = target if os.path.isabs(target) else os.path.join(base, target)
+    full = os.path.normpath(full)
+
+    if full in _summoning:
+        return None, RTError(node.pos_start, node.pos_end, f"'{target}' is summoning itself")
+
+    try:
+        with open(full, encoding='utf-8') as handle:
+            source = handle.read()
+    except OSError as exc:
+        return None, RTError(node.pos_start, node.pos_end, f"Cannot summon '{target}': {exc.strerror}")
+
+    _summoning.add(full)
+    try:
+        tokens, error = Lexer(full, source).make_tokens()
+        if error:
+            return None, error
+
+        ast = Parser(tokens).parse()
+        if ast.error:
+            return None, ast.error
+
+        # runs in the summoning scope, so its stashes and chores land here
+        result = interpreter.visit(ast.node)
+        if result.error:
+            return None, result.error
+    finally:
+        _summoning.discard(full)
+
+    return Number(0), None
+
+
 def bi_whatis(args, node):
     return String(args[0].TYPE_NAME), None
 
@@ -2132,6 +2186,7 @@ BUILTINS = {
     'sortof': (['pile'], bi_sortof),
     'labels': (['bag'], bi_labels),
     'goods': (['bag'], bi_goods),
+    'summon': (['path'], bi_summon),
     'whatis': (['value'], bi_whatis),
     'is_math': (['value'], bi_is_num),
     'is_yap': (['value'], bi_is_str),
@@ -2140,9 +2195,12 @@ BUILTINS = {
 }
 
 
+NEEDS_INTERPRETER = {'summon'}
+
+
 def install_builtins(symbol_table):
     for name, (arg_names, fn) in BUILTINS.items():
-        symbol_table.set(name, BuiltInFunction(name, arg_names, fn))
+        symbol_table.set(name, BuiltInFunction(name, arg_names, fn, name in NEEDS_INTERPRETER))
     return symbol_table
 
 
@@ -2671,26 +2729,80 @@ def run(filename, text, symbol_table=None):
 
 # CLI
 #######################################
+USAGE = """shit - a language with regrettable keywords
+
+usage:
+  python shit.py                 open the REPL
+  python shit.py FILE            run a program
+  python shit.py --tokens FILE   show the token stream, then stop
+  python shit.py --ast FILE      show the parse tree, then stop
+  python shit.py --help          this
+"""
+
+
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
 
     if not argv:
-        import shell  # noqa: F401  (running shell.py starts the REPL)
+        import shell  # noqa: F401  (importing shell starts the REPL)
         return 0
 
-    path = argv[0]
+    flags = [arg for arg in argv if arg.startswith('--')]
+    paths = [arg for arg in argv if not arg.startswith('--')]
+
+    if '--help' in flags or '-h' in argv:
+        print(USAGE, end='')
+        return 0
+
+    unknown = [flag for flag in flags if flag not in ('--tokens', '--ast', '--help')]
+    if unknown:
+        print(f"shit: unknown option {unknown[0]}")
+        print(USAGE, end='')
+        return 2
+
+    if len(paths) != 1:
+        print('shit: expected exactly one file')
+        print(USAGE, end='')
+        return 2
+
+    path = paths[0]
     try:
-        with open(path, encoding='utf-8') as f:
-            source = f.read()
-    except OSError as e:
-        print(f'shit: cannot read {path}: {e.strerror}')
+        with open(path, encoding='utf-8') as handle:
+            source = handle.read()
+    except OSError as exc:
+        print(f'shit: cannot read {path}: {exc.strerror}')
         return 1
+
+    if '--tokens' in flags or '--ast' in flags:
+        return dump(path, source, ast='--ast' in flags)
 
     result, error = run(path, source)
     if error:
         print(error.as_string())
         return 1
 
+    return 0
+
+
+def dump(path, source, ast=False):
+    """--tokens / --ast: show an intermediate stage instead of running."""
+    tokens, error = Lexer(path, source).make_tokens()
+    if error:
+        print(error.as_string())
+        return 1
+
+    if not ast:
+        for token in tokens:
+            print(token)
+        return 0
+
+    parsed = Parser(tokens).parse()
+    if parsed.error:
+        print(parsed.error.as_string())
+        return 1
+
+    for statement in parsed.node.element_nodes:
+        print(statement)
     return 0
 
 
