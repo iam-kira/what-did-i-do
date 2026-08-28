@@ -63,7 +63,6 @@ Roughly in order:
 - [ ] Real user-defined types - a bag of chores with dot access works, but has
       no identity, no whatis name of its own, and no shared behaviour
 - [ ] A `--time` flag, or anything resembling a profiler
-- [ ] Directory listing, so a script can walk more than one named file
 - [ ] `slurp` reads the whole file; no streaming and no binary
 - [ ] Speed: every value copies on read. Measured, it is fine for a toy -
       fib(19) plus a 200k-iteration loop runs in about 1.6s - so measure

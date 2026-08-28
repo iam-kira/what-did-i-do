@@ -95,7 +95,7 @@ python shit.py --help
 | [editors/](editors/) | VS Code syntax highlighting for `.shit` files |
 | [example.shit](example.shit) | A program using most of the language |
 | [examples/calc.shit](examples/calc.shit) | A calculator written in shit: tokeniser, precedence-climbing parser, evaluator |
-| [examples/wc.shit](examples/wc.shit) | A word counter you can actually run on a file |
+| [examples/wc.shit](examples/wc.shit) | A word counter that walks files and folders |
 
 ---
 
@@ -107,14 +107,14 @@ python shit.py --help
 - **Control flow** — `fr`/`orfr`/`whatever`, `keep`, `grind ... til`, `grind ... among`, `bail`, `skip`, `yeet`
 - **Scoping** — lexical, with working closures and outer-variable mutation
 - **Operators** — `+ - * / % ^`, comparisons, `also`/`orelse`/`nah`, indexing, compound assignment
-- **39 builtins** — printing, input, files, maths, slicing, sorting, splitting, joining, type checks
+- **42 builtins** — printing, input, files and folders, maths, slicing, sorting, splitting, joining, type checks
 - **Scriptable** — `handed()` for arguments, `slurp`/`spill` for files, `bounce(code)` for exit status
 - **Higher-order chores** — `eachof`, `keepif`, `smoosh`, and `sortof` with a key chore
 - **Objects, sort of** — a chore returning a bag of chores over captured state, reached with `thing.name()`
 - **Imports** — `summon("lib.shit")`, with cycle detection
 - **Error handling** — `risky` / `whoops` / `oops`, with a `kind` on every error so you can branch instead of string-matching
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **480 tests**, including a robustness sweep that asserts no input ever raises a Python error
+- **489 tests**, including a robustness sweep that asserts no input ever raises a Python error
 
 ---
 

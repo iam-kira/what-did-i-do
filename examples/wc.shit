@@ -1,18 +1,44 @@
-# a word counter you could actually use: python shit.py wc.shit somefile.txt
-stash files = handed()
+# A word counter: python shit.py examples/wc.shit FILE-OR-FOLDER...
+#
+# Folders are walked one level deep. Missing paths are reported, not fatal.
 
-fr howmany(files) == 0 ong
-    yap("give me a file")
+stash targets = handed()
+
+fr howmany(targets) == 0 ong
+    yap("give me a file or a folder")
     bounce(2)
 bet
 
-grind path among files ong
+chore count(path) ong
+    stash text = slurp(path)
+    stash lines = howmany(shred(text, "
+"))
+    yap("{path}: {lines} lines, {howmany(shred(text))} words, {howmany(text)} chars")
+bet
+
+grind path among targets ong
     fr nah isthere(path) ong
         yap("{path}: not there")
         skip
     bet
 
-    stash text = slurp(path)
-    stash words = shred(text)
-    yap("{path}: {howmany(shred(text, "\n"))} lines, {howmany(words)} words, {howmany(text)} chars")
+    fr isfolder(path) ong
+        grind name among rummage(path) ong
+            stash inner = stitch(path, name)
+            fr nah isfolder(inner) ong
+                risky ong
+                    count(inner)
+                whoops e ong
+                    yap("{inner}: {e.why}")
+                bet
+            bet
+        bet
+        skip
+    bet
+
+    risky ong
+        count(path)
+    whoops e ong
+        yap("{path}: {e.why}")
+    bet
 bet

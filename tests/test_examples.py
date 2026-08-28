@@ -44,6 +44,20 @@ def test_word_count_example_reads_a_file(tmp_path, capsys):
     assert '24 chars' in out
 
 
+def test_word_count_example_walks_a_folder(tmp_path, capsys):
+    (tmp_path / 'a.txt').write_text('one two\n', encoding='utf-8')
+    (tmp_path / 'b.txt').write_text('three\n', encoding='utf-8')
+    (tmp_path / 'sub').mkdir()
+
+    exit_code = shit.main([os.path.join(REPO, 'examples', 'wc.shit'), str(tmp_path)])
+    out = capsys.readouterr().out.strip().splitlines()
+
+    assert exit_code == 0
+    assert len(out) == 2, out
+    assert any('a.txt' in line and '2 words' in line for line in out)
+    assert any('b.txt' in line and '1 words' in line for line in out)
+
+
 def test_word_count_example_complains_with_no_file(capsys):
     exit_code = shit.main([os.path.join(REPO, 'examples', 'wc.shit')])
 

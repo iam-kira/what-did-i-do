@@ -328,6 +328,9 @@ Return the new value, or keep the state in a closure like `counter` above.
 | `spill(path, text)` | write a file, replacing it; gives back how much it wrote |
 | `dribble(path, text)` | same, but appends |
 | `isthere(path)` | `1` if the path exists |
+| `isfolder(path)` | `1` if it is a folder |
+| `rummage(path?)` | sorted names inside a folder; defaults to here |
+| `stitch(part, ...)` | join path parts with `/` |
 | `handed()` | a pile of the arguments the program was given |
 | `bounce(code?)` | stop the program with an exit code; no `risky` catches it |
 

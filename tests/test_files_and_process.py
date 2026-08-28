@@ -138,3 +138,69 @@ def test_handed_is_empty_when_run_directly():
     result, error = ev('handed()')
     assert error is None
     assert repr(result) == '[]'
+
+
+# --- directories ---
+
+def test_rummage_lists_a_folder(tmp_path):
+    (tmp_path / 'b.txt').write_text('b', encoding='utf-8')
+    (tmp_path / 'a.txt').write_text('a', encoding='utf-8')
+
+    result, error = ev('rummage(' + yap(tmp_path) + ')')
+    assert error is None
+    assert repr(result) == '["a.txt", "b.txt"]'
+
+
+def test_rummage_defaults_to_here():
+    result, error = ev('gotit(rummage(), ' + Q + 'shit.py' + Q + ')')
+    assert error is None
+    assert repr(result) == '1'
+
+
+def test_rummage_of_a_missing_folder_reports_a_file_error(tmp_path):
+    result, error = ev('rummage(' + yap(tmp_path / 'gone') + ')')
+    assert result is None
+    assert error.kind == 'file'
+    assert 'Cannot rummage' in error.details
+
+
+def test_isfolder_tells_folders_from_files(tmp_path):
+    (tmp_path / 'f.txt').write_text('x', encoding='utf-8')
+
+    result, error = ev('isfolder(' + yap(tmp_path) + ')')
+    assert error is None
+    assert repr(result) == '1'
+
+    result, error = ev('isfolder(' + yap(tmp_path / 'f.txt') + ')')
+    assert error is None
+    assert repr(result) == '0'
+
+
+def test_stitch_joins_with_forward_slashes():
+    result, error = ev('stitch(' + Q + 'a' + Q + ', ' + Q + 'b' + Q + ', ' + Q + 'c.txt' + Q + ')')
+    assert error is None
+    assert result.value == 'a/b/c.txt'
+
+
+def test_stitch_takes_one_part_or_many():
+    result, error = ev('stitch(' + Q + 'only' + Q + ')')
+    assert error is None
+    assert result.value == 'only'
+
+
+def test_stitch_needs_yaps():
+    result, error = ev('stitch(1)')
+    assert result is None
+    assert error.kind == 'type'
+    assert "'stitch' needs yaps" in error.details
+
+
+def test_stitch_output_can_be_slurped(tmp_path):
+    folder = tmp_path / 'sub'
+    folder.mkdir()
+    (folder / 'note.txt').write_text('found me', encoding='utf-8')
+
+    source = ('slurp(stitch(' + yap(folder) + ', ' + Q + 'note.txt' + Q + '))')
+    result, error = ev(source)
+    assert error is None
+    assert result.value == 'found me'

@@ -2654,6 +2654,52 @@ def bi_isthere(args, node):
     return Number(1 if os.path.exists(target) else 0), None
 
 
+def bi_rummage(args, node):
+    import os
+
+    target = '.' if args[0] is None else None
+    if target is None:
+        target, error = _path_of(args, node, 'rummage')
+        if error:
+            return None, error
+
+    try:
+        names = sorted(os.listdir(target))
+    except OSError as exc:
+        return None, RTError(
+            node.pos_start, node.pos_end, f"Cannot rummage '{target}': {exc.strerror}", kind='file'
+        )
+    return List([String(name) for name in names]), None
+
+
+def bi_isfolder(args, node):
+    import os
+
+    target, error = _path_of(args, node, 'isfolder')
+    if error:
+        return None, error
+    return Number(1 if os.path.isdir(target) else 0), None
+
+
+def bi_stitch(args, node):
+    import os
+
+    parts = []
+    for value in args:
+        if value is None:
+            continue
+        if not isinstance(value, String):
+            return None, RTError(
+                node.pos_start, node.pos_end, f"'stitch' needs yaps, got {value.TYPE_NAME}", kind='type'
+            )
+        parts.append(value.value)
+
+    if not parts:
+        return None, RTError(node.pos_start, node.pos_end, "'stitch' needs at least one yap", kind='type')
+    # forward slashes everywhere, so a shit program reads the same on any box
+    return String(os.path.join(*parts).replace(os.sep, '/')), None
+
+
 def bi_handed(args, node):
     return List([String(arg) for arg in SCRIPT_ARGS]), None
 
@@ -2722,6 +2768,9 @@ BUILTINS = {
     'dribble': (['path', 'text'], bi_dribble),
     'isthere': (['path'], bi_isthere),
     'handed': ([], bi_handed),
+    'rummage': (['?path'], bi_rummage),
+    'isfolder': (['path'], bi_isfolder),
+    'stitch': (['part', '*more'], bi_stitch),
     'bounce': (['?code'], bi_bounce),
     'whatis': (['value'], bi_whatis),
     'is_math': (['value'], bi_is_num),
