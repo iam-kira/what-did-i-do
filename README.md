@@ -108,7 +108,7 @@ python shit.py --help
 - **Imports** — `summon("lib.shit")`, with cycle detection
 - **Error handling** — `risky` / `whoops` / `oops`, catching anything the runtime throws
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **265 tests** covering every stage
+- **410 tests**, including a robustness sweep that asserts no input ever raises a Python error
 
 ---
 

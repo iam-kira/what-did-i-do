@@ -2153,9 +2153,13 @@ def bi_num(args, node):
         except ValueError:
             pass
         try:
-            return Number(float(text)), None
+            number = float(text)
         except ValueError:
-            return _type_error(node, f'Cannot convert "{value.value}" to a number')
+            return _type_error(node, f'Cannot convert "{value.value}" to a math')
+
+        if number != number or number in (float('inf'), float('-inf')):
+            return _type_error(node, f'Cannot convert "{value.value}" to a math')
+        return Number(number), None
     return _type_error(node, f"'mathify' cannot convert a {value.TYPE_NAME}")
 
 
@@ -2222,16 +2226,31 @@ def bi_absolutely(args, node):
     return (None, error) if error else (Number(abs(args[0].value)), None)
 
 
+def _round_half_away(value, places=0):
+    """2.5 -> 3, not python's round-half-to-even 2."""
+    import math
+
+    factor = 10 ** places
+    scaled = value * factor
+    whole = math.floor(scaled + 0.5) if scaled >= 0 else math.ceil(scaled - 0.5)
+    if places <= 0:
+        return int(whole / factor) if factor != 1 else int(whole)
+    return whole / factor
+
+
 def bi_roundish(args, node):
     error = _need(node, args[0], Number, 'math', 'roundish')
     if error:
         return None, error
-    if args[1] is None:
-        return Number(int(round(args[0].value))), None
-    error = _need(node, args[1], Number, 'math', 'roundish')
-    if error:
-        return None, error
-    return Number(round(args[0].value, int(args[1].value))), None
+
+    places = 0
+    if args[1] is not None:
+        error = _need(node, args[1], Number, 'math', 'roundish')
+        if error:
+            return None, error
+        places = int(args[1].value)
+
+    return Number(_round_half_away(args[0].value, places)), None
 
 
 def bi_total(args, node):

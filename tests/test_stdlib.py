@@ -131,9 +131,30 @@ def test_whatis_reports_dialect_type_names():
 # --- arity ---
 
 def test_optional_arguments_may_be_omitted():
-    result, error = ev('roundish(2.5)')
+    result, error = ev('roundish(2.4)')
     assert error is None
     assert repr(result) == '2'
+
+
+def test_roundish_rounds_half_away_from_zero():
+    check({
+        'roundish(2.5)': '3',
+        'roundish(3.5)': '4',
+        'roundish(-2.5)': '-3',
+        'roundish(0.5)': '1',
+        'roundish(7)': '7',
+    })
+
+
+def test_mathify_refuses_values_the_language_cannot_write():
+    for text in ('nan', 'inf', '-inf'):
+        result, error = ev('mathify(' + Q + text + Q + ')')
+        assert result is None, text
+        assert 'Cannot convert' in error.details, text
+
+
+def test_mathify_accepts_exponent_notation():
+    check({'mathify(' + Q + '1e3' + Q + ')': '1000'})
 
 
 def test_variadic_builtin_accepts_any_count():
