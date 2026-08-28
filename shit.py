@@ -2356,6 +2356,107 @@ def bi_sortof(args, node):
     return List(items), None
 
 
+def call_chore(func, call_args, node, interpreter):
+    """Call a shit chore from inside a builtin. Returns (value, error)."""
+    if not isinstance(func, BaseFunction):
+        return None, RTError(node.pos_start, node.pos_end, f'{func} is not a chore')
+
+    error = func.check_args(call_args, node.pos_start, node.pos_end)
+    if error:
+        return None, error
+
+    result = func.execute(call_args, interpreter, node)
+    if result.error:
+        return None, result.error
+
+    value = result.func_return_value if result.func_return_value is not None else result.value
+    # the signals belong to that call, not to whatever we are in the middle of
+    result.func_return_value = None
+    result.loop_should_break = False
+    result.loop_should_continue = False
+    return value, None
+
+
+def bi_eachof(args, node, interpreter):
+    pile, func = args
+    error = _need(node, pile, List, 'pile', 'eachof')
+    if error:
+        return None, error
+
+    out = []
+    for item in pile.elements:
+        value, error = call_chore(func, [item.copy()], node, interpreter)
+        if error:
+            return None, error
+        out.append(value)
+    return List(out), None
+
+
+def bi_keepif(args, node, interpreter):
+    pile, func = args
+    error = _need(node, pile, List, 'pile', 'keepif')
+    if error:
+        return None, error
+
+    out = []
+    for item in pile.elements:
+        value, error = call_chore(func, [item.copy()], node, interpreter)
+        if error:
+            return None, error
+        if value.is_true():
+            out.append(item.copy())
+    return List(out), None
+
+
+def bi_smoosh(args, node, interpreter):
+    pile, func, start = args
+    error = _need(node, pile, List, 'pile', 'smoosh')
+    if error:
+        return None, error
+
+    items = list(pile.elements)
+    if start is not None:
+        carried = start.copy()
+    elif items:
+        carried = items.pop(0).copy()
+    else:
+        return None, RTError(node.pos_start, node.pos_end, "'smoosh' needs a starting value for an empty pile")
+
+    for item in items:
+        carried, error = call_chore(func, [carried, item.copy()], node, interpreter)
+        if error:
+            return None, error
+    return carried, None
+
+
+def bi_sortof_by(args, node, interpreter):
+    pile, func = args
+    error = _need(node, pile, List, 'pile', 'sortof')
+    if error:
+        return None, error
+
+    if func is None:
+        return bi_sortof([pile], node)
+
+    # decorate-sort-undecorate, so the chore runs once per item
+    decorated = []
+    for item in pile.elements:
+        key, error = call_chore(func, [item.copy()], node, interpreter)
+        if error:
+            return None, error
+        if not isinstance(key, (Number, String)):
+            return None, RTError(
+                node.pos_start, node.pos_end, f'A sort key must be a math or a yap, got {key.TYPE_NAME}'
+            )
+        decorated.append((key, item.copy()))
+
+    if len({type(key) for key, _ in decorated}) > 1:
+        return None, RTError(node.pos_start, node.pos_end, 'Sort keys must be all maths or all yaps')
+
+    decorated.sort(key=lambda pair: pair[0].value)
+    return List([item for _, item in decorated]), None
+
+
 def bi_labels(args, node):
     error = _need(node, args[0], Bag, 'bag', 'labels')
     if error:
@@ -2458,7 +2559,10 @@ BUILTINS = {
     'trim': (['yap'], bi_trim),
     'where': (['value', 'needle'], bi_where),
     'gotit': (['value', 'needle'], bi_gotit),
-    'sortof': (['pile'], bi_sortof),
+    'sortof': (['pile', '?by'], bi_sortof_by),
+    'eachof': (['pile', 'chore'], bi_eachof),
+    'keepif': (['pile', 'chore'], bi_keepif),
+    'smoosh': (['pile', 'chore', '?start'], bi_smoosh),
     'labels': (['bag'], bi_labels),
     'goods': (['bag'], bi_goods),
     'summon': (['path'], bi_summon),
@@ -2470,7 +2574,7 @@ BUILTINS = {
 }
 
 
-NEEDS_INTERPRETER = {'summon'}
+NEEDS_INTERPRETER = {'summon', 'eachof', 'keepif', 'smoosh', 'sortof'}
 
 
 def install_builtins(symbol_table):

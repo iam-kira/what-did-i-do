@@ -60,7 +60,6 @@ Roughly in order:
 
 Known smaller things, good first issues:
 
-- [ ] `sortof` cannot take a custom comparison chore
 - [ ] `mathify` accepts `"  12  "` but not `"1e3"`
 - [ ] Error text mixes dialect and English on purpose: type names are dialect
       (`math`, `yap`), the surrounding sentence is plain English so errors stay

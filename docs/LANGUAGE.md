@@ -275,15 +275,47 @@ A chore with no `yeet` evaluates to its last statement. Call depth is capped at
 | `gotit(value, needle)` | `1` or `0`; on a bag, checks labels |
 | `stuff(pile, value)` | new pile with `value` on the end |
 | `yoink(pile, index)` | new pile with `index` removed; on a bag, drops a label |
-| `sortof(pile)` | sorted; all maths or all yaps |
+| `sortof(pile, by?)` | sorted; `by` is a chore giving each item's sort key |
 | `glue(pile, separator?)` | join into a yap |
 | `shred(yap, separator?)` | split into a pile; no separator splits on whitespace |
 | `shout` `whisper` `trim` | upper, lower, strip |
 | `labels(bag)` `goods(bag)` | a bag's labels or its values, as a pile |
 
-Nothing mutates in place — `stuff`, `yoink`, `sortof`, `chunk` and `flip` all
-hand back something new. To change a pile or bag where it stands, assign into
-it: `xs[0] = 99`.
+**Chores that take chores**
+
+| Chore | Does |
+|---|---|
+| `eachof(pile, chore)` | run the chore on each thing, collect the results |
+| `keepif(pile, chore)` | keep the things the chore likes |
+| `smoosh(pile, chore, start?)` | fold left; without `start` the first thing seeds it |
+
+```text
+chore dbl(n) ong yeet n * 2 bet
+chore odd(n) ong yeet n % 2 == 1 bet
+chore add(a, b) ong yeet a + b bet
+
+yap(eachof([1, 2, 3], dbl))          # [2, 4, 6]
+yap(keepif([1, 2, 3, 4], odd))       # [1, 3]
+yap(smoosh([1, 2, 3, 4], add))       # 10
+yap(sortof(["bx", "az"], lastchar))  # sorted by whatever the chore returns
+```
+
+Closures work here, so a chore can build the chore you pass:
+
+```text
+chore times(k) ong
+    chore go(n) ong
+        yeet n * k
+    bet
+    yeet go
+bet
+
+yap(eachof([1, 2, 3], times(10)))    # [10, 20, 30]
+```
+
+Nothing mutates in place — `stuff`, `yoink`, `sortof`, `chunk`, `flip`,
+`eachof` and `keepif` all hand back something new. To change a pile or bag
+where it stands, assign into it: `xs[0] = 99`.
 
 Builtins live in a scope every program inherits, so you can shadow one:
 `stash howmany = 5` is legal, if unwise.
