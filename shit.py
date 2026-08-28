@@ -124,6 +124,9 @@ TT_GT = 'GT'
 TT_LTE = 'LTE'
 TT_GTE = 'GTE'
 TT_STRING = 'STRING'
+TT_LCURLY = 'LCURLY'
+TT_RCURLY = 'RCURLY'
+TT_COLON = 'COLON'
 TT_LSQUARE = 'LSQUARE'
 TT_RSQUARE = 'RSQUARE'
 TT_LPAREN = 'LPAREN'
@@ -207,6 +210,15 @@ class Lexer:
                 if error:
                     return [], error
                 tokens.append(token)
+            elif self.current_char == '{':
+                tokens.append(Token(TT_LCURLY, pos_start=self.pos))
+                self.advance()
+            elif self.current_char == '}':
+                tokens.append(Token(TT_RCURLY, pos_start=self.pos))
+                self.advance()
+            elif self.current_char == ':':
+                tokens.append(Token(TT_COLON, pos_start=self.pos))
+                self.advance()
             elif self.current_char == '[':
                 tokens.append(Token(TT_LSQUARE, pos_start=self.pos))
                 self.advance()
@@ -382,6 +394,18 @@ class ArrayNode:
 
     def __repr__(self):
         return f'[{self.element_nodes}]'
+
+
+class BagNode:
+    """A bag literal: {"a": 1}."""
+
+    def __init__(self, pair_nodes, pos_start, pos_end):
+        self.pair_nodes = pair_nodes
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return '{' + ', '.join(f'{k}: {v}' for k, v in self.pair_nodes) + '}'
 
 
 class IndexNode:
@@ -1051,6 +1075,12 @@ class Parser:
                 return res
             return self.postfix_result(res, array)
 
+        if tok.type == TT_LCURLY:
+            bag = res.register(self.bag_expr())
+            if res.error:
+                return res
+            return self.postfix_result(res, bag)
+
         if tok.type == TT_KEYWORD and tok.value in ('based', 'cringe', 'ghosted'):
             self.advance()
             literal = 1 if tok.value == 'based' else 0
@@ -1118,6 +1148,54 @@ class Parser:
         pos_end = self.current_tok.pos_end.copy()
         self.advance()
         return res.success(ArrayNode(element_nodes, pos_start, pos_end))
+
+    def bag_expr(self):
+        res = ParseResult()
+        pos_start = self.current_tok.pos_start.copy()
+        self.advance()  # past '{'
+
+        pair_nodes = []
+        self.skip_newlines()
+
+        if self.current_tok.type != TT_RCURLY:
+            while True:
+                key = res.register(self.expr())
+                if res.error:
+                    return res
+
+                if self.current_tok.type != TT_COLON:
+                    return res.failure(
+                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ':'")
+                    )
+                self.advance()
+                self.skip_newlines()
+
+                value = res.register(self.expr())
+                if res.error:
+                    return res
+                pair_nodes.append((key, value))
+
+                self.skip_newlines()
+                if self.current_tok.type != TT_COMMA:
+                    break
+                self.advance()
+                self.skip_newlines()
+                if self.current_tok.type == TT_RCURLY:
+                    break  # trailing comma
+
+        self.skip_newlines()
+        if self.current_tok.type != TT_RCURLY:
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ',' or '}'")
+            )
+
+        pos_end = self.current_tok.pos_end.copy()
+        self.advance()
+        return res.success(BagNode(pair_nodes, pos_start, pos_end))
+
+    def skip_newlines(self):
+        while self.current_tok.type == TT_NEWLINE:
+            self.advance()
 
     def postfix_result(self, res, node):
         """Attach any trailing [index] suffixes to an already-parsed atom."""
@@ -1584,6 +1662,86 @@ class BaseFunction(Value):
         return True
 
 
+class Bag(Value):
+    TYPE_NAME = 'bag'
+
+    def __init__(self, pairs=None):
+        super().__init__()
+        # python key -> (key Value, value Value); insertion ordered
+        self.pairs = dict(pairs) if pairs else {}
+
+    @staticmethod
+    def key_of(value):
+        """Maths and yaps can be labels; nothing else can."""
+        if isinstance(value, Number):
+            return ('math', value.value)
+        if isinstance(value, String):
+            return ('yap', value.value)
+        return None
+
+    def copy(self):
+        clone = Bag({k: (kv.copy(), vv.copy()) for k, (kv, vv) in self.pairs.items()})
+        return clone.set_pos(self.pos_start, self.pos_end)
+
+    def added_to(self, other):
+        if not isinstance(other, Bag):
+            return self.illegal_operation(other)
+        merged = dict(self.pairs)
+        merged.update(other.pairs)
+        return Bag(merged), None
+
+    def compare_eq(self, other):
+        if not isinstance(other, Bag) or len(self.pairs) != len(other.pairs):
+            return Number(0), None
+        for key, (_, mine) in self.pairs.items():
+            if key not in other.pairs:
+                return Number(0), None
+            equal, error = mine.compare_eq(other.pairs[key][1])
+            if error:
+                return None, error
+            if not equal.is_true():
+                return Number(0), None
+        return Number(1), None
+
+    def compare_ne(self, other):
+        equal, error = self.compare_eq(other)
+        if error:
+            return None, error
+        return Number(0 if equal.is_true() else 1), None
+
+    def get_index(self, index):
+        key = self.key_of(index)
+        if key is None:
+            return None, RTError(index.pos_start, index.pos_end, 'A bag label must be a math or a yap')
+        if key not in self.pairs:
+            return None, RTError(index.pos_start, index.pos_end, f'No label {index!r} in this bag')
+        return self.pairs[key][1], None
+
+    def set_index(self, index, value):
+        key = self.key_of(index)
+        if key is None:
+            return RTError(index.pos_start, index.pos_end, 'A bag label must be a math or a yap')
+        self.pairs[key] = (index.copy(), value)
+        return None
+
+    def labels(self):
+        return [key_value for key_value, _ in self.pairs.values()]
+
+    def goods(self):
+        return [value for _, value in self.pairs.values()]
+
+    def length(self):
+        return len(self.pairs)
+
+    def is_true(self):
+        return len(self.pairs) > 0
+
+    def __repr__(self):
+        if not self.pairs:
+            return '{}'
+        return '{' + ', '.join(f'{k!r}: {v!r}' for k, v in self.pairs.values()) + '}'
+
+
 class Function(BaseFunction):
     def __init__(self, name, arg_names, body_node, defining_scope=None):
         super().__init__(name, arg_names)
@@ -1686,7 +1844,7 @@ def bi_input(args, node):
 def bi_len(args, node):
     length = args[0].length()
     if length is None:
-        return _type_error(node, f"'howmany' needs a yap or pile, got {args[0].TYPE_NAME}")
+        return _type_error(node, f"'howmany' needs a yap, pile or bag, got {args[0].TYPE_NAME}")
     return Number(length), None
 
 
@@ -1721,8 +1879,16 @@ def bi_append(args, node):
 
 def bi_pop(args, node):
     target, index = args
+    if isinstance(target, Bag):
+        key = Bag.key_of(index)
+        if key is None or key not in target.pairs:
+            return None, RTError(node.pos_start, node.pos_end, f'No label {index!r} in this bag')
+        remaining = dict(target.pairs)
+        del remaining[key]
+        return Bag(remaining), None
+
     if not isinstance(target, List):
-        return _type_error(node, "'yoink' needs a pile as its first argument")
+        return _type_error(node, "'yoink' needs a pile or bag as its first argument")
     _, error = target.get_index(index)
     if error:
         return None, error
@@ -1867,6 +2033,8 @@ def _members(container):
         return container.elements
     if isinstance(container, String):
         return [String(char) for char in container.value]
+    if isinstance(container, Bag):
+        return container.labels()
     return None
 
 
@@ -1903,6 +2071,20 @@ def bi_sortof(args, node):
     elif items:
         return None, RTError(node.pos_start, node.pos_end, "'sortof' needs a pile of all maths or all yaps")
     return List(items), None
+
+
+def bi_labels(args, node):
+    error = _need(node, args[0], Bag, 'bag', 'labels')
+    if error:
+        return None, error
+    return List([key.copy() for key in args[0].labels()]), None
+
+
+def bi_goods(args, node):
+    error = _need(node, args[0], Bag, 'bag', 'goods')
+    if error:
+        return None, error
+    return List([value.copy() for value in args[0].goods()]), None
 
 
 def bi_whatis(args, node):
@@ -1948,6 +2130,8 @@ BUILTINS = {
     'where': (['value', 'needle'], bi_where),
     'gotit': (['value', 'needle'], bi_gotit),
     'sortof': (['pile'], bi_sortof),
+    'labels': (['bag'], bi_labels),
+    'goods': (['bag'], bi_goods),
     'whatis': (['value'], bi_whatis),
     'is_math': (['value'], bi_is_num),
     'is_yap': (['value'], bi_is_str),
@@ -2029,6 +2213,24 @@ class Interpreter:
                 return res
 
         return res.success(List(elements).set_pos(node.pos_start, node.pos_end))
+
+    def visit_BagNode(self, node):
+        res = RTResult()
+        bag = Bag().set_pos(node.pos_start, node.pos_end)
+
+        for key_node, value_node in node.pair_nodes:
+            key = res.register(self.visit(key_node))
+            if res.error:
+                return res
+            value = res.register(self.visit(value_node))
+            if res.error:
+                return res
+
+            error = bag.set_index(key, value)
+            if error:
+                return res.failure(error)
+
+        return res.success(bag)
 
     def visit_IndexNode(self, node):
         res = RTResult()
@@ -2250,6 +2452,8 @@ class Interpreter:
             items = list(iterable.elements)
         elif isinstance(iterable, String):
             items = [String(char) for char in iterable.value]
+        elif isinstance(iterable, Bag):
+            items = iterable.labels()
         else:
             return res.failure(
                 RTError(

@@ -160,7 +160,7 @@ def test_len_of_string_and_list():
 def test_len_of_number_is_an_error():
     result, error = ev('howmany(5)')
     assert result is None
-    assert 'needs a yap or pile' in error.details
+    assert 'needs a yap, pile or bag' in error.details
 
 
 def test_str_and_num_round_trip():
