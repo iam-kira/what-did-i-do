@@ -84,6 +84,12 @@ Known smaller things, good first issues:
 - Match the surrounding style — plain classes, no frameworks, no new dependencies
 - Update [docs/LANGUAGE.md](docs/LANGUAGE.md) in the same commit if you changed behaviour
 
+## Licensing
+
+shit is MIT licensed and copyright Vijay Biradar. By opening a pull request you agree
+your contribution is released under the same licence, and that the project's
+copyright notice stays intact.
+
 ## Bugs
 
 Open an issue with the source that broke and what you expected instead. A failing

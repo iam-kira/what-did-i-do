@@ -136,6 +136,18 @@ python -m pytest -q
 
 ---
 
-## License
+## Credit and licence
 
-[MIT](LICENSE)
+shit was created by **Vijay Biradar**.
+
+It is released under the [MIT Licence](LICENSE), which lets anyone use, modify
+and sell it — including inside closed-source products — on one condition:
+
+> The above copyright notice and this permission notice shall be included in
+> all copies or substantial portions of the Software.
+
+So if you ship shit, or anything substantially built from it, the copyright
+notice comes with it. That is not optional, and it applies to commercial use
+too.
+
+Contributions are accepted under the same licence.

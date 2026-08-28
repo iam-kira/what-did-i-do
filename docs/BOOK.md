@@ -973,3 +973,10 @@ Things that will trip you up:
 
 And the one that catches everyone: `for i in range(3)` is
 `grind i = 0 til 3 ong ... bet`, end-exclusive, same as Python.
+
+---
+
+## Credit
+
+shit was created by **Vijay Biradar**, and is released under the MIT Licence. Use it,
+change it, sell it — but the copyright notice travels with every copy.

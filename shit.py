@@ -1,3 +1,12 @@
+"""shit - a small interpreted language.
+
+Copyright (c) 2026 Vijay Biradar
+Licensed under the MIT License. See LICENSE for the full text.
+
+You may use, modify and sell this software, including inside closed-source
+products, but the copyright notice above must travel with every copy.
+"""
+
 import sys
 
 # A shit-level call costs roughly 20 Python frames, so MAX_CALL_DEPTH calls need
