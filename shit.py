@@ -3,7 +3,10 @@
 DIGITS = '0123456789'
 LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 LETTERS_DIGITS = LETTERS + DIGITS + '_'
-KEYWORDS = ['var', 'if', 'then', 'elif', 'else', 'end', 'while', 'fun']
+KEYWORDS = [
+    'var', 'if', 'then', 'elif', 'else', 'end', 'while', 'fun',
+    'and', 'or', 'not', 'true', 'false', 'null',
+]
 
 
 # ERROR
@@ -656,6 +659,25 @@ class Parser:
         return res.success(CallNode(node, arg_nodes, pos_end))
 
     def expr(self):
+        return self.bin_op(self.and_expr, ((TT_KEYWORD, 'or'),))
+
+    def and_expr(self):
+        return self.bin_op(self.not_expr, ((TT_KEYWORD, 'and'),))
+
+    def not_expr(self):
+        res = ParseResult()
+
+        if self.current_tok.matches(TT_KEYWORD, 'not'):
+            op_tok = self.current_tok
+            self.advance()
+            node = res.register(self.not_expr())
+            if res.error:
+                return res
+            return res.success(UnaryOpNode(op_tok, node))
+
+        return self.comp_expr()
+
+    def comp_expr(self):
         return self.bin_op(self.arith_expr, (TT_EE, TT_NE, TT_LT, TT_GT, TT_LTE, TT_GTE))
 
     def arith_expr(self):
@@ -685,6 +707,11 @@ class Parser:
             self.advance()
             return res.success(NumberNode(tok))
 
+        if tok.type == TT_KEYWORD and tok.value in ('true', 'false', 'null'):
+            self.advance()
+            literal = 1 if tok.value == 'true' else 0
+            return res.success(NumberNode(Token(TT_INT, literal, tok.pos_start, tok.pos_end)))
+
         if tok.type == TT_IDENTIFIER:
             self.advance()
             if self.current_tok.type == TT_LPAREN:
@@ -704,8 +731,19 @@ class Parser:
             )
 
         return res.failure(
-            InvalidSyntaxError(tok.pos_start, tok.pos_end, 'Expected int, float, identifier, +, -, or (')
+            InvalidSyntaxError(
+                tok.pos_start, tok.pos_end, "Expected int, float, identifier, 'not', '+', '-' or '('"
+            )
         )
+
+    def op_matches(self, ops):
+        for op in ops:
+            if isinstance(op, tuple):
+                if self.current_tok.matches(op[0], op[1]):
+                    return True
+            elif self.current_tok.type == op:
+                return True
+        return False
 
     def bin_op(self, func, ops):
         res = ParseResult()
@@ -713,7 +751,7 @@ class Parser:
         if res.error:
             return res
 
-        while self.current_tok.type in ops:
+        while self.op_matches(ops):
             op_tok = self.current_tok
             self.advance()
             right = res.register(func())
@@ -747,9 +785,14 @@ class RTResult:
 
 # VALUES
 ######################################
-class Number:
-    def __init__(self, value):
-        self.value = value
+class Value:
+    """Base for every runtime value.
+
+    Operations default to an 'illegal operation' error, so a new type only has
+    to override what it actually supports.
+    """
+
+    def __init__(self):
         self.pos_start = None
         self.pos_end = None
 
@@ -759,40 +802,117 @@ class Number:
         return self
 
     def copy(self):
-        value_copy = Number(self.value)
-        value_copy.set_pos(self.pos_start, self.pos_end)
-        return value_copy
+        raise NotImplementedError(f'{type(self).__name__} has no copy method')
+
+    def is_true(self):
+        return False
+
+    def illegal_operation(self, other=None):
+        other = other if other is not None else self
+        return None, RTError(
+            self.pos_start,
+            other.pos_end,
+            f'Illegal operation for {type(self).__name__.lower()}',
+        )
 
     def added_to(self, other):
+        return self.illegal_operation(other)
+
+    def subbed_by(self, other):
+        return self.illegal_operation(other)
+
+    def multed_by(self, other):
+        return self.illegal_operation(other)
+
+    def dived_by(self, other):
+        return self.illegal_operation(other)
+
+    def compare_lt(self, other):
+        return self.illegal_operation(other)
+
+    def compare_gt(self, other):
+        return self.illegal_operation(other)
+
+    def compare_lte(self, other):
+        return self.illegal_operation(other)
+
+    def compare_gte(self, other):
+        return self.illegal_operation(other)
+
+    def compare_eq(self, other):
+        return Number(1 if self is other else 0), None
+
+    def compare_ne(self, other):
+        equal, error = self.compare_eq(other)
+        if error:
+            return None, error
+        return Number(0 if equal.is_true() else 1), None
+
+    def notted(self):
+        return Number(0 if self.is_true() else 1), None
+
+
+class Number(Value):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    def copy(self):
+        return Number(self.value).set_pos(self.pos_start, self.pos_end)
+
+    def added_to(self, other):
+        if not isinstance(other, Number):
+            return self.illegal_operation(other)
         return Number(self.value + other.value), None
 
     def subbed_by(self, other):
+        if not isinstance(other, Number):
+            return self.illegal_operation(other)
         return Number(self.value - other.value), None
 
     def multed_by(self, other):
+        if not isinstance(other, Number):
+            return self.illegal_operation(other)
         return Number(self.value * other.value), None
 
     def dived_by(self, other):
+        if not isinstance(other, Number):
+            return self.illegal_operation(other)
         if other.value == 0:
             return None, RTError(other.pos_start, other.pos_end, 'Division by zero')
+        if isinstance(self.value, int) and isinstance(other.value, int):
+            if self.value % other.value == 0:
+                return Number(self.value // other.value), None
         return Number(self.value / other.value), None
 
     def compare_eq(self, other):
+        if not isinstance(other, Number):
+            return Number(0), None
         return Number(1 if self.value == other.value else 0), None
 
     def compare_ne(self, other):
+        if not isinstance(other, Number):
+            return Number(1), None
         return Number(1 if self.value != other.value else 0), None
 
     def compare_lt(self, other):
+        if not isinstance(other, Number):
+            return self.illegal_operation(other)
         return Number(1 if self.value < other.value else 0), None
 
     def compare_gt(self, other):
+        if not isinstance(other, Number):
+            return self.illegal_operation(other)
         return Number(1 if self.value > other.value else 0), None
 
     def compare_lte(self, other):
+        if not isinstance(other, Number):
+            return self.illegal_operation(other)
         return Number(1 if self.value <= other.value else 0), None
 
     def compare_gte(self, other):
+        if not isinstance(other, Number):
+            return self.illegal_operation(other)
         return Number(1 if self.value >= other.value else 0), None
 
     def is_true(self):
@@ -804,18 +924,12 @@ class Number:
         return str(self.value)
 
 
-class Function:
+class Function(Value):
     def __init__(self, name, arg_names, body_node):
+        super().__init__()
         self.name = name
         self.arg_names = arg_names
         self.body_node = body_node
-        self.pos_start = None
-        self.pos_end = None
-
-    def set_pos(self, pos_start=None, pos_end=None):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
-        return self
 
     def copy(self):
         return Function(self.name, self.arg_names, self.body_node).set_pos(self.pos_start, self.pos_end)
@@ -896,11 +1010,10 @@ class Interpreter:
         if res.error:
             return res
 
-        if not isinstance(number, Number):
-            return res.failure(RTError(node.pos_start, node.pos_end, 'Illegal operation on a function'))
-
         if node.op_tok.type == TT_MINUS:
-            number, error = Number(0).subbed_by(number)
+            number, error = Number(0).set_pos(node.pos_start, node.pos_end).subbed_by(number)
+        elif node.op_tok.matches(TT_KEYWORD, 'not'):
+            number, error = number.notted()
         else:
             number, error = number, None
 
@@ -917,9 +1030,6 @@ class Interpreter:
         right = res.register(self.visit(node.right_node))
         if res.error:
             return res
-
-        if not isinstance(left, Number) or not isinstance(right, Number):
-            return res.failure(RTError(node.pos_start, node.pos_end, 'Illegal operation on a function'))
 
         if node.op_tok.type == TT_PLUS:
             result, error = left.added_to(right)
@@ -941,6 +1051,10 @@ class Interpreter:
             result, error = left.compare_lte(right)
         elif node.op_tok.type == TT_GTE:
             result, error = left.compare_gte(right)
+        elif node.op_tok.matches(TT_KEYWORD, 'and'):
+            result, error = (Number(1) if left.is_true() and right.is_true() else Number(0)), None
+        elif node.op_tok.matches(TT_KEYWORD, 'or'):
+            result, error = (Number(1) if left.is_true() or right.is_true() else Number(0)), None
         else:
             return res.failure(RTError(node.pos_start, node.pos_end, 'Unknown binary operator'))
 
