@@ -97,6 +97,7 @@ python shit.py --help
 ## What it can do
 
 - **Types** — numbers (`math`), strings (`yap`), lists (`pile`), dicts (`bag`), first-class functions (`chore`)
+- **Yap holes** — `"hi {name}, {1 + 2} points"`
 - **Control flow** — `fr`/`orfr`/`whatever`, `keep`, `grind ... til`, `grind ... among`, `bail`, `skip`, `yeet`
 - **Scoping** — lexical, with working closures and outer-variable mutation
 - **Operators** — `+ - * / % ^`, comparisons, `also`/`orelse`/`nah`, indexing, compound assignment
@@ -104,7 +105,7 @@ python shit.py --help
 - **Imports** — `summon("lib.shit")`, with cycle detection
 - **Error handling** — `risky` / `whoops` / `oops`, catching anything the runtime throws
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **205 tests** covering every stage
+- **224 tests** covering every stage
 
 ---
 

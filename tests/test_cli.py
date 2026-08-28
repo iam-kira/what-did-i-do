@@ -21,6 +21,8 @@ def test_example_program_runs_end_to_end(capsys):
     assert '{"the": 3, "quick": 1, "lazy": 1, "end": 1}' in out
     assert 'distinct words: 4' in out
     assert 'shit still works' in out
+    assert 'dodged: Division by zero' in out
+    assert '10 / 0 = 0' in out
 
 
 def test_missing_file_is_reported(capsys):

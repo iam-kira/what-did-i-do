@@ -22,7 +22,7 @@ chore fact(n) ong
     bet
     yeet n * fact(n - 1)
 bet
-yap("10! = " + yapify(fact(10)))
+yap("10! = {fact(10)}")
 
 # closures: a chore that remembers
 chore counter() ong
@@ -37,7 +37,7 @@ bet
 stash c = counter()
 c()
 c()
-yap("counted til " + yapify(c()))
+yap("counted til {c()}")
 
 # piles and yaps
 stash words = ["shit", "is", "a", "language"]
@@ -64,7 +64,7 @@ keep based ong
     evens = stuff(evens, n)
 bet
 yap(evens)
-yap("2 ^ 16 = " + yapify(2 ^ 16))
+yap("2 ^ 16 = {2 ^ 16}")
 
 # bags
 stash tally = {}
@@ -76,6 +76,18 @@ grind w among shred("the quick the lazy the end") ong
     bet
 bet
 yap(tally)
-yap("distinct words: " + yapify(howmany(tally)))
+yap("distinct words: {howmany(tally)}")
 yap(sortof(labels(tally)))
 yap(glue(["shit", "still", "works"], " "))
+
+# risky business
+chore safe_div(a, b) ong
+    risky ong
+        yeet a / b
+    whoops e ong
+        yap("dodged: {e["why"]}")
+        yeet 0
+    bet
+bet
+yap("10 / 2 = {safe_div(10, 2)}")
+yap("10 / 0 = {safe_div(10, 0)}")

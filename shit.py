@@ -128,6 +128,7 @@ TT_GT = 'GT'
 TT_LTE = 'LTE'
 TT_GTE = 'GTE'
 TT_STRING = 'STRING'
+TT_FSTRING = 'FSTRING'
 TT_LCURLY = 'LCURLY'
 TT_RCURLY = 'RCURLY'
 TT_COLON = 'COLON'
@@ -279,10 +280,13 @@ class Lexer:
         return Token(TT_FLOAT, float(num_str), pos_start, self.pos), None
 
     def make_string(self):
+        """A yap. {expr} inside one interpolates; {{ is a literal brace."""
+        segments = []          # ('text', str) / ('code', str)
         text = ''
         pos_start = self.pos.copy()
         escapes = {'n': '\n', 't': '\t', 'r': '\r',
-                   '\\': '\\', '"': '"'}
+                   '\\': '\\', '"': '"',
+                   '{': '{', '}': '}'}
         self.advance()
 
         escaped = False
@@ -292,14 +296,78 @@ class Lexer:
                 escaped = False
             elif self.current_char == '\\':
                 escaped = True
+            elif self.current_char == '{':
+                self.advance()
+                if self.current_char == '{':
+                    text += '{'
+                else:
+                    code, error = self.read_interpolation(pos_start)
+                    if error:
+                        return None, error
+                    if text:
+                        segments.append(('text', text))
+                        text = ''
+                    segments.append(('code', code))
+                    continue
+            elif self.current_char == '}':
+                self.advance()
+                text += '}'
+                if self.current_char == '}':
+                    self.advance()
+                continue
             elif self.current_char == '"':
                 self.advance()
-                return Token(TT_STRING, text, pos_start, self.pos), None
+                if text or not segments:
+                    segments.append(('text', text))
+                if len(segments) == 1 and segments[0][0] == 'text':
+                    return Token(TT_STRING, segments[0][1], pos_start, self.pos), None
+                return Token(TT_FSTRING, segments, pos_start, self.pos), None
             else:
                 text += self.current_char
             self.advance()
 
         error = ExpectedCharError(pos_start, self.pos.copy(), 'unterminated string')
+        error.incomplete = True
+        return None, error
+
+    def read_interpolation(self, pos_start):
+        """Read up to the matching '}', tracking nested braces and quotes."""
+        code = ''
+        depth = 1
+        in_yap = False
+
+        while self.current_char is not None:
+            char = self.current_char
+            if in_yap:
+                code += char
+                if char == '\\':
+                    self.advance()
+                    if self.current_char is not None:
+                        code += self.current_char
+                        self.advance()
+                    continue
+                if char == '"':
+                    in_yap = False
+                self.advance()
+                continue
+
+            if char == '"':
+                in_yap = True
+            elif char == '{':
+                depth += 1
+            elif char == '}':
+                depth -= 1
+                if depth == 0:
+                    self.advance()
+                    if not code.strip():
+                        return None, InvalidSyntaxError(
+                            pos_start, self.pos.copy(), 'Empty {} in a yap'
+                        )
+                    return code, None
+            code += char
+            self.advance()
+
+        error = ExpectedCharError(pos_start, self.pos.copy(), "unterminated {} in a yap")
         error.incomplete = True
         return None, error
 
@@ -390,6 +458,18 @@ class StringNode:
 
     def __repr__(self):
         return f'{self.tok}'
+
+
+class FStringNode:
+    """A yap with {expr} holes: a list of ('text', StringNode) / ('code', node)."""
+
+    def __init__(self, parts, pos_start, pos_end):
+        self.parts = parts
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return '(yap ' + ' + '.join(str(node) for _, node in self.parts) + ')'
 
 
 class ArrayNode:
@@ -1161,6 +1241,19 @@ class Parser:
             self.advance()
             return self.postfix_result(res, StringNode(tok))
 
+        if tok.type == TT_FSTRING:
+            self.advance()
+            parts = []
+            for kind, chunk in tok.value:
+                if kind == 'text':
+                    parts.append(('text', StringNode(Token(TT_STRING, chunk, tok.pos_start, tok.pos_end))))
+                    continue
+                node = res.register(self.sub_parse(chunk, tok))
+                if res.error:
+                    return res
+                parts.append(('code', node))
+            return self.postfix_result(res, FStringNode(parts, tok.pos_start, tok.pos_end))
+
         if tok.type == TT_LSQUARE:
             array = res.register(self.array_expr())
             if res.error:
@@ -1284,6 +1377,25 @@ class Parser:
         pos_end = self.current_tok.pos_end.copy()
         self.advance()
         return res.success(BagNode(pair_nodes, pos_start, pos_end))
+
+    def sub_parse(self, source, tok):
+        """Parse one {expr} fragment. Its errors point at the yap that holds it."""
+        res = ParseResult()
+
+        tokens, error = Lexer(tok.pos_start.filename, source).make_tokens()
+        if error:
+            return res.failure(InvalidSyntaxError(tok.pos_start, tok.pos_end, error.details))
+
+        parsed = Parser(tokens).statements()
+        if parsed.error:
+            return res.failure(InvalidSyntaxError(tok.pos_start, tok.pos_end, parsed.error.details))
+
+        statements = parsed.node.element_nodes
+        if len(statements) != 1:
+            return res.failure(
+                InvalidSyntaxError(tok.pos_start, tok.pos_end, 'A {} in a yap needs exactly one expression')
+            )
+        return res.success(statements[0])
 
     def skip_newlines(self):
         while self.current_tok.type == TT_NEWLINE:
@@ -2350,6 +2462,18 @@ class Interpreter:
 
     def visit_StringNode(self, node):
         return RTResult().success(String(node.tok.value).set_pos(node.pos_start, node.pos_end))
+
+    def visit_FStringNode(self, node):
+        res = RTResult()
+        pieces = []
+
+        for _, part in node.parts:
+            value = res.register(self.visit(part))
+            if res.error:
+                return res
+            pieces.append(str(value) if isinstance(value, String) else repr(value))
+
+        return res.success(String(''.join(pieces)).set_pos(node.pos_start, node.pos_end))
 
     def visit_ArrayNode(self, node):
         res = RTResult()

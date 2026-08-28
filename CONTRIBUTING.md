@@ -57,7 +57,6 @@ Roughly in order:
 - [ ] `whatever` branch on a loop, or `do ... keep`
 - [ ] User-defined types, or at least a bag with named chores attached
 - [ ] Iterating a bag's label/value pairs, not just its labels
-- [ ] Yap interpolation, so `"hi {name}"` beats `"hi " + name`
 - [ ] A `--time` flag, or anything resembling a profiler
 - [ ] Speed: every value copies on read, which is simple and wasteful
 

@@ -43,7 +43,24 @@ no significant whitespace.
 `based`, `cringe` and `ghosted` are `1`, `0` and `0`. There is no separate
 boolean type — anything non-zero, non-empty is truthy.
 
-String escapes: `\n` `\t` `\r` `\` `\"`.
+String escapes: `\n` `\t` `\r` `\\` `\"` `{{` `}}`.
+
+### Yap holes
+
+`{...}` inside a yap evaluates and drops the result in. Any expression works —
+calls, lookups, arithmetic, even another yap:
+
+```text
+stash name = "ana"
+stash scores = {"ana": 3}
+
+yap("hi {name}, you have {scores[name]} points")
+yap("{1 + 2} and {smol(9, 4)}")
+```
+
+Yaps interpolate as their text, everything else as it would print. `{{` and
+`}}` give literal braces. A hole holds exactly one expression; an empty `{}` is
+an error. An error inside a hole points at the yap that holds it.
 
 Piles and bags may span lines and carry a trailing comma:
 
