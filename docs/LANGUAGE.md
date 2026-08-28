@@ -370,6 +370,11 @@ Return the new value, or keep the state in a closure like `counter` above.
 | `shred(yap, separator?)` | split into a pile; no separator splits on whitespace |
 | `shout` `whisper` `trim` | upper, lower, strip |
 | `labels(bag)` `goods(bag)` | a bag's labels or its values, as a pile |
+| `swap(yap, find, replace)` | every occurrence replaced |
+| `starts(yap, prefix)` / `ends(yap, suffix)` | `1` or `0` |
+| `code(letter)` / `letter(code)` | a character to its number, and back |
+| `numbered(value)` | `[a, b]` becomes `[[0, a], [1, b]]` |
+| `pair(left, right)` | two piles zipped, stopping at the shorter |
 
 **Chores that take chores**
 
@@ -401,6 +406,27 @@ chore times(k) ong
 bet
 
 cook(eachof([1, 2, 3], times(10)))    # [10, 20, 30]
+```
+
+`where` and `gotit` search a yap by **substring**, and a pile or bag by
+element or label:
+
+```text
+cook(where("hello", "ll"))          # 2
+cook(gotit("hello world", "lo w"))  # 1
+cook(where([1, 2, 3], 2))           # 1
+```
+
+`numbered` and `pair` exist to feed two-name `grind`:
+
+```text
+grind i, word among numbered(["a", "b"]) ong
+    cook("{i}: {word}")
+bet
+
+grind name, point among pair(names, points) ong
+    cook("{name} -> {point}")
+bet
 ```
 
 Nothing mutates in place — `stuff`, `yoink`, `sortof`, `chunk`, `flip`,

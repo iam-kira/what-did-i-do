@@ -433,13 +433,13 @@ class Lexer:
                     self.advance()
                     if not code.strip():
                         return None, InvalidSyntaxError(
-                            pos_start, self.pos.copy(), 'Empty {} in a yap'
+                            pos_start, self.pos.copy(), 'Empty {} in a yap - write {{ or a backslash-brace for a literal one'
                         )
                     return code, None
             code += char
             self.advance()
 
-        error = ExpectedCharError(pos_start, self.pos.copy(), "unterminated {} in a yap")
+        error = ExpectedCharError(pos_start, self.pos.copy(), "unterminated {} in a yap - write {{ or a backslash-brace for a literal one")
         error.incomplete = True
         return None, error
 
@@ -939,9 +939,7 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, 'stash'):
             self.advance()
             if self.current_tok.type != TT_IDENTIFIER:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier')
-                )
+                return self.expected_name('identifier')
 
             var_names = [self.current_tok]
             self.advance()
@@ -949,11 +947,7 @@ class Parser:
             while self.current_tok.type == TT_COMMA:
                 self.advance()
                 if self.current_tok.type != TT_IDENTIFIER:
-                    return res.failure(
-                        InvalidSyntaxError(
-                            self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier'
-                        )
-                    )
+                    return self.expected_name('identifier')
                 var_names.append(self.current_tok)
                 self.advance()
 
@@ -989,9 +983,7 @@ class Parser:
         while self.current_tok.type == TT_COMMA:
             self.advance()
             if self.current_tok.type != TT_IDENTIFIER:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier')
-                )
+                return self.expected_name('identifier')
             var_names.append(self.current_tok)
             self.advance()
 
@@ -1121,11 +1113,7 @@ class Parser:
         self.advance()
 
         if self.current_tok.type != TT_IDENTIFIER:
-            return res.failure(
-                InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end, 'Expected a name for the whoops'
-                )
-            )
+            return self.expected_name('a name for the whoops')
         catch_name_tok = self.current_tok
         self.advance()
 
@@ -1154,9 +1142,7 @@ class Parser:
         self.advance()
 
         if self.current_tok.type != TT_IDENTIFIER:
-            return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier')
-            )
+            return self.expected_name('identifier')
         var_name_toks = [self.current_tok]
         var_name_tok = self.current_tok
         self.advance()
@@ -1164,9 +1150,7 @@ class Parser:
         while self.current_tok.type == TT_COMMA:
             self.advance()
             if self.current_tok.type != TT_IDENTIFIER:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier')
-                )
+                return self.expected_name('identifier')
             var_name_toks.append(self.current_tok)
             self.advance()
 
@@ -1251,9 +1235,7 @@ class Parser:
         self.advance()
 
         if self.current_tok.type != TT_IDENTIFIER:
-            return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected function name')
-            )
+            return self.expected_name('function name')
         var_name_tok = self.current_tok
         self.advance()
 
@@ -1271,11 +1253,7 @@ class Parser:
             while self.current_tok.type == TT_COMMA:
                 self.advance()
                 if self.current_tok.type != TT_IDENTIFIER:
-                    return res.failure(
-                        InvalidSyntaxError(
-                            self.current_tok.pos_start, self.current_tok.pos_end, 'Expected parameter name'
-                        )
-                    )
+                    return self.expected_name('parameter name')
                 arg_name_toks.append(self.current_tok)
                 self.advance()
 
@@ -1536,6 +1514,20 @@ class Parser:
                 InvalidSyntaxError(tok.pos_start, tok.pos_end, 'A {} in a yap needs exactly one expression')
             )
         return res.success(statements[0])
+
+    def expected_name(self, what='identifier'):
+        """The error for 'a name should be here'.
+
+        Says outright when the offending token is a keyword, because
+        `chore shift(text, by)` is an easy thing to write and a baffling
+        thing to debug otherwise.
+        """
+        tok = self.current_tok
+        detail = 'Expected %s' % what
+        if tok.type == TT_KEYWORD:
+            detail += ", but '%s' is a keyword" % tok.value
+
+        return ParseResult().failure(InvalidSyntaxError(tok.pos_start, tok.pos_end, detail))
 
     def skip_newlines(self):
         while self.current_tok.type == TT_NEWLINE:
@@ -2441,11 +2433,22 @@ def _members(container):
 
 
 def bi_where(args, node):
-    members = _members(args[0])
+    target, needle = args[0], args[1]
+
+    # a yap is searched by substring, not character by character
+    if isinstance(target, String):
+        if not isinstance(needle, String):
+            return None, RTError(
+                node.pos_start, node.pos_end,
+                f"'where' in a yap needs a yap to look for, got {needle.TYPE_NAME}", kind='type',
+            )
+        return Number(target.value.find(needle.value)), None
+
+    members = _members(target)
     if members is None:
-        return None, RTError(node.pos_start, node.pos_end, "'where' needs a yap or pile", kind='type')
+        return None, RTError(node.pos_start, node.pos_end, "'where' needs a yap, pile or bag", kind='type')
     for i, item in enumerate(members):
-        equal, error = item.compare_eq(args[1])
+        equal, error = item.compare_eq(needle)
         if error:
             return None, error
         if equal.is_true():
@@ -2456,7 +2459,7 @@ def bi_where(args, node):
 def bi_gotit(args, node):
     index, error = bi_where(args, node)
     if error:
-        return None, RTError(node.pos_start, node.pos_end, "'gotit' needs a yap or pile", kind='type')
+        return None, error
     return Number(1 if index.value >= 0 else 0), None
 
 
@@ -2574,6 +2577,72 @@ def bi_sortof_by(args, node, interpreter):
 
     decorated.sort(key=lambda pair: pair[0].value)
     return List([item for _, item in decorated]), None
+
+
+def bi_swap(args, node):
+    for value in args[:3]:
+        error = _need(node, value, String, 'yap', 'swap')
+        if error:
+            return None, error
+    if args[1].value == '':
+        return None, RTError(node.pos_start, node.pos_end, "'swap' cannot look for an empty yap", kind='type')
+    return String(args[0].value.replace(args[1].value, args[2].value)), None
+
+
+def bi_starts(args, node):
+    for value in args[:2]:
+        error = _need(node, value, String, 'yap', 'starts')
+        if error:
+            return None, error
+    return Number(1 if args[0].value.startswith(args[1].value) else 0), None
+
+
+def bi_ends(args, node):
+    for value in args[:2]:
+        error = _need(node, value, String, 'yap', 'ends')
+        if error:
+            return None, error
+    return Number(1 if args[0].value.endswith(args[1].value) else 0), None
+
+
+def bi_code(args, node):
+    error = _need(node, args[0], String, 'yap', 'code')
+    if error:
+        return None, error
+    if len(args[0].value) != 1:
+        return None, RTError(
+            node.pos_start, node.pos_end, "'code' needs exactly one character", kind='type'
+        )
+    return Number(ord(args[0].value)), None
+
+
+def bi_letter(args, node):
+    error = _need(node, args[0], Number, 'math', 'letter')
+    if error:
+        return None, error
+    point = int(args[0].value)
+    if not 0 <= point <= 0x10FFFF:
+        return None, RTError(node.pos_start, node.pos_end, f'{point} is not a character', kind='type')
+    return String(chr(point)), None
+
+
+def bi_numbered(args, node):
+    """[a, b] -> [[0, a], [1, b]], so `grind i, x among numbered(xs)` works."""
+    target = args[0]
+    members = _members(target)
+    if members is None:
+        return None, RTError(node.pos_start, node.pos_end, "'numbered' needs a yap or pile", kind='type')
+    return List([List([Number(i), item.copy()]) for i, item in enumerate(members)]), None
+
+
+def bi_pair(args, node):
+    """Two piles into one pile of pairs, stopping at the shorter."""
+    for value in args[:2]:
+        error = _need(node, value, List, 'pile', 'pair')
+        if error:
+            return None, error
+    left, right = args[0].elements, args[1].elements
+    return List([List([a.copy(), b.copy()]) for a, b in zip(left, right)]), None
 
 
 def bi_labels(args, node):
@@ -2795,6 +2864,13 @@ BUILTINS = {
     'where': (['value', 'needle'], bi_where),
     'gotit': (['value', 'needle'], bi_gotit),
     'sortof': (['pile', '?by'], bi_sortof_by),
+    'swap': (['yap', 'find', 'replace'], bi_swap),
+    'starts': (['yap', 'prefix'], bi_starts),
+    'ends': (['yap', 'suffix'], bi_ends),
+    'code': (['letter'], bi_code),
+    'letter': (['code'], bi_letter),
+    'numbered': (['value'], bi_numbered),
+    'pair': (['left', 'right'], bi_pair),
     'eachof': (['pile', 'chore'], bi_eachof),
     'keepif': (['pile', 'chore'], bi_keepif),
     'smoosh': (['pile', 'chore', '?start'], bi_smoosh),

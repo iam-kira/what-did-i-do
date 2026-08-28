@@ -58,7 +58,8 @@ def test_every_doc_snippet_runs():
                        'stash path = "no-such-file.txt"',
                        'stash player = {"name": "ana", "score": 0}',
                        'stash score = 7', 'stash n = 3', 'stash count = 0',
-                       'stash scores = {"ana": 3}'):
+                       'stash scores = {"ana": 3}',
+                       'stash names = ["ana", "bo"]', 'stash points = [1, 2]'):
             aura.run('<setup>', helper, table)
 
         _, error = aura.run(f'{name}#{index}', block, table)

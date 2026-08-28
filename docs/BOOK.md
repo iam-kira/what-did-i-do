@@ -496,7 +496,8 @@ Any expression works — arithmetic, calls, lookups, even another yap:
 it reads the hole.
 
 Yaps interpolate as their text; everything else as it would print. `{{` and
-`}}` give literal braces. A hole holds exactly one expression — `{}` alone is
+`}}` give literal braces, and so does a backslash before one — which matters
+the moment you write a program that handles JSON, CSS or shell braces. A hole holds exactly one expression — `{}` alone is
 an error, and so is `{1; 2}`. Errors inside a hole point at the yap holding it.
 
 A yap with no holes is an ordinary string token, so nothing pays for the
@@ -605,7 +606,7 @@ a cycle is reported rather than followed forever.
 
 ## 11. The standard library
 
-42 builtins. They live in a scope every program inherits, so you can shadow one
+49 builtins. They live in a scope every program inherits, so you can shadow one
 if you insist.
 
 **Talking and reading**
@@ -660,9 +661,35 @@ if you insist.
 | `shred(yap, separator?)` | split into a pile |
 | `shout` `whisper` `trim` | upper, lower, strip |
 | `labels(bag)` `goods(bag)` | a bag's labels or values |
+| `swap(yap, find, replace)` | every occurrence replaced |
+| `starts(yap, prefix)` / `ends(yap, suffix)` | `1` or `0` |
+| `code(letter)` / `letter(code)` | a character to its number, and back |
+| `numbered(value)` | `[a, b]` becomes `[[0, a], [1, b]]` |
+| `pair(left, right)` | two piles zipped, stopping at the shorter |
 | `eachof(pile, chore)` | map |
 | `keepif(pile, chore)` | filter |
 | `smoosh(pile, chore, start?)` | fold |
+
+`where` and `gotit` search a yap by **substring**, and a pile or bag by
+element or label:
+
+```text
+cook(where("hello", "ll"))          # 2
+cook(gotit("hello world", "lo w"))  # 1
+cook(where([1, 2, 3], 2))           # 1
+```
+
+`numbered` and `pair` exist to feed two-name `grind`:
+
+```text
+grind i, word among numbered(["a", "b"]) ong
+    cook("{i}: {word}")
+bet
+
+grind name, point among pair(names, points) ong
+    cook("{name} -> {point}")
+bet
+```
 
 Nothing mutates in place. To change a pile or bag where it stands, assign into
 it: `xs[0] = 99`.
