@@ -35,6 +35,7 @@ no significant whitespace.
 | Number | `math` | `42`, `3.14` |
 | String | `yap` | `"hi"`, `"tab\there"` |
 | List | `pile` | `[1, "two", [3]]` |
+| Dict | `bag` | `{"a": 1, 2: "b"}` |
 | Function | `chore` | `chore f(a) ong ... bet` |
 
 `based`, `cringe` and `ghosted` are `1`, `0` and `0`. There is no separate
@@ -42,14 +43,38 @@ boolean type — anything non-zero, non-empty is truthy.
 
 String escapes: `\n` `\t` `\r` `\` `\"`.
 
-Lists may span lines and may carry a trailing comma:
+Piles and bags may span lines and carry a trailing comma:
 
 ```text
 stash xs = [
     1,
     2,
 ]
+
+stash config = {
+    "host": "localhost",
+    "port": 8080,
+}
 ```
+
+### Bags
+
+Labels may be maths or yaps — nothing else. Reading a label that is not there
+is an error, so check first with `gotit`.
+
+```text
+stash scores = {"ana": 3}
+scores["bo"] = 5          # add
+scores["ana"] += 1        # update
+yap(howmany(scores))      # 2
+yap(labels(scores))       # ["ana", "bo"]
+yap(goods(scores))        # [4, 5]
+yap(gotit(scores, "cy"))  # 0
+stash fewer = yoink(scores, "ana")
+```
+
+`+` merges two bags, right-hand side winning. `==` compares by value. An empty
+bag is falsy.
 
 ---
 
@@ -73,7 +98,7 @@ locally, so a parameter or local never clobbers an outer name.
 | Arithmetic | `+` `-` `*` `/` `%` `^` |
 | Comparison | `==` `!=` `<` `>` `<=` `>=` |
 | Logic | `also` `orelse` `nah` |
-| Index | `xs[0]`, `xs[-1]` |
+| Index | `xs[0]`, `xs[-1]`, `bag["label"]` |
 
 Precedence, loosest first: `orelse` → `also` → `nah` → comparison → `+ -` →
 `* / %` → unary `+ -` → `^` → call/index.
@@ -83,7 +108,19 @@ Precedence, loosest first: `orelse` → `also` → `nah` → comparison → `+ -
 
 Exact integer division stays an integer: `4 / 2` is `2`, but `5 / 2` is `2.5`.
 
-`+` joins two yaps or two piles. `*` repeats either by a whole math.
+`+` joins two yaps or two piles, and merges two bags. `*` repeats a yap or a
+pile by a whole math.
+
+Assignment targets may be indexes, and compound assignment works on them:
+
+```text
+xs[0] = 99
+xs[0] += 1
+grid[1][0] = 9
+scores["ana"] += 1
+```
+
+Yaps are immutable — `s[0] = "z"` is an error.
 
 ---
 
@@ -119,8 +156,9 @@ bet
 ```
 
 `grind ... til` ranges are **end-exclusive**. `by` defaults to `1` and may be
-negative; `by 0` is an error. `grind ... among` walks a pile, or a yap one
-character at a time. `bail` and `skip` work in both loop kinds.
+negative; `by 0` is an error. `grind ... among` walks a pile, a yap one
+character at a time, or a bag's labels. `bail` and `skip` work in both loop
+kinds.
 
 ---
 
@@ -163,19 +201,53 @@ A chore with no `yeet` evaluates to its last statement. Call depth is capped at
 
 ## Built-in chores
 
+**In and out**
+
 | Chore | Does |
 |---|---|
 | `yap(value)` | print a line, gives back `0` |
-| `beg(prompt)` | read a line as a yap |
-| `howmany(value)` | length of a yap or pile |
+| `beg(prompt?)` | read a line as a yap; the prompt is optional |
+| `summon(path)` | run another file here, so its chores and stashes land in this scope |
+
+**Everything**
+
+| Chore | Does |
+|---|---|
+| `howmany(value)` | length of a yap, pile or bag |
+| `whatis(value)` | type name as a yap: `"math"`, `"yap"`, `"pile"`, `"bag"`, `"chore"` |
 | `yapify(value)` | anything → yap |
 | `mathify(value)` | yap → math, or explode trying |
-| `stuff(pile, value)` | new pile with `value` on the end |
-| `yoink(pile, index)` | new pile with `index` removed |
 | `is_math` `is_yap` `is_pile` `is_chore` | type checks, `1` or `0` |
 
-`stuff` and `yoink` return new piles. To change one in place, assign into it:
-`xs[0] = 99`.
+**Maths**
+
+| Chore | Does |
+|---|---|
+| `smol(a, b, ...)` or `smol(pile)` | smallest |
+| `chonk(a, b, ...)` or `chonk(pile)` | biggest |
+| `total(a, b, ...)` or `total(pile)` | sum |
+| `absolutely(n)` | absolute value |
+| `roundish(n, places?)` | round |
+
+**Piles and yaps**
+
+| Chore | Does |
+|---|---|
+| `chunk(value, start?, stop?)` | slice; out-of-range bounds clamp |
+| `flip(value)` | reversed |
+| `where(value, needle)` | first index, or `-1` |
+| `gotit(value, needle)` | `1` or `0`; on a bag, checks labels |
+| `stuff(pile, value)` | new pile with `value` on the end |
+| `yoink(pile, index)` | new pile with `index` removed; on a bag, drops a label |
+| `sortof(pile)` | sorted; all maths or all yaps |
+| `glue(pile, separator?)` | join into a yap |
+| `shred(yap, separator?)` | split into a pile; no separator splits on whitespace |
+| `shout` `whisper` `trim` | upper, lower, strip |
+| `labels(bag)` `goods(bag)` | a bag's labels or its values, as a pile |
+
+Nothing mutates in place — `stuff`, `yoink`, `sortof`, `chunk` and `flip` all
+hand back something new. To change a pile or bag where it stands, assign into
+it: `xs[0] = 99`.
 
 Builtins live in a scope every program inherits, so you can shadow one:
 `stash howmany = 5` is legal, if unwise.
@@ -205,9 +277,28 @@ File prog.shit, line 2, col 16
 
 ---
 
+## Running things
+
+```bash
+python shit.py                 # REPL - it reads multi-line blocks
+python shit.py prog.shit       # run a file
+python shit.py --tokens f.shit # dump the token stream
+python shit.py --ast f.shit    # dump the parse tree
+python shit.py --help
+```
+
+In the REPL, an unfinished block keeps prompting with `...  >`. A blank line
+force-ends it, and ctrl-c throws the buffer away.
+
+File mode prints nothing on its own — use `yap`. The REPL echoes each
+statement's value.
+
+---
+
 ## Not a thing yet
 
-- No dictionaries
-- No modules or imports
-- No `xs[0]` on a yap as an assignment target — yaps are immutable
 - No user-defined types
+- No `xs[0]` on a yap as an assignment target — yaps are immutable
+- No multiple return values or destructuring
+- No `whatever` branch on a loop
+- Call depth caps at 200

@@ -60,14 +60,25 @@ shell :> stash xs = [1, 2, 3]
 shell :> xs[-1] * 10
 30
 
-shell :> nah cringe
-1
+shell :> {"a": 1, "b": 2}
+{"a": 1, "b": 2}
 
-shell :> chore sq(n) ong yeet n ^ 2 bet
+shell :> chore sq(n) ong
+   ...  >     yeet n ^ 2
+   ...  > bet
 <chore sq>
 
 shell :> sq(9)
 81
+```
+
+It reads multi-line blocks — an unfinished one keeps prompting with `...  >`.
+Other ways in:
+
+```bash
+python shit.py --tokens prog.shit   # token stream
+python shit.py --ast prog.shit      # parse tree
+python shit.py --help
 ```
 
 ---
@@ -85,18 +96,20 @@ shell :> sq(9)
 
 ## What it can do
 
-- **Types** — numbers (`math`), strings (`yap`), lists (`pile`), first-class functions (`chore`)
+- **Types** — numbers (`math`), strings (`yap`), lists (`pile`), dicts (`bag`), first-class functions (`chore`)
 - **Control flow** — `fr`/`orfr`/`whatever`, `keep`, `grind ... til`, `grind ... among`, `bail`, `skip`, `yeet`
 - **Scoping** — lexical, with working closures and outer-variable mutation
 - **Operators** — `+ - * / % ^`, comparisons, `also`/`orelse`/`nah`, indexing, compound assignment
+- **27 builtins** — printing, input, maths, slicing, sorting, splitting, joining, type checks
+- **Imports** — `summon("lib.shit")`, with cycle detection
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **131 tests** covering every stage
+- **189 tests** covering every stage
 
 ---
 
 ## Status
 
-Works. Not finished. Missing: dictionaries, modules, user-defined types.
+Works. Not finished. Missing: user-defined types, destructuring.
 Known rough edges are listed at the end of
 [docs/LANGUAGE.md](docs/LANGUAGE.md) and in [CONTRIBUTING.md](CONTRIBUTING.md).
 

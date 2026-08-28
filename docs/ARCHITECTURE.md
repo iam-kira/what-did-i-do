@@ -94,9 +94,13 @@ that legally end it, then checks for `bet` itself.
 what it supports and touches no interpreter code. Each subclass sets
 `TYPE_NAME`, which is what error messages print.
 
-`Number`, `String`, `List`, and `BaseFunction` (→ `Function`,
+`Number`, `String`, `List`, `Bag`, and `BaseFunction` (→ `Function`,
 `BuiltInFunction`) live here. Operations return `(value, error)`, same shape as
 everything else.
+
+`Bag` keys its Python dict on `('math', 3)` / `('yap', 'a')` tuples so maths and
+yaps can both be labels without colliding, and keeps the original key `Value`
+alongside each entry so `labels()` and `repr` can hand it back.
 
 Values are copied on read, so assigning a pile to a second name gives it its own
 copy. `IndexAssignNode` is the deliberate exception: it resolves the *live*
@@ -128,6 +132,16 @@ outside a chore real errors, and cap recursion at `MAX_CALL_DEPTH`.
 
 ---
 
+## Incomplete input
+
+`wants_more(filename, text)` lexes and parses without running, and reports
+whether the input failed only because it stopped early — that is what lets the
+REPL keep reading a half-typed block. Parse errors are judged by position (did
+it fail at the end?); lexer errors carry an explicit `incomplete` flag, because
+an unterminated yap reports at its opening quote, not at the end.
+
+---
+
 ## Adding a feature
 
 Most changes touch four places, in order:
@@ -141,6 +155,11 @@ A new *value type* is smaller: subclass `Value`, set `TYPE_NAME`, override the
 operations it supports. A new *builtin* is smaller still: write
 `bi_yourthing(args, node) -> (value, error)` and add one row to `BUILTINS`.
 
+Builtin arg names carry prefixes: `?name` is optional and arrives as `None`,
+`*name` soaks up any number more. A builtin that needs the interpreter itself
+(`summon` does, to run a file in the caller's scope) goes in
+`NEEDS_INTERPRETER` and receives it as a third argument.
+
 ---
 
 ## Layout
@@ -151,5 +170,5 @@ operations it supports. A new *builtin* is smaller still: write
 | | AST nodes, `ParseResult`, `Parser` |
 | | `RTResult`, `Value` and friends, builtins, `SymbolTable`, `Interpreter` |
 | | `run()`, `main()` |
-| `shell.py` | REPL loop |
+| `shell.py` | REPL loop, buffering until `wants_more` says the input is complete |
 | `tests/` | one file per concern |

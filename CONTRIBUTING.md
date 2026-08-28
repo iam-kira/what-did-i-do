@@ -53,19 +53,22 @@ supports. A new builtin is one function plus one row in `BUILTINS`.
 
 Roughly in order:
 
-- [ ] Dictionaries / maps (`{"a": 1}`), with `among` iteration over keys
-- [ ] A `summon("other.shit")` builtin so files can pull each other in
-- [ ] More builtins: `min`, `max`, `abs`, `slice`, `join`, `split`, `upper`, `lower`
-- [ ] `whatever` on a loop, or `do ... keep`
-- [ ] Multiple return values, or returning a pile and destructuring it
-- [ ] A `--tokens` / `--ast` CLI flag for debugging your own programs
+- [ ] Destructuring: `stash a, b = [1, 2]`, and multiple return values
+- [ ] `whatever` branch on a loop, or `do ... keep`
+- [ ] User-defined types, or at least a bag with named chores attached
+- [ ] Iterating a bag's label/value pairs, not just its labels
+- [ ] Yap interpolation, so `"hi {name}"` beats `"hi " + name`
+- [ ] A `--time` flag, or anything resembling a profiler
+- [ ] Speed: every value copies on read, which is simple and wasteful
 
-Known smaller bugs, good first issues:
+Known smaller things, good first issues:
 
-- [ ] `Token.__init__` leaves `pos_start` undefined when given no positions
-- [ ] `beg` requires a prompt argument; `beg()` should work
-- [ ] Yaps are immutable, so `s[0] = "z"` errors — decide whether that stays
-- [ ] Error messages mix dialect and English ("Division by zero" vs "not a chore")
+- [ ] `sortof` cannot take a custom comparison chore
+- [ ] No way to catch an error from inside shit - every RTError ends the program
+- [ ] `mathify` accepts `"  12  "` but not `"1e3"`
+- [ ] Error text mixes dialect and English on purpose: type names are dialect
+      (`math`, `yap`), the surrounding sentence is plain English so errors stay
+      readable. Keep that split if you add messages.
 
 ## Pull requests
 

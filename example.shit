@@ -65,3 +65,17 @@ keep based ong
 bet
 yap(evens)
 yap("2 ^ 16 = " + yapify(2 ^ 16))
+
+# bags
+stash tally = {}
+grind w among shred("the quick the lazy the end") ong
+    fr gotit(tally, w) ong
+        tally[w] += 1
+    whatever
+        tally[w] = 1
+    bet
+bet
+yap(tally)
+yap("distinct words: " + yapify(howmany(tally)))
+yap(sortof(labels(tally)))
+yap(glue(["shit", "still", "works"], " "))
