@@ -102,7 +102,7 @@ python shit.py --help
 - **Control flow** — `fr`/`orfr`/`whatever`, `keep`, `grind ... til`, `grind ... among`, `bail`, `skip`, `yeet`
 - **Scoping** — lexical, with working closures and outer-variable mutation
 - **Operators** — `+ - * / % ^`, comparisons, `also`/`orelse`/`nah`, indexing, compound assignment
-- **31 builtins** — printing, input, maths, slicing, sorting, splitting, joining, type checks
+- **33 builtins** — printing, input, maths, slicing, sorting, splitting, joining, type checks
 - **Higher-order chores** — `eachof`, `keepif`, `smoosh`, and `sortof` with a key chore
 - **Imports** — `summon("lib.shit")`, with cycle detection
 - **Error handling** — `risky` / `whoops` / `oops`, catching anything the runtime throws
