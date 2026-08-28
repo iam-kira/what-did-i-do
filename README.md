@@ -89,6 +89,7 @@ python shit.py --help
 
 | | |
 |---|---|
+| [docs/BOOK.md](docs/BOOK.md) | **The book** — the whole language and the whole interpreter, in the order you would learn them |
 | [docs/LANGUAGE.md](docs/LANGUAGE.md) | The language — vocabulary, values, operators, control flow, closures, builtins, errors |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the interpreter works, and where to add things |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, workflow, and what needs doing |

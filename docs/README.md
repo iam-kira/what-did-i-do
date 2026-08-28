@@ -1,5 +1,8 @@
 # shit docs
 
+- **[BOOK.md](BOOK.md)** — the whole thing: language then interpreter, with a
+  grammar, a builtin index and an appendix for people coming from Python. Start
+  here to *learn* shit.
 - **[LANGUAGE.md](LANGUAGE.md)** — the language: vocabulary, values, operators,
   control flow, chores, builtins, errors. Start here to *write* shit.
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** — how the interpreter is built and why

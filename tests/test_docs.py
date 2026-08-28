@@ -1,6 +1,9 @@
 """Every shit snippet in the docs has to actually run.
 
 Docs drift silently; this makes them fail loudly instead.
+
+The convention: a ```text fence holds runnable shit, so it gets executed here.
+Notation - grammars, pipeline diagrams, word listings - uses a bare fence.
 """
 
 import io
@@ -10,8 +13,12 @@ import re
 import shit
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DOCS = ['README.md', 'CONTRIBUTING.md', os.path.join('docs', 'LANGUAGE.md'),
-        os.path.join('docs', 'ARCHITECTURE.md'), os.path.join('docs', 'README.md')]
+# every markdown file in the repo root and docs/, so a new one is covered by default
+DOCS = ['README.md', 'CONTRIBUTING.md'] + sorted(
+    os.path.join('docs', name)
+    for name in os.listdir(os.path.join(REPO, 'docs'))
+    if name.endswith('.md')
+)
 
 FENCE = re.compile(r'```text\n(.*?)```', re.DOTALL)
 
@@ -48,10 +55,15 @@ def test_every_doc_snippet_runs():
                        'chore bounds() ong yeet [1, 9] bet',
                        'stash grid = [[1, 2], [3, 4]]', 'stash i = 0',
                        'stash b = {"x": 1}',
-                       'stash path = "no-such-file.txt"'):
+                       'stash path = "no-such-file.txt"',
+                       'stash player = {"name": "ana", "score": 0}',
+                       'stash score = 7', 'stash n = 3', 'stash count = 0',
+                       'stash scores = {"ana": 3}'):
             shit.run('<setup>', helper, table)
 
         _, error = shit.run(f'{name}#{index}', block, table)
+        if isinstance(error, shit.BounceError):
+            continue  # a snippet showing bounce() is behaving correctly
         if error:
             failures.append(f'{name} snippet {index}: {error.details}\n{block.strip()[:200]}')
 
