@@ -124,8 +124,27 @@ end
 print(fib(20))
 ```
 
-Arguments are bound in a fresh child scope, so recursion works and locals do not
-leak. A function without `return` evaluates to its last statement.
+Scoping is lexical: a function sees the scope it was *written* in, not the one
+it was called from. Assignment walks outward to where the name was declared, so
+functions can mutate outer state — and nested functions are real closures:
+
+```text
+fun counter() then
+    var n = 0
+    fun tick() then
+        n = n + 1
+        return n
+    end
+    return tick
+end
+
+var c = counter()
+print(c())   # 1
+print(c())   # 2
+```
+
+`var` always declares in the current scope, so parameters and locals never clobber
+an outer name. A function without `return` evaluates to its last statement.
 
 ### Builtins
 
@@ -241,8 +260,6 @@ python -m pytest -q
 - No compound assignment (`x += 1`) and no index assignment (`xs[0] = 1`)
 - No dictionaries or `for x in xs` iteration
 - No modules or imports
-- Assignment inside a function always writes to the local scope, so a function
-  shadows an outer name rather than mutating it
 - Call depth is capped at 200
 
 ---

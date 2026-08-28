@@ -56,9 +56,6 @@ Roughly in order:
 Known smaller bugs, good first issues:
 
 - [ ] `Token.__init__` leaves `pos_start` undefined when given no positions
-- [ ] Assignment inside a function always writes to the local scope, so a function
-      shadows an outer name instead of mutating it (see the `ponytail:` note in
-      `Function.execute`)
 
 ## Pull requests
 

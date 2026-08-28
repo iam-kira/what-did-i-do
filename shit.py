@@ -1453,12 +1453,17 @@ class BaseFunction(Value):
 
 
 class Function(BaseFunction):
-    def __init__(self, name, arg_names, body_node):
+    def __init__(self, name, arg_names, body_node, defining_scope=None):
         super().__init__(name, arg_names)
         self.body_node = body_node
+        # the scope the function was written in - calls parent off this, not off
+        # whoever happens to be calling, so scoping is lexical
+        self.defining_scope = defining_scope
 
     def copy(self):
-        return Function(self.name, self.arg_names, self.body_node).set_pos(self.pos_start, self.pos_end)
+        return Function(self.name, self.arg_names, self.body_node, self.defining_scope).set_pos(
+            self.pos_start, self.pos_end
+        )
 
     def execute(self, args, interpreter, node):
         res = RTResult()
@@ -1472,10 +1477,8 @@ class Function(BaseFunction):
                 )
             )
 
-        # ponytail: assignment inside a call writes to the local scope, so a
-        # function shadows outer names instead of mutating them. Add explicit
-        # scope resolution in SymbolTable.set if that ever bites.
-        call_table = SymbolTable(parent=interpreter.symbol_table)
+        parent_scope = self.defining_scope if self.defining_scope is not None else interpreter.symbol_table
+        call_table = SymbolTable(parent=parent_scope)
         for name, value in zip(self.arg_names, args):
             call_table.set(name, value.copy())
 
@@ -1643,7 +1646,18 @@ class SymbolTable:
         return self.parent.get(name) if self.parent else None
 
     def set(self, name, value):
+        """Declare or overwrite in THIS scope."""
         self.symbols[name] = value
+
+    def set_existing(self, name, value):
+        """Assign where the name was declared, walking outwards. False if unbound."""
+        scope = self
+        while scope is not None:
+            if name in scope.symbols:
+                scope.symbols[name] = value
+                return True
+            scope = scope.parent
+        return False
 
     def exists(self, name):
         if name in self.symbols:
@@ -1719,12 +1733,14 @@ class Interpreter:
         if res.error:
             return res
 
-        if not node.is_declaration and not self.symbol_table.exists(var_name):
+        if node.is_declaration:
+            self.symbol_table.set(var_name, value.copy())
+            return res.success(value)
+
+        if not self.symbol_table.set_existing(var_name, value.copy()):
             return res.failure(
                 RTError(node.pos_start, node.pos_end, f"Cannot assign to undefined variable '{var_name}'")
             )
-
-        self.symbol_table.set(var_name, value.copy())
         return res.success(value)
 
     def visit_UnaryOpNode(self, node):
@@ -1925,7 +1941,9 @@ class Interpreter:
         res = RTResult()
         func_name = node.var_name_tok.value
         arg_names = [tok.value for tok in node.arg_name_toks]
-        func = Function(func_name, arg_names, node.body_node).set_pos(node.pos_start, node.pos_end)
+        func = Function(func_name, arg_names, node.body_node, self.symbol_table).set_pos(
+            node.pos_start, node.pos_end
+        )
 
         self.symbol_table.set(func_name, func)
         return res.success(func)
