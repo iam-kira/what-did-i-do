@@ -7,7 +7,8 @@ Everything the language currently does. For how the interpreter is built, see
 
 ## Vocabulary
 
-aura does not speak Python. Same ideas, worse names.
+aura does not speak Python. Same ideas, worse names — the name itself being
+the one straight face in the room.
 
 | aura | means | aura | means |
 |---|---|---|---|

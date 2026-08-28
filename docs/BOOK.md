@@ -102,8 +102,13 @@ echoes; files do not.
 
 ## 2. The vocabulary
 
-aura does not use a single normal keyword. This is the whole trick, and the
-whole joke. The semantics underneath are ordinary; only the words changed.
+aura does not use a single normal keyword. This is the whole trick. The
+semantics underneath are ordinary; only the words changed.
+
+The name is the exception, and deliberately so. `aura` is the straight man —
+it reads like any other small language, which is what lets the contents be the
+punchline. A name that announced the joke would compete with it. It also means
+the language still reads fine once the slang it borrows from has moved on.
 
 | aura | usual name | aura | usual name |
 |---|---|---|---|
@@ -132,6 +137,11 @@ The types are renamed too, and the names show up in error messages:
 | list | `pile` | things heaped up |
 | dict | `bag` | things with labels |
 | function | `chore` | work you would rather not do twice |
+
+Two words earn their keep beyond the joke. `cook` prints — "let him cook",
+produce something — and it exists because `yap` used to mean both the string
+type *and* printing, the only word in the language doing two jobs. And `sus`
+opens a `sus`/`whoops` block: suspicious code, then the whoops.
 
 ---
 
