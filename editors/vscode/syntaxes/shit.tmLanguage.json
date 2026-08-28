@@ -1,0 +1,83 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "shit",
+  "scopeName": "source.shit",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#yap" },
+    { "include": "#math" },
+    { "include": "#keyword" },
+    { "include": "#builtin" },
+    { "include": "#chore-name" },
+    { "include": "#operator" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.line.number-sign.shit",
+      "match": "#.*$"
+    },
+    "yap": {
+      "name": "string.quoted.double.shit",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.shit",
+          "match": "\\\\."
+        },
+        {
+          "name": "meta.embedded.line.shit",
+          "begin": "(?<!\\{)\\{(?!\\{)",
+          "end": "\\}",
+          "beginCaptures": { "0": { "name": "punctuation.section.embedded.begin.shit" } },
+          "endCaptures": { "0": { "name": "punctuation.section.embedded.end.shit" } },
+          "patterns": [
+            { "include": "#yap" },
+            { "include": "#math" },
+            { "include": "#builtin" },
+            { "include": "#operator" }
+          ]
+        }
+      ]
+    },
+    "math": {
+      "name": "constant.numeric.shit",
+      "match": "\\b\\d+(\\.\\d+)?\\b"
+    },
+    "keyword": {
+      "patterns": [
+        {
+          "name": "keyword.control.shit",
+          "match": "\\b(fr|orfr|whatever|keep|grind|til|by|among|bail|skip|yeet|risky|whoops|oops|ong|bet)\\b"
+        },
+        {
+          "name": "keyword.declaration.shit",
+          "match": "\\b(stash|chore)\\b"
+        },
+        {
+          "name": "keyword.operator.logical.shit",
+          "match": "\\b(also|orelse|nah)\\b"
+        },
+        {
+          "name": "constant.language.shit",
+          "match": "\\b(based|cringe|ghosted)\\b"
+        }
+      ]
+    },
+    "builtin": {
+      "name": "support.function.builtin.shit",
+      "match": "\\b(yap|beg|summon|slurp|spill|dribble|isthere|handed|bounce|howmany|whatis|yapify|mathify|is_math|is_yap|is_pile|is_chore|smol|chonk|total|absolutely|roundish|chunk|flip|where|gotit|stuff|yoink|sortof|glue|shred|shout|whisper|trim|labels|goods|eachof|keepif|smoosh)\\b(?=\\s*\\()"
+    },
+    "chore-name": {
+      "match": "\\b(chore)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.declaration.shit" },
+        "2": { "name": "entity.name.function.shit" }
+      }
+    },
+    "operator": {
+      "name": "keyword.operator.shit",
+      "match": "(\\+=|-=|\\*=|/=|==|!=|<=|>=|[-+*/%^<>=])"
+    }
+  }
+}

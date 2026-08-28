@@ -27,8 +27,14 @@ python -m pytest -q         # tests
 shit.py    # everything: Lexer -> Parser -> Interpreter -> run()
 shell.py   # REPL loop
 docs/      # language reference and architecture notes
+examples/  # programs written in shit
+editors/   # VS Code syntax highlighting
 tests/     # one file per concern
 ```
+
+If you add a keyword or a builtin, add it to
+`editors/vscode/syntaxes/shit.tmLanguage.json` too - a test compares the
+grammar against the real lists and will fail if you forget.
 
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains the pipeline, the
 returned-error convention, how scopes and control-flow signals work, and where
