@@ -10,6 +10,46 @@ PROMPT = 'shell :> '
 CONTINUED = '   ...  > '
 QUIT_WORDS = ('quit', 'exit', ':q')
 
+HELP = """aura - a language with regrettable keywords
+
+  stash x = 1        declare            chore f(a) ong ... bet     define
+  x = 2              assign             yeet v                     return
+  fr c ong           if                 cook(v)                    print
+  orfr c ong         else if            grind i = 0 til 3 ong      count
+  whatever           else               grind x among xs ong       walk
+  keep c ong         while              sus ong ... whoops e ong   try / catch
+  bet                closes any block   bail / skip                break / continue
+
+  types    math   yap   pile   bag   chore   ghosted
+  values   based  cringe  ghosted        ("{x}" interpolates)
+
+at this prompt:
+  help       this            builtins   list every built-in chore
+  clear      clear screen    exit       leave (or ctrl-d)
+
+a block keeps prompting with '...  >' until it closes; a blank line ends it,
+and ctrl-c throws away what you were typing.
+
+full reference: docs/BOOK.md
+"""
+
+
+def show_builtins():
+    """The built-in chores, in columns, because there are a lot of them."""
+    names = sorted(aura.BUILTINS)
+    width = max(len(n) for n in names) + 2
+    per_row = max(1, 76 // width)
+
+    print('%d built-in chores:' % len(names))
+    for i in range(0, len(names), per_row):
+        print('  ' + ''.join(n.ljust(width) for n in names[i:i + per_row]).rstrip())
+    print("\ncall one with brackets, e.g. cook(\"hi\") or howmany([1, 2])")
+
+
+def clear_screen():
+    import os
+    os.system('cls' if os.name == 'nt' else 'clear')
+
 
 def show(result):
     """Echo a statement's value the way the REPL does: repr, so "1" and 1 differ."""
@@ -41,6 +81,21 @@ def main(symbol_table=None):
             clean = line.strip()
             if not clean:
                 continue
+            # a name you defined always wins over a shell convenience
+            shadowed = aura.global_symbol_table.exists(clean)
+
+            if clean.lower() == 'help' and not shadowed:
+                print(HELP, end='')
+                continue
+
+            if clean.lower() == 'builtins' and not shadowed:
+                show_builtins()
+                continue
+
+            if clean.lower() == 'clear' and not shadowed:
+                clear_screen()
+                continue
+
             if clean.lower() in QUIT_WORDS:
                 print('bye!')
                 return 0

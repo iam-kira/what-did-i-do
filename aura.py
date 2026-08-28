@@ -850,9 +850,26 @@ class Parser:
         res = self.statements()
         if not res.error and self.current_tok.type != TT_EOF:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected end of input')
+                InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end, self.leftover_hint()
+                )
             )
         return res
+
+    def leftover_hint(self):
+        """Two things in a row where one was expected.
+
+        `cook "hi"` is the classic - natural coming from a shell or Ruby, and
+        'Expected end of input' says nothing about the missing brackets.
+        """
+        previous = self.peek(-1)
+        if previous is not None and previous.type == TT_IDENTIFIER:
+            if self.current_tok.type in (TT_STRING, TT_FSTRING, TT_INT, TT_FLOAT, TT_IDENTIFIER):
+                return (
+                    'Expected end of input - to call a chore, put the arguments '
+                    'in brackets: %s(...)' % previous.value
+                )
+        return 'Expected end of input'
 
     def statements(self, stop_keywords=()):
         res = ParseResult()

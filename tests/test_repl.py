@@ -1,117 +1,134 @@
-"""The REPL is what most people meet first, so it gets tested like everything else."""
+"""The REPL as a person actually meets it."""
 
-import pytest
 
-import shell
 import aura
+import shell
 
 
-@pytest.fixture
-def repl(monkeypatch, capsys):
-    """Feed the REPL a script of lines; return (exit code, printed lines)."""
+def drive(typed, monkeypatch, capsys):
+    """Feed lines to the REPL and return everything it printed."""
+    lines = iter(typed)
 
-    def run(*lines, interrupt_at=None):
-        script = iter(lines)
-        seen = {'count': 0}
+    def fake_input(prompt=''):
+        try:
+            return next(lines)
+        except StopIteration:
+            raise EOFError
 
-        def fake_input(prompt=''):
-            seen['count'] += 1
-            if interrupt_at is not None and seen['count'] == interrupt_at:
-                raise KeyboardInterrupt
-            try:
-                return next(script)
-            except StopIteration:
-                raise EOFError
-
-        monkeypatch.setattr('builtins.input', fake_input)
-        code = shell.main(aura.new_symbol_table())
-        return code, capsys.readouterr().out.splitlines()
-
-    return run
+    monkeypatch.setattr('builtins.input', fake_input)
+    aura.global_symbol_table.symbols.clear()
+    shell.main()
+    return capsys.readouterr().out
 
 
-def test_a_value_is_echoed(repl):
-    code, out = repl('1 + 2')
-    assert code == 0
-    assert '3' in out
+# --- the commands a newcomer reaches for ---
+
+def test_help_lists_the_vocabulary(monkeypatch, capsys):
+    out = drive(['help'], monkeypatch, capsys)
+    for expected in ('stash', 'chore', 'cook(v)', 'sus ong', 'bet', 'docs/BOOK.md'):
+        assert expected in out, expected
 
 
-def test_yaps_echo_with_their_quotes(repl):
-    _, out = repl('"hi"')
-    assert '"hi"' in out
+def test_help_explains_the_prompt_itself(monkeypatch, capsys):
+    out = drive(['help'], monkeypatch, capsys)
+    assert '...  >' in out
+    assert 'ctrl-c' in out
 
 
-def test_state_persists_between_lines(repl):
-    _, out = repl('stash x = 2', 'x * 21')
-    assert '42' in out
+def test_builtins_lists_every_builtin(monkeypatch, capsys):
+    out = drive(['builtins'], monkeypatch, capsys)
+    assert '%d built-in chores' % len(aura.BUILTINS) in out
+    for name in ('cook', 'howmany', 'is_ghosted', 'swap', 'pair'):
+        assert name in out, name
 
 
-def test_a_multi_line_block_is_buffered_until_complete(repl):
-    _, out = repl('chore f(n) ong', 'yeet n + 1', 'bet', 'f(41)')
-    assert '42' in out
+def test_a_defined_name_beats_the_shell_command(monkeypatch, capsys):
+    out = drive(['stash help = 5', 'help'], monkeypatch, capsys)
+    assert out.count('5') == 2
+    assert 'regrettable keywords' not in out
 
 
-def test_a_blank_line_force_ends_an_unfinished_block(repl):
-    _, out = repl('fr 1 ong', '', '2')
-    assert any("Expected 'bet'" in line for line in out)
+def test_quit_words_all_leave(monkeypatch, capsys):
+    for word in ('exit', 'quit', ':q'):
+        out = drive([word, 'cook("never")'], monkeypatch, capsys)
+        assert 'bye!' in out
+        assert 'never' not in out
+
+
+# --- editing behaviour ---
+
+def test_a_block_keeps_prompting_until_it_closes(monkeypatch, capsys):
+    out = drive(['chore sq(n) ong', 'yeet n * n', 'bet', 'sq(9)'], monkeypatch, capsys)
+    assert '<chore sq>' in out
+    assert '81' in out
+
+
+def test_a_blank_line_ends_a_stuck_block(monkeypatch, capsys):
+    out = drive(['fr 1 ong', '', '2'], monkeypatch, capsys)
+    assert "Expected 'bet'" in out
     assert '2' in out
 
 
-def test_errors_print_and_the_session_continues(repl):
-    _, out = repl('1 / 0', '7')
-    assert any('Division by zero' in line for line in out)
+def test_values_echo_with_repr_so_types_are_visible(monkeypatch, capsys):
+    out = drive(['1', '"1"', 'ghosted', '[1]'], monkeypatch, capsys)
+    assert '1\n' in out
+    assert '"1"' in out
+    assert 'ghosted' in out
+    assert '[1]' in out
+
+
+def test_state_persists_between_lines(monkeypatch, capsys):
+    out = drive(['stash n = 1', 'n += 1', 'n'], monkeypatch, capsys)
+    printed = [line for line in out.splitlines() if line and line != 'bye!']
+    assert printed == ['1', '2', '2']
+
+
+def test_an_error_does_not_end_the_session(monkeypatch, capsys):
+    out = drive(['1 / 0', 'cook("still here")'], monkeypatch, capsys)
+    assert 'Division by zero' in out
+    assert 'still here' in out
+
+
+def test_errors_show_the_offending_line(monkeypatch, capsys):
+    out = drive(['stash x = 1 + $'], monkeypatch, capsys)
+    assert 'Illegal Character' in out
+    assert 'stash x = 1 + $' in out
+    assert '^' in out
+
+
+def test_a_missing_bracket_call_is_explained(monkeypatch, capsys):
+    out = drive(['cook "hi"'], monkeypatch, capsys)
+    assert 'put the arguments in brackets' in out
+
+
+def test_blank_lines_are_ignored(monkeypatch, capsys):
+    out = drive(['', '   ', '7'], monkeypatch, capsys)
     assert '7' in out
 
 
-def test_blank_lines_are_ignored(repl):
-    _, out = repl('', '   ', '5')
-    assert out.count('5') == 1
+def test_ctrl_c_drops_the_buffer_without_quitting(monkeypatch, capsys):
+    """KeyboardInterrupt mid-block throws the block away, not the session."""
+    lines = iter(['chore f() ong', KeyboardInterrupt, '42'])
 
+    def fake_input(prompt=''):
+        try:
+            item = next(lines)
+        except StopIteration:
+            raise EOFError
+        if item is KeyboardInterrupt:
+            raise KeyboardInterrupt
+        return item
 
-@pytest.mark.parametrize('word', ['exit', 'quit', ':q', 'EXIT'])
-def test_quit_words_leave(repl, word):
-    code, out = repl(word, '999')
-    assert code == 0
+    monkeypatch.setattr('builtins.input', fake_input)
+    aura.global_symbol_table.symbols.clear()
+    shell.main()
+    out = capsys.readouterr().out
+
+    assert 'Dropped that' in out
+    assert '42' in out
     assert 'bye!' in out
-    assert '999' not in out
 
 
-def test_end_of_input_leaves(repl):
-    code, out = repl()
-    assert code == 0
-    assert any('bye!' in line for line in out)
-
-
-def test_ctrl_c_does_not_quit(repl):
-    code, out = repl('5', interrupt_at=1)
-    assert code == 0
-    assert any('Type' in line for line in out)
-
-
-def test_ctrl_c_drops_a_half_typed_block(repl):
-    code, out = repl('chore f() ong', '5', interrupt_at=2)
-    assert code == 0
-    assert any('Dropped that' in line for line in out)
-    # the buffer is gone, so the next line is read fresh rather than continuing
-    assert '5' in out
-
-
-def test_bounce_sets_the_exit_code(repl):
-    code, _ = repl('bounce(3)')
-    assert code == 3
-
-
-def test_several_statements_on_one_line_each_echo(repl):
-    _, out = repl('1; 2')
-    assert '1' in out and '2' in out
-
-
-def test_builtins_are_available(repl):
-    _, out = repl('howmany([1, 2])')
-    assert '2' in out
-
-
-def test_yap_prints_raw_while_the_echo_is_repr(repl):
-    _, out = repl('cook("hi")')
-    assert 'hi' in out
-    assert '0' in out
+def test_eof_says_goodbye(monkeypatch, capsys):
+    out = drive([], monkeypatch, capsys)
+    assert 'bye!' in out
