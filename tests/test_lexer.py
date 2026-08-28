@@ -14,7 +14,7 @@ def test_lexer_basic_tokens_and_eof():
 
 
 def test_lexer_identifiers_keywords_and_ops():
-    lexer = shit.Lexer('<stdin>', 'var x = 10 >= 2')
+    lexer = shit.Lexer('<stdin>', 'stash x = 10 >= 2')
     tokens, error = lexer.make_tokens()
 
     assert error is None

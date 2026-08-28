@@ -33,7 +33,7 @@ def test_string_comparison_and_truthiness():
     assert error is None
     assert repr(result) == '1'
 
-    result, error = ev('not ' + Q + Q)
+    result, error = ev('nah ' + Q + Q)
     assert error is None
     assert repr(result) == '1'
 
@@ -65,7 +65,7 @@ def test_list_equality_is_by_value():
 
 
 def test_empty_list_is_falsy():
-    result, error = ev('not []')
+    result, error = ev('nah []')
     assert error is None
     assert repr(result) == '1'
 
@@ -109,11 +109,11 @@ def test_index_out_of_range():
 def test_non_integer_index():
     result, error = ev('[1, 2][1.5]')
     assert result is None
-    assert 'must be an integer' in error.details
+    assert 'must be a whole math' in error.details
 
 
 def test_indexing_a_number_is_rejected():
-    result, error = ev('var n = 5\nn[0]')
+    result, error = ev('stash n = 5\nn[0]')
     assert result is None
     assert 'not indexable' in error.details
 
@@ -148,54 +148,54 @@ def test_power_binds_tighter_than_unary_minus():
 # --- builtins ---
 
 def test_len_of_string_and_list():
-    result, error = ev('len(' + Q + 'abc' + Q + ')')
+    result, error = ev('howmany(' + Q + 'abc' + Q + ')')
     assert error is None
     assert repr(result) == '3'
 
-    result, error = ev('len([1, 2])')
+    result, error = ev('howmany([1, 2])')
     assert error is None
     assert repr(result) == '2'
 
 
 def test_len_of_number_is_an_error():
-    result, error = ev('len(5)')
+    result, error = ev('howmany(5)')
     assert result is None
-    assert 'needs a string or list' in error.details
+    assert 'needs a yap or pile' in error.details
 
 
 def test_str_and_num_round_trip():
-    result, error = ev('num(str(42)) == 42')
+    result, error = ev('mathify(yapify(42)) == 42')
     assert error is None
     assert repr(result) == '1'
 
 
 def test_num_rejects_nonsense():
-    result, error = ev('num(' + Q + 'nope' + Q + ')')
+    result, error = ev('mathify(' + Q + 'nope' + Q + ')')
     assert result is None
     assert 'Cannot convert' in error.details
 
 
 def test_append_and_pop_do_not_mutate_the_original():
-    result, error = ev('var a = [1, 2]\nvar b = append(a, 3)\na')
+    result, error = ev('stash a = [1, 2]\nstash b = stuff(a, 3)\na')
     assert error is None
     assert repr(result) == '[1, 2]'
 
-    result, error = ev('pop([1, 2, 3], 0)')
+    result, error = ev('yoink([1, 2, 3], 0)')
     assert error is None
     assert repr(result) == '[2, 3]'
 
 
 def test_pop_index_is_bounds_checked():
-    result, error = ev('pop([1], 5)')
+    result, error = ev('yoink([1], 5)')
     assert result is None
     assert 'out of range' in error.details
 
 
 def test_type_predicates():
     cases = {
-        'is_num(1)': '1', 'is_num(' + Q + 'a' + Q + ')': '0',
-        'is_str(' + Q + 'a' + Q + ')': '1', 'is_list([])': '1',
-        'is_fun(print)': '1', 'is_fun(1)': '0',
+        'is_math(1)': '1', 'is_math(' + Q + 'a' + Q + ')': '0',
+        'is_yap(' + Q + 'a' + Q + ')': '1', 'is_pile([])': '1',
+        'is_chore(yap)': '1', 'is_chore(1)': '0',
     }
     for source, expected in cases.items():
         result, error = ev(source)
@@ -204,19 +204,19 @@ def test_type_predicates():
 
 
 def test_builtin_arity_is_checked():
-    result, error = ev('print(1, 2)')
+    result, error = ev('yap(1, 2)')
     assert result is None
     assert 'takes 1 argument(s), got 2' in error.details
 
 
 def test_print_returns_zero(capsys):
-    result, error = ev('print(' + Q + 'hi' + Q + ')')
+    result, error = ev('yap(' + Q + 'hi' + Q + ')')
     assert error is None
     assert repr(result) == '0'
     assert capsys.readouterr().out == 'hi\n'
 
 
 def test_builtins_are_available_but_shadowable():
-    result, error = ev('var len = 5\nlen')
+    result, error = ev('stash howmany = 5\nhowmany')
     assert error is None
     assert repr(result) == '5'

@@ -13,7 +13,9 @@ def test_example_program_runs_end_to_end(capsys):
     assert out[:6] == ['1', '2', 'fizz', '4', 'buzz', 'fizz']
     assert 'fizzbuzz' in out
     assert '10! = 3628800' in out
-    assert 'shit is a language' in out
+    assert 'counted til 3' in out
+    assert '["this", "is", "a", "language"]' in out
+    assert 'shit is a language ' in out
     assert '[2, 4, 6, 8, 10]' in out
     assert '2 ^ 16 = 65536' in out
 
@@ -26,7 +28,7 @@ def test_missing_file_is_reported(capsys):
 
 def test_program_error_exits_nonzero(tmp_path, capsys):
     program = tmp_path / 'bad.shit'
-    program.write_text('var x = 1 / 0\n', encoding='utf-8')
+    program.write_text('stash x = 1 / 0\n', encoding='utf-8')
 
     exit_code = shit.main([str(program)])
     assert exit_code == 1
@@ -36,7 +38,7 @@ def test_program_error_exits_nonzero(tmp_path, capsys):
 def test_file_mode_does_not_echo_statement_values(capsys):
     program = os.path.join(REPO, 'tests', '_echo_check.shit')
     with open(program, 'w', encoding='utf-8') as handle:
-        handle.write('var x = 99\nx\nprint("only this")\n')
+        handle.write('stash x = 99\nx\nyap("only this")\n')
     try:
         exit_code = shit.main([program])
     finally:

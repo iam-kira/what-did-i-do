@@ -11,8 +11,8 @@ def ev(source):
 def test_scoping_is_lexical_not_dynamic():
     """A function must not see its caller's locals."""
     source = (
-        'fun show() then\nreturn secret\nend\n'
-        'fun caller() then\nvar secret = 1\nreturn show()\nend\n'
+        'chore show() ong\nyeet secret\nbet\n'
+        'chore caller() ong\nstash secret = 1\nyeet show()\nbet\n'
         'caller()'
     )
     result, error = ev(source)
@@ -21,21 +21,21 @@ def test_scoping_is_lexical_not_dynamic():
 
 
 def test_assignment_mutates_the_outer_variable():
-    source = 'var count = 0\nfun bump() then\ncount = count + 1\nend\nbump()\nbump()\ncount'
+    source = 'stash count = 0\nchore bump() ong\ncount = count + 1\nbet\nbump()\nbump()\ncount'
     result, error = ev(source)
     assert error is None
     assert repr(result) == '2'
 
 
 def test_var_inside_a_function_stays_local():
-    source = 'var x = 1\nfun f() then\nvar x = 99\nend\nf()\nx'
+    source = 'stash x = 1\nchore f() ong\nstash x = 99\nbet\nf()\nx'
     result, error = ev(source)
     assert error is None
     assert repr(result) == '1'
 
 
 def test_parameters_shadow_outer_names_without_clobbering_them():
-    source = 'var x = 1\nfun f(x) then\nx = 50\nreturn x\nend\nf(9)\nx'
+    source = 'stash x = 1\nchore f(x) ong\nx = 50\nyeet x\nbet\nf(9)\nx'
     result, error = ev(source)
     assert error is None
     assert repr(result) == '1'
@@ -43,8 +43,8 @@ def test_parameters_shadow_outer_names_without_clobbering_them():
 
 def test_closure_captures_its_defining_scope():
     source = (
-        'fun adder(k) then\nfun add(x) then\nreturn x + k\nend\nreturn add\nend\n'
-        'var add5 = adder(5)\nadd5(3)'
+        'chore adder(k) ong\nchore add(x) ong\nyeet x + k\nbet\nyeet add\nbet\n'
+        'stash add5 = adder(5)\nadd5(3)'
     )
     result, error = ev(source)
     assert error is None
@@ -53,8 +53,8 @@ def test_closure_captures_its_defining_scope():
 
 def test_closures_have_independent_state():
     source = (
-        'fun counter() then\nvar n = 0\nfun tick() then\nn = n + 1\nreturn n\nend\nreturn tick\nend\n'
-        'var a = counter()\nvar b = counter()\na()\na()\nb()'
+        'chore counter() ong\nstash n = 0\nchore tick() ong\nn = n + 1\nyeet n\nbet\nyeet tick\nbet\n'
+        'stash a = counter()\nstash b = counter()\na()\na()\nb()'
     )
     result, error = ev(source)
     assert error is None
@@ -63,8 +63,8 @@ def test_closures_have_independent_state():
 
 def test_closure_keeps_counting_across_calls():
     source = (
-        'fun counter() then\nvar n = 0\nfun tick() then\nn = n + 1\nreturn n\nend\nreturn tick\nend\n'
-        'var a = counter()\na()\na()\na()'
+        'chore counter() ong\nstash n = 0\nchore tick() ong\nn = n + 1\nyeet n\nbet\nyeet tick\nbet\n'
+        'stash a = counter()\na()\na()\na()'
     )
     result, error = ev(source)
     assert error is None
@@ -72,13 +72,13 @@ def test_closure_keeps_counting_across_calls():
 
 
 def test_assigning_an_undeclared_name_is_still_an_error():
-    result, error = ev('fun f() then\nnope = 1\nend\nf()')
+    result, error = ev('chore f() ong\nnope = 1\nbet\nf()')
     assert result is None
     assert 'Cannot assign to undefined variable' in error.details
 
 
 def test_recursion_still_resolves_the_functions_own_name():
-    source = 'fun fact(n) then\nif n <= 1 then\nreturn 1\nend\nreturn n * fact(n - 1)\nend\nfact(6)'
+    source = 'chore fact(n) ong\nfr n <= 1 ong\nyeet 1\nbet\nyeet n * fact(n - 1)\nbet\nfact(6)'
     result, error = ev(source)
     assert error is None
     assert repr(result) == '720'

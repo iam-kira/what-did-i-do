@@ -15,7 +15,7 @@ def test_interpreter_arithmetic_evaluation():
 
 def test_interpreter_var_declare_assign_and_access():
     reset_symbols()
-    result, error = shit.run('<stdin>', 'var x = 10\nx = x + 5\nx')
+    result, error = shit.run('<stdin>', 'stash x = 10\nx = x + 5\nx')
 
     assert error is None
     assert isinstance(result, list)
@@ -51,7 +51,7 @@ def test_interpreter_division_by_zero_error():
 def test_run_uses_supplied_symbol_table_and_leaves_global_alone():
     reset_symbols()
     table = shit.SymbolTable()
-    result, error = shit.run('<stdin>', 'var z = 99', table)
+    result, error = shit.run('<stdin>', 'stash z = 99', table)
 
     assert error is None
     assert repr(result) == '99'
@@ -61,7 +61,7 @@ def test_run_uses_supplied_symbol_table_and_leaves_global_alone():
 
 def test_interpreter_if_takes_true_branch():
     reset_symbols()
-    result, error = shit.run('<stdin>', 'var x = 0\nif 1 < 2 then\n  x = 10\nend\nx')
+    result, error = shit.run('<stdin>', 'stash x = 0\nfr 1 < 2 ong\n  x = 10\nbet\nx')
 
     assert error is None
     assert [repr(value) for value in result] == ['0', '10', '10']
@@ -69,7 +69,7 @@ def test_interpreter_if_takes_true_branch():
 
 def test_interpreter_if_elif_else_chain():
     reset_symbols()
-    src = 'var x = 5\nif x > 10 then\n  1\nelif x > 3 then\n  2\nelse\n  3\nend'
+    src = 'stash x = 5\nfr x > 10 ong\n  1\norfr x > 3 ong\n  2\nwhatever\n  3\nbet'
     result, error = shit.run('<stdin>', src)
 
     assert error is None
@@ -78,7 +78,7 @@ def test_interpreter_if_elif_else_chain():
 
 def test_interpreter_if_without_else_yields_zero():
     reset_symbols()
-    result, error = shit.run('<stdin>', 'if 0 then\n  1\nend')
+    result, error = shit.run('<stdin>', 'fr 0 ong\n  1\nbet')
 
     assert error is None
     assert repr(result) == '0'
@@ -86,7 +86,7 @@ def test_interpreter_if_without_else_yields_zero():
 
 def test_interpreter_while_counts_up():
     reset_symbols()
-    result, error = shit.run('<stdin>', 'var i = 0\nwhile i < 5 then\n  i = i + 1\nend\ni')
+    result, error = shit.run('<stdin>', 'stash i = 0\nkeep i < 5 ong\n  i = i + 1\nbet\ni')
 
     assert error is None
     assert [repr(value) for value in result] == ['0', '5', '5']
@@ -94,7 +94,7 @@ def test_interpreter_while_counts_up():
 
 def test_interpreter_while_body_never_runs():
     reset_symbols()
-    result, error = shit.run('<stdin>', 'var i = 9\nwhile i < 5 then\n  i = i + 1\nend')
+    result, error = shit.run('<stdin>', 'stash i = 9\nkeep i < 5 ong\n  i = i + 1\nbet')
 
     assert error is None
     assert [repr(value) for value in result] == ['9', '0']
@@ -102,7 +102,7 @@ def test_interpreter_while_body_never_runs():
 
 def test_interpreter_while_with_nested_if():
     reset_symbols()
-    src = 'var i = 0\nvar big = 0\nwhile i < 6 then\n  if i > 2 then\n    big = big + 1\n  end\n  i = i + 1\nend\nbig'
+    src = 'stash i = 0\nstash big = 0\nkeep i < 6 ong\n  fr i > 2 ong\n    big = big + 1\n  bet\n  i = i + 1\nbet\nbig'
     result, error = shit.run('<stdin>', src)
 
     assert error is None
@@ -111,7 +111,7 @@ def test_interpreter_while_with_nested_if():
 
 def test_interpreter_function_call_returns_last_value():
     reset_symbols()
-    result, error = shit.run('<stdin>', 'fun add(a, b) then\n  a + b\nend\nadd(2, 3)')
+    result, error = shit.run('<stdin>', 'chore add(a, b) ong\n  a + b\nbet\nadd(2, 3)')
 
     assert error is None
     assert repr(result[-1]) == '5'
@@ -119,7 +119,7 @@ def test_interpreter_function_call_returns_last_value():
 
 def test_interpreter_function_sees_globals_but_args_shadow():
     reset_symbols()
-    src = 'var k = 100\nfun bump(k) then\n  k + 1\nend\nbump(1)\nk'
+    src = 'stash k = 100\nchore bump(k) ong\n  k + 1\nbet\nbump(1)\nk'
     result, error = shit.run('<stdin>', src)
 
     assert error is None
@@ -128,7 +128,7 @@ def test_interpreter_function_sees_globals_but_args_shadow():
 
 def test_interpreter_function_with_loop_body():
     reset_symbols()
-    src = 'fun sum_to(n) then\n  var i = 0\n  var total = 0\n  while i < n then\n    total = total + i\n    i = i + 1\n  end\n  total\nend\nsum_to(5)'
+    src = 'chore sum_to(n) ong\n  stash i = 0\n  stash total = 0\n  keep i < n ong\n    total = total + i\n    i = i + 1\n  bet\n  total\nbet\nsum_to(5)'
     result, error = shit.run('<stdin>', src)
 
     assert error is None
@@ -137,7 +137,7 @@ def test_interpreter_function_with_loop_body():
 
 def test_interpreter_zero_arg_function():
     reset_symbols()
-    result, error = shit.run('<stdin>', 'fun two() then\n  2\nend\ntwo() * 3')
+    result, error = shit.run('<stdin>', 'chore two() ong\n  2\nbet\ntwo() * 3')
 
     assert error is None
     assert repr(result[-1]) == '6'

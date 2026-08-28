@@ -1,52 +1,67 @@
-# fizzbuzz
+# fizzbuzz, in shit
 
-fun label(n) then
-    if n % 15 == 0 then
-        return "fizzbuzz"
-    elif n % 3 == 0 then
-        return "fizz"
-    elif n % 5 == 0 then
-        return "buzz"
-    end
-    return str(n)
-end
+chore label(n) ong
+    fr n % 15 == 0 ong
+        yeet "fizzbuzz"
+    orfr n % 3 == 0 ong
+        yeet "fizz"
+    orfr n % 5 == 0 ong
+        yeet "buzz"
+    bet
+    yeet yapify(n)
+bet
 
-for i = 1 to 16 then
-    print(label(i))
-end
+grind i = 1 til 16 ong
+    yap(label(i))
+bet
 
 # recursion
-fun fact(n) then
-    if n <= 1 then
-        return 1
-    end
-    return n * fact(n - 1)
-end
-print("10! = " + str(fact(10)))
+chore fact(n) ong
+    fr n <= 1 ong
+        yeet 1
+    bet
+    yeet n * fact(n - 1)
+bet
+yap("10! = " + yapify(fact(10)))
 
-# lists and strings
-var words = ["shit", "is", "a", "language"]
-var line = ""
-for i = 0 to len(words) then
-    line = line + words[i]
-    if i < len(words) - 1 then
-        line = line + " "
-    end
-end
-print(line)
+# closures: a chore that remembers
+chore counter() ong
+    stash n = 0
+    chore tick() ong
+        n += 1
+        yeet n
+    bet
+    yeet tick
+bet
 
-# while, break and continue
-var n = 0
-var evens = []
-while true then
-    n = n + 1
-    if n % 2 == 1 then
-        continue
-    end
-    if n > 10 then
-        break
-    end
-    evens = append(evens, n)
-end
-print(evens)
-print("2 ^ 16 = " + str(2 ^ 16))
+stash c = counter()
+c()
+c()
+yap("counted til " + yapify(c()))
+
+# piles and yaps
+stash words = ["shit", "is", "a", "language"]
+stash line = ""
+grind w among words ong
+    line += w + " "
+bet
+yap(line)
+
+words[0] = "this"
+yap(words)
+
+# keep going til you bail
+stash n = 0
+stash evens = []
+keep based ong
+    n += 1
+    fr n % 2 == 1 ong
+        skip
+    bet
+    fr n > 10 ong
+        bail
+    bet
+    evens = stuff(evens, n)
+bet
+yap(evens)
+yap("2 ^ 16 = " + yapify(2 ^ 16))

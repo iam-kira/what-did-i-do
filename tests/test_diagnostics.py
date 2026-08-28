@@ -10,8 +10,8 @@ def ev(source, filename='<stdin>'):
 
 def test_runtime_error_records_call_frames():
     source = (
-        'fun inner(n) then\nreturn n / 0\nend\n'
-        'fun outer(n) then\nreturn inner(n)\nend\n'
+        'chore inner(n) ong\nyeet n / 0\nbet\n'
+        'chore outer(n) ong\nyeet inner(n)\nbet\n'
         'outer(5)'
     )
     result, error = ev(source, 'prog.shit')
@@ -32,13 +32,13 @@ def test_error_without_a_call_has_no_traceback():
 
 
 def test_runaway_recursion_reports_a_language_error():
-    result, error = ev('fun boom(n) then\nreturn boom(n + 1)\nend\nboom(0)')
+    result, error = ev('chore boom(n) ong\nyeet boom(n + 1)\nbet\nboom(0)')
     assert result is None
     assert 'Maximum call depth' in error.details
 
 
 def test_traceback_is_capped_and_says_how_many_it_dropped():
-    result, error = ev('fun boom(n) then\nreturn boom(n + 1)\nend\nboom(0)')
+    result, error = ev('chore boom(n) ong\nyeet boom(n + 1)\nbet\nboom(0)')
     assert len(error.frames) == shit.RTError.MAX_FRAMES
     assert error.frames_omitted > 0
     assert 'more frame(s)' in error.as_string()
@@ -65,7 +65,7 @@ def test_valid_numbers_still_lex():
 
 
 def test_error_reports_file_line_and_column():
-    result, error = ev('var x = 1\nx + $', 'prog.shit')
+    result, error = ev('stash x = 1\nx + $', 'prog.shit')
     assert result is None
     text = error.as_string()
     assert 'File prog.shit' in text

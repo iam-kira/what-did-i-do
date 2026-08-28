@@ -10,14 +10,14 @@ def ev(source):
 
 
 def test_boolean_and_null_literals():
-    for source, expected in (('true', '1'), ('false', '0'), ('null', '0')):
+    for source, expected in (('based', '1'), ('cringe', '0'), ('ghosted', '0')):
         result, error = ev(source)
         assert error is None
         assert repr(result) == expected
 
 
 def test_not_operator():
-    for source, expected in (('not true', '0'), ('not false', '1'), ('not 5', '0'), ('not 0', '1')):
+    for source, expected in (('nah based', '0'), ('nah cringe', '1'), ('nah 5', '0'), ('nah 0', '1')):
         result, error = ev(source)
         assert error is None
         assert repr(result) == expected
@@ -25,8 +25,8 @@ def test_not_operator():
 
 def test_and_or_truth_table():
     cases = {
-        '1 and 1': '1', '1 and 0': '0', '0 and 1': '0', '0 and 0': '0',
-        '1 or 1': '1', '1 or 0': '1', '0 or 1': '1', '0 or 0': '0',
+        '1 also 1': '1', '1 also 0': '0', '0 also 1': '0', '0 also 0': '0',
+        '1 orelse 1': '1', '1 orelse 0': '1', '0 orelse 1': '1', '0 orelse 0': '0',
     }
     for source, expected in cases.items():
         result, error = ev(source)
@@ -35,19 +35,19 @@ def test_and_or_truth_table():
 
 
 def test_logic_precedence_below_comparison():
-    result, error = ev('1 < 2 and 3 > 2')
+    result, error = ev('1 < 2 also 3 > 2')
     assert error is None
     assert repr(result) == '1'
 
 
 def test_and_binds_tighter_than_or():
-    result, error = ev('false and false or true')
+    result, error = ev('cringe also cringe orelse based')
     assert error is None
     assert repr(result) == '1'
 
 
 def test_not_is_right_associative():
-    result, error = ev('not not 5')
+    result, error = ev('nah nah 5')
     assert error is None
     assert repr(result) == '1'
 
@@ -66,13 +66,13 @@ def test_inexact_division_is_float():
 
 
 def test_illegal_operation_on_function():
-    result, error = ev('fun f() then 1 end\nf + 1')
+    result, error = ev('chore f() ong 1 bet\nf + 1')
     assert result is None
     assert error.error_name == 'Runtime Error'
     assert 'Illegal operation' in error.details
 
 
 def test_function_compares_unequal_to_number():
-    result, error = ev('fun f() then 1 end\nf == 1')
+    result, error = ev('chore f() ong 1 bet\nf == 1')
     assert error is None
     assert repr(result) == '0'

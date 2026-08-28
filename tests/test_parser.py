@@ -26,10 +26,10 @@ def test_parser_parentheses_override_precedence():
 
 
 def test_parser_var_declaration_and_assignment():
-    declaration = first_statement_repr('var x = 10')
+    declaration = first_statement_repr('stash x = 10')
     assignment = first_statement_repr('x = x + 1')
 
-    assert declaration == '(var IDENTIFIER:x = INT:10)'
+    assert declaration == '(stash IDENTIFIER:x = INT:10)'
     assert assignment == '(IDENTIFIER:x = (IDENTIFIER:x, PLUS, INT:1))'
 
 
@@ -38,6 +38,6 @@ def test_parser_comparison_expression():
 
 
 def test_parser_statement_list():
-    ast = parse_ast('var x = 10\nx = x + 2\nx')
+    ast = parse_ast('stash x = 10\nx = x + 2\nx')
 
     assert len(ast.element_nodes) == 3

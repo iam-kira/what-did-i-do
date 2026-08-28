@@ -11,9 +11,9 @@ DIGITS = '0123456789'
 LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 LETTERS_DIGITS = LETTERS + DIGITS + '_'
 KEYWORDS = [
-    'var', 'if', 'then', 'elif', 'else', 'end', 'while', 'fun',
-    'and', 'or', 'not', 'true', 'false', 'null',
-    'for', 'to', 'step', 'in', 'break', 'continue', 'return',
+    'stash', 'fr', 'ong', 'orfr', 'whatever', 'bet', 'keep', 'chore',
+    'also', 'orelse', 'nah', 'based', 'cringe', 'ghosted',
+    'grind', 'til', 'by', 'among', 'bail', 'skip', 'yeet',
 ]
 
 
@@ -414,7 +414,7 @@ class VarAssignNode:
         self.pos_end = self.value_node.pos_end
 
     def __repr__(self):
-        prefix = 'var ' if self.is_declaration else ''
+        prefix = 'stash ' if self.is_declaration else ''
         return f'({prefix}{self.var_name_tok} = {self.value_node})'
 
 
@@ -654,7 +654,7 @@ class Parser:
         """True when nothing more of the current statement can follow."""
         if self.current_tok.type in (TT_NEWLINE, TT_EOF):
             return True
-        return self.current_tok.type == TT_KEYWORD and self.current_tok.value in ('end', 'elif', 'else')
+        return self.current_tok.type == TT_KEYWORD and self.current_tok.value in ('bet', 'orfr', 'whatever')
 
     def at_block_end(self, stop_keywords):
         if self.current_tok.type == TT_EOF:
@@ -664,16 +664,16 @@ class Parser:
     def statement(self):
         res = ParseResult()
 
-        if self.current_tok.matches(TT_KEYWORD, 'if'):
+        if self.current_tok.matches(TT_KEYWORD, 'fr'):
             return self.if_expr()
 
-        if self.current_tok.matches(TT_KEYWORD, 'while'):
+        if self.current_tok.matches(TT_KEYWORD, 'keep'):
             return self.while_expr()
 
-        if self.current_tok.matches(TT_KEYWORD, 'for'):
+        if self.current_tok.matches(TT_KEYWORD, 'grind'):
             return self.for_expr()
 
-        if self.current_tok.matches(TT_KEYWORD, 'return'):
+        if self.current_tok.matches(TT_KEYWORD, 'yeet'):
             pos_start = self.current_tok.pos_start.copy()
             pos_end = self.current_tok.pos_end.copy()
             self.advance()
@@ -686,20 +686,20 @@ class Parser:
                 pos_end = value.pos_end.copy()
             return res.success(ReturnNode(value, pos_start, pos_end))
 
-        if self.current_tok.matches(TT_KEYWORD, 'continue'):
+        if self.current_tok.matches(TT_KEYWORD, 'skip'):
             node = ContinueNode(self.current_tok.pos_start.copy(), self.current_tok.pos_end.copy())
             self.advance()
             return res.success(node)
 
-        if self.current_tok.matches(TT_KEYWORD, 'break'):
+        if self.current_tok.matches(TT_KEYWORD, 'bail'):
             node = BreakNode(self.current_tok.pos_start.copy(), self.current_tok.pos_end.copy())
             self.advance()
             return res.success(node)
 
-        if self.current_tok.matches(TT_KEYWORD, 'fun'):
+        if self.current_tok.matches(TT_KEYWORD, 'chore'):
             return self.func_def()
 
-        if self.current_tok.matches(TT_KEYWORD, 'var'):
+        if self.current_tok.matches(TT_KEYWORD, 'stash'):
             self.advance()
             if self.current_tok.type != TT_IDENTIFIER:
                 return res.failure(
@@ -765,29 +765,29 @@ class Parser:
             if res.error:
                 return res
 
-            if not self.current_tok.matches(TT_KEYWORD, 'then'):
+            if not self.current_tok.matches(TT_KEYWORD, 'ong'):
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'then'")
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'ong'")
                 )
             self.advance()
 
-            body = res.register(self.statements(('elif', 'else', 'end')))
+            body = res.register(self.statements(('orfr', 'whatever', 'bet')))
             if res.error:
                 return res
             cases.append((condition, body))
 
-            if not self.current_tok.matches(TT_KEYWORD, 'elif'):
+            if not self.current_tok.matches(TT_KEYWORD, 'orfr'):
                 break
 
-        if self.current_tok.matches(TT_KEYWORD, 'else'):
+        if self.current_tok.matches(TT_KEYWORD, 'whatever'):
             self.advance()
-            else_case = res.register(self.statements(('end',)))
+            else_case = res.register(self.statements(('bet',)))
             if res.error:
                 return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'end'):
+        if not self.current_tok.matches(TT_KEYWORD, 'bet'):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'end'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'bet'")
             )
 
         pos_end = self.current_tok.pos_end.copy()
@@ -803,19 +803,19 @@ class Parser:
         if res.error:
             return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'then'):
+        if not self.current_tok.matches(TT_KEYWORD, 'ong'):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'then'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'ong'")
             )
         self.advance()
 
-        body = res.register(self.statements(('end',)))
+        body = res.register(self.statements(('bet',)))
         if res.error:
             return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'end'):
+        if not self.current_tok.matches(TT_KEYWORD, 'bet'):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'end'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'bet'")
             )
 
         pos_end = self.current_tok.pos_end.copy()
@@ -834,25 +834,25 @@ class Parser:
         var_name_tok = self.current_tok
         self.advance()
 
-        if self.current_tok.matches(TT_KEYWORD, 'in'):
+        if self.current_tok.matches(TT_KEYWORD, 'among'):
             self.advance()
             iterable_node = res.register(self.expr())
             if res.error:
                 return res
 
-            if not self.current_tok.matches(TT_KEYWORD, 'then'):
+            if not self.current_tok.matches(TT_KEYWORD, 'ong'):
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'then'")
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'ong'")
                 )
             self.advance()
 
-            body = res.register(self.statements(('end',)))
+            body = res.register(self.statements(('bet',)))
             if res.error:
                 return res
 
-            if not self.current_tok.matches(TT_KEYWORD, 'end'):
+            if not self.current_tok.matches(TT_KEYWORD, 'bet'):
                 return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'end'")
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'bet'")
                 )
             pos_end = self.current_tok.pos_end.copy()
             self.advance()
@@ -860,7 +860,7 @@ class Parser:
 
         if self.current_tok.type != TT_EQ:
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'in' or '='")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'among' or '='")
             )
         self.advance()
 
@@ -868,9 +868,9 @@ class Parser:
         if res.error:
             return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'to'):
+        if not self.current_tok.matches(TT_KEYWORD, 'til'):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'to'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'til'")
             )
         self.advance()
 
@@ -879,25 +879,25 @@ class Parser:
             return res
 
         step_node = None
-        if self.current_tok.matches(TT_KEYWORD, 'step'):
+        if self.current_tok.matches(TT_KEYWORD, 'by'):
             self.advance()
             step_node = res.register(self.expr())
             if res.error:
                 return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'then'):
+        if not self.current_tok.matches(TT_KEYWORD, 'ong'):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'then'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'ong'")
             )
         self.advance()
 
-        body = res.register(self.statements(('end',)))
+        body = res.register(self.statements(('bet',)))
         if res.error:
             return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'end'):
+        if not self.current_tok.matches(TT_KEYWORD, 'bet'):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'end'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'bet'")
             )
 
         pos_end = self.current_tok.pos_end.copy()
@@ -944,19 +944,19 @@ class Parser:
             )
         self.advance()
 
-        if not self.current_tok.matches(TT_KEYWORD, 'then'):
+        if not self.current_tok.matches(TT_KEYWORD, 'ong'):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'then'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'ong'")
             )
         self.advance()
 
-        body = res.register(self.statements(('end',)))
+        body = res.register(self.statements(('bet',)))
         if res.error:
             return res
 
-        if not self.current_tok.matches(TT_KEYWORD, 'end'):
+        if not self.current_tok.matches(TT_KEYWORD, 'bet'):
             return res.failure(
-                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'end'")
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'bet'")
             )
 
         pos_end = self.current_tok.pos_end.copy()
@@ -989,15 +989,15 @@ class Parser:
         return res.success(CallNode(node, arg_nodes, pos_end))
 
     def expr(self):
-        return self.bin_op(self.and_expr, ((TT_KEYWORD, 'or'),))
+        return self.bin_op(self.and_expr, ((TT_KEYWORD, 'orelse'),))
 
     def and_expr(self):
-        return self.bin_op(self.not_expr, ((TT_KEYWORD, 'and'),))
+        return self.bin_op(self.not_expr, ((TT_KEYWORD, 'also'),))
 
     def not_expr(self):
         res = ParseResult()
 
-        if self.current_tok.matches(TT_KEYWORD, 'not'):
+        if self.current_tok.matches(TT_KEYWORD, 'nah'):
             op_tok = self.current_tok
             self.advance()
             node = res.register(self.not_expr())
@@ -1051,9 +1051,9 @@ class Parser:
                 return res
             return self.postfix_result(res, array)
 
-        if tok.type == TT_KEYWORD and tok.value in ('true', 'false', 'null'):
+        if tok.type == TT_KEYWORD and tok.value in ('based', 'cringe', 'ghosted'):
             self.advance()
-            literal = 1 if tok.value == 'true' else 0
+            literal = 1 if tok.value == 'based' else 0
             return res.success(NumberNode(Token(TT_INT, literal, tok.pos_start, tok.pos_end)))
 
         if tok.type == TT_IDENTIFIER:
@@ -1222,6 +1222,9 @@ class Value:
     to override what it actually supports.
     """
 
+    # what this type is called in error messages, in the dialect
+    TYPE_NAME = 'thing'
+
     def __init__(self):
         self.pos_start = None
         self.pos_end = None
@@ -1242,7 +1245,7 @@ class Value:
         return None, RTError(
             self.pos_start,
             other.pos_end,
-            f'Illegal operation for {type(self).__name__.lower()}',
+            f'Illegal operation for {self.TYPE_NAME}',
         )
 
     def added_to(self, other):
@@ -1289,12 +1292,12 @@ class Value:
 
     def get_index(self, index):
         return None, RTError(
-            self.pos_start, index.pos_end, f'{type(self).__name__.lower()} is not indexable'
+            self.pos_start, index.pos_end, f'{self.TYPE_NAME} is not indexable'
         )
 
     def set_index(self, index, value):
         return RTError(
-            self.pos_start, index.pos_end, f'Cannot assign into a {type(self).__name__.lower()}'
+            self.pos_start, index.pos_end, f'Cannot assign into a {self.TYPE_NAME}'
         )
 
     def length(self):
@@ -1302,6 +1305,8 @@ class Value:
 
 
 class Number(Value):
+    TYPE_NAME = 'math'
+
     def __init__(self, value):
         super().__init__()
         self.value = value
@@ -1392,6 +1397,8 @@ class Number(Value):
 
 
 class String(Value):
+    TYPE_NAME = 'yap'
+
     def __init__(self, value):
         super().__init__()
         self.value = value
@@ -1456,6 +1463,8 @@ class String(Value):
 
 
 class List(Value):
+    TYPE_NAME = 'pile'
+
     def __init__(self, elements):
         super().__init__()
         self.elements = elements
@@ -1517,7 +1526,7 @@ def index_into(container, sequence, index, wrap):
     Negative indices count from the end, as in Python.
     """
     if not isinstance(index, Number) or not isinstance(index.value, int):
-        return None, RTError(index.pos_start, index.pos_end, 'Index must be an integer')
+        return None, RTError(index.pos_start, index.pos_end, 'Index must be a whole math')
 
     i = index.value
     if i < 0:
@@ -1532,6 +1541,8 @@ def index_into(container, sequence, index, wrap):
 
 
 class BaseFunction(Value):
+    TYPE_NAME = 'chore'
+
     def __init__(self, name, arg_names):
         super().__init__()
         self.name = name
@@ -1648,7 +1659,7 @@ def bi_input(args, node):
 def bi_len(args, node):
     length = args[0].length()
     if length is None:
-        return _type_error(node, f"'len' needs a string or list, got {type(args[0]).__name__.lower()}")
+        return _type_error(node, f"'howmany' needs a yap or pile, got {args[0].TYPE_NAME}")
     return Number(length), None
 
 
@@ -1671,20 +1682,20 @@ def bi_num(args, node):
             return Number(float(text)), None
         except ValueError:
             return _type_error(node, f'Cannot convert "{value.value}" to a number')
-    return _type_error(node, f"'num' cannot convert a {type(value).__name__.lower()}")
+    return _type_error(node, f"'mathify' cannot convert a {value.TYPE_NAME}")
 
 
 def bi_append(args, node):
     target, value = args
     if not isinstance(target, List):
-        return _type_error(node, "'append' needs a list as its first argument")
+        return _type_error(node, "'stuff' needs a pile as its first argument")
     return List(target.elements + [value.copy()]), None
 
 
 def bi_pop(args, node):
     target, index = args
     if not isinstance(target, List):
-        return _type_error(node, "'pop' needs a list as its first argument")
+        return _type_error(node, "'yoink' needs a pile as its first argument")
     _, error = target.get_index(index)
     if error:
         return None, error
@@ -1711,17 +1722,17 @@ def bi_is_fun(args, node):
 
 
 BUILTINS = {
-    'print': (['value'], bi_print),
-    'input': (['prompt'], bi_input),
-    'len': (['value'], bi_len),
-    'str': (['value'], bi_str),
-    'num': (['value'], bi_num),
-    'append': (['list', 'value'], bi_append),
-    'pop': (['list', 'index'], bi_pop),
-    'is_num': (['value'], bi_is_num),
-    'is_str': (['value'], bi_is_str),
-    'is_list': (['value'], bi_is_list),
-    'is_fun': (['value'], bi_is_fun),
+    'yap': (['value'], bi_print),
+    'beg': (['prompt'], bi_input),
+    'howmany': (['value'], bi_len),
+    'yapify': (['value'], bi_str),
+    'mathify': (['value'], bi_num),
+    'stuff': (['list', 'value'], bi_append),
+    'yoink': (['list', 'index'], bi_pop),
+    'is_math': (['value'], bi_is_num),
+    'is_yap': (['value'], bi_is_str),
+    'is_pile': (['value'], bi_is_list),
+    'is_chore': (['value'], bi_is_fun),
 }
 
 
@@ -1849,7 +1860,7 @@ class Interpreter:
 
         if node.op_tok.type == TT_MINUS:
             number, error = Number(0).set_pos(node.pos_start, node.pos_end).subbed_by(number)
-        elif node.op_tok.matches(TT_KEYWORD, 'not'):
+        elif node.op_tok.matches(TT_KEYWORD, 'nah'):
             number, error = number.notted()
         else:
             number, error = number, None
@@ -1892,9 +1903,9 @@ class Interpreter:
             result, error = left.compare_lte(right)
         elif node.op_tok.type == TT_GTE:
             result, error = left.compare_gte(right)
-        elif node.op_tok.matches(TT_KEYWORD, 'and'):
+        elif node.op_tok.matches(TT_KEYWORD, 'also'):
             result, error = (Number(1) if left.is_true() and right.is_true() else Number(0)), None
-        elif node.op_tok.matches(TT_KEYWORD, 'or'):
+        elif node.op_tok.matches(TT_KEYWORD, 'orelse'):
             result, error = (Number(1) if left.is_true() or right.is_true() else Number(0)), None
         else:
             return res.failure(RTError(node.pos_start, node.pos_end, 'Unknown binary operator'))
@@ -1972,14 +1983,14 @@ class Interpreter:
         else:
             step_value = Number(1)
 
-        for name, val in (('start', start_value), ('end', end_value), ('step', step_value)):
+        for name, val in (('start', start_value), ('til', end_value), ('by', step_value)):
             if not isinstance(val, Number):
                 return res.failure(
-                    RTError(node.pos_start, node.pos_end, f"'for' {name} value must be a number")
+                    RTError(node.pos_start, node.pos_end, f"'grind' {name} value must be a math")
                 )
 
         if step_value.value == 0:
-            return res.failure(RTError(node.pos_start, node.pos_end, "'for' step cannot be 0"))
+            return res.failure(RTError(node.pos_start, node.pos_end, "'grind' by cannot be 0"))
 
         var_name = node.var_name_tok.value
         i = start_value.value
@@ -2024,7 +2035,7 @@ class Interpreter:
                 RTError(
                     node.iterable_node.pos_start,
                     node.iterable_node.pos_end,
-                    f'Cannot iterate over a {type(iterable).__name__.lower()}',
+                    f'Cannot iterate over a {iterable.TYPE_NAME}',
                 )
             )
 
@@ -2105,7 +2116,7 @@ class Interpreter:
         res = RTResult()
 
         if self.func_depth == 0:
-            return res.failure(RTError(node.pos_start, node.pos_end, "'return' outside of a function"))
+            return res.failure(RTError(node.pos_start, node.pos_end, "'yeet' outside of a function"))
 
         if node.node_to_return is not None:
             value = res.register(self.visit(node.node_to_return))
@@ -2119,13 +2130,13 @@ class Interpreter:
     def visit_ContinueNode(self, node):
         res = RTResult()
         if self.loop_depth == 0:
-            return res.failure(RTError(node.pos_start, node.pos_end, "'continue' outside of a loop"))
+            return res.failure(RTError(node.pos_start, node.pos_end, "'skip' outside of a loop"))
         return res.success_continue()
 
     def visit_BreakNode(self, node):
         res = RTResult()
         if self.loop_depth == 0:
-            return res.failure(RTError(node.pos_start, node.pos_end, "'break' outside of a loop"))
+            return res.failure(RTError(node.pos_start, node.pos_end, "'bail' outside of a loop"))
         return res.success_break()
 
     def visit_FuncDefNode(self, node):
@@ -2147,7 +2158,7 @@ class Interpreter:
             return res
 
         if not isinstance(func, BaseFunction):
-            return res.failure(RTError(node.pos_start, node.pos_end, f'{func} is not a function'))
+            return res.failure(RTError(node.pos_start, node.pos_end, f'{func} is not a chore'))
 
         args = []
         for arg_node in node.arg_nodes:
