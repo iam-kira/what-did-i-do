@@ -118,3 +118,29 @@ def test_token_without_positions_still_has_the_attributes():
     token = shit.Token(shit.TT_EOF)
     assert token.pos_start is None
     assert token.pos_end is None
+
+
+# --- REPL continuation ---
+
+def test_wants_more_on_an_unfinished_block():
+    for source in ('chore f() ong', 'fr 1 ong', 'keep 1 ong', 'grind i = 0 til 2 ong'):
+        assert shit.wants_more('<stdin>', source), source
+
+
+def test_wants_more_on_an_unfinished_expression():
+    for source in ('1 +', '[1,', '{' + Q + 'a' + Q + ': 1', '(1 + 2'):
+        assert shit.wants_more('<stdin>', source), source
+
+
+def test_wants_more_on_an_unterminated_yap():
+    assert shit.wants_more('<stdin>', Q + 'oops')
+
+
+def test_complete_input_does_not_want_more():
+    for source in ('1 + 2', 'chore f() ong yeet 1 bet', 'stash x = [1, 2]'):
+        assert not shit.wants_more('<stdin>', source), source
+
+
+def test_a_real_error_does_not_want_more():
+    for source in ('1 $ 2', 'stash 1 = 2'):
+        assert not shit.wants_more('<stdin>', source), source

@@ -20,6 +20,9 @@ KEYWORDS = [
 # ERROR
 ######################################
 class Error:
+    # set when the input merely stops early, so the REPL knows to keep reading
+    incomplete = False
+
     def __init__(self, pos_start, pos_end, error_name, details):
         self.pos_start = pos_start
         self.pos_end = pos_end
@@ -295,7 +298,9 @@ class Lexer:
                 text += self.current_char
             self.advance()
 
-        return None, ExpectedCharError(pos_start, self.pos.copy(), 'unterminated string')
+        error = ExpectedCharError(pos_start, self.pos.copy(), 'unterminated string')
+        error.incomplete = True
+        return None, error
 
     def make_identifier(self):
         ident = ''
@@ -2697,6 +2702,18 @@ global_symbol_table = SymbolTable(parent=builtin_symbol_table)
 def new_symbol_table():
     """A fresh scope with the builtins available."""
     return SymbolTable(parent=builtin_symbol_table)
+
+
+def wants_more(filename, text):
+    """True when text fails only because it stops early - the REPL should keep reading."""
+    tokens, error = Lexer(filename, text).make_tokens()
+    if error:
+        return error.incomplete
+
+    parsed = Parser(tokens).parse()
+    if not parsed.error:
+        return False
+    return parsed.error.pos_start.index >= len(text.rstrip())
 
 
 def run(filename, text, symbol_table=None):
