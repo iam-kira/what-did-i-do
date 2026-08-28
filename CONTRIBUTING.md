@@ -53,10 +53,8 @@ supports. A new builtin is one function plus one row in `BUILTINS`.
 
 Roughly in order:
 
-- [ ] Destructuring: `stash a, b = [1, 2]`, and multiple return values
 - [ ] `whatever` branch on a loop, or `do ... keep`
 - [ ] User-defined types, or at least a bag with named chores attached
-- [ ] Iterating a bag's label/value pairs, not just its labels
 - [ ] A `--time` flag, or anything resembling a profiler
 - [ ] Speed: every value copies on read, which is simple and wasteful
 

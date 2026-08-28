@@ -530,6 +530,22 @@ class VarAssignNode:
         return f'({prefix}{self.var_name_tok} = {self.value_node})'
 
 
+class DestructureNode:
+    """stash a, b = <pile>"""
+
+    def __init__(self, var_name_toks, value_node, is_declaration):
+        self.var_name_toks = var_name_toks
+        self.value_node = value_node
+        self.is_declaration = is_declaration
+        self.pos_start = var_name_toks[0].pos_start
+        self.pos_end = value_node.pos_end
+
+    def __repr__(self):
+        prefix = 'stash ' if self.is_declaration else ''
+        names = ', '.join(tok.value for tok in self.var_name_toks)
+        return f'({prefix}{names} = {self.value_node})'
+
+
 class BinOpNode:
     def __init__(self, left_node, op_tok, right_node):
         self.left_node = left_node
@@ -590,15 +606,17 @@ class ForNode:
 
 
 class ForInNode:
-    def __init__(self, var_name_tok, iterable_node, body_node, pos_start, pos_end):
-        self.var_name_tok = var_name_tok
+    def __init__(self, var_name_toks, iterable_node, body_node, pos_start, pos_end):
+        self.var_name_toks = var_name_toks
+        self.var_name_tok = var_name_toks[0]
         self.iterable_node = iterable_node
         self.body_node = body_node
         self.pos_start = pos_start
         self.pos_end = pos_end
 
     def __repr__(self):
-        return f'(grind {self.var_name_tok.value} among {self.iterable_node})'
+        names = ', '.join(tok.value for tok in self.var_name_toks)
+        return f'(grind {names} among {self.iterable_node})'
 
 
 class IndexAssignNode:
@@ -853,8 +871,19 @@ class Parser:
                     InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier')
                 )
 
-            var_name = self.current_tok
+            var_names = [self.current_tok]
             self.advance()
+
+            while self.current_tok.type == TT_COMMA:
+                self.advance()
+                if self.current_tok.type != TT_IDENTIFIER:
+                    return res.failure(
+                        InvalidSyntaxError(
+                            self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier'
+                        )
+                    )
+                var_names.append(self.current_tok)
+                self.advance()
 
             if self.current_tok.type != TT_EQ:
                 return res.failure(
@@ -865,16 +894,45 @@ class Parser:
             expr = res.register(self.expr())
             if res.error:
                 return res
-            return res.success(VarAssignNode(var_name, expr, is_declaration=True))
+
+            if len(var_names) == 1:
+                return res.success(VarAssignNode(var_names[0], expr, is_declaration=True))
+            return res.success(DestructureNode(var_names, expr, is_declaration=True))
 
         expr = res.register(self.expr())
         if res.error:
             return res
 
+        if self.current_tok.type == TT_COMMA and isinstance(expr, VarAccessNode):
+            return self.destructure(res, expr)
+
         if self.current_tok.type in ASSIGN_OPS:
             return self.assignment(res, expr)
 
         return res.success(expr)
+
+    def destructure(self, res, first):
+        var_names = [first.var_name_tok]
+
+        while self.current_tok.type == TT_COMMA:
+            self.advance()
+            if self.current_tok.type != TT_IDENTIFIER:
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier')
+                )
+            var_names.append(self.current_tok)
+            self.advance()
+
+        if self.current_tok.type != TT_EQ:
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '='")
+            )
+        self.advance()
+
+        value = res.register(self.expr())
+        if res.error:
+            return res
+        return res.success(DestructureNode(var_names, value, is_declaration=False))
 
     def assignment(self, res, target):
         """Turn `target = value` into an assignment; `x += 1` desugars to `x = x + 1`."""
@@ -1027,8 +1085,23 @@ class Parser:
             return res.failure(
                 InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier')
             )
+        var_name_toks = [self.current_tok]
         var_name_tok = self.current_tok
         self.advance()
+
+        while self.current_tok.type == TT_COMMA:
+            self.advance()
+            if self.current_tok.type != TT_IDENTIFIER:
+                return res.failure(
+                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier')
+                )
+            var_name_toks.append(self.current_tok)
+            self.advance()
+
+        if len(var_name_toks) > 1 and not self.current_tok.matches(TT_KEYWORD, 'among'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'among'")
+            )
 
         if self.current_tok.matches(TT_KEYWORD, 'among'):
             self.advance()
@@ -1052,7 +1125,7 @@ class Parser:
                 )
             pos_end = self.current_tok.pos_end.copy()
             self.advance()
-            return res.success(ForInNode(var_name_tok, iterable_node, body, pos_start, pos_end))
+            return res.success(ForInNode(var_name_toks, iterable_node, body, pos_start, pos_end))
 
         if self.current_tok.type != TT_EQ:
             return res.failure(
@@ -2546,6 +2619,41 @@ class Interpreter:
             )
         return res.success(value)
 
+    def visit_DestructureNode(self, node):
+        res = RTResult()
+
+        value = res.register(self.visit(node.value_node))
+        if res.error:
+            return res
+
+        error = self.unpack(node, node.var_name_toks, value)
+        if error:
+            return res.failure(error)
+        return res.success(value)
+
+    def unpack(self, node, name_toks, value):
+        """Bind a pile's elements to several names. Returns an error, or None."""
+        if not isinstance(value, List):
+            return RTError(
+                node.pos_start, node.pos_end, f'Can only unpack a pile, got {value.TYPE_NAME}'
+            )
+        if len(value.elements) != len(name_toks):
+            return RTError(
+                node.pos_start,
+                node.pos_end,
+                f'Need {len(name_toks)} things to unpack, got {len(value.elements)}',
+            )
+
+        declaring = getattr(node, 'is_declaration', True)
+        for tok, item in zip(name_toks, value.elements):
+            if declaring:
+                self.symbol_table.set(tok.value, item.copy())
+            elif not self.symbol_table.set_existing(tok.value, item.copy()):
+                return RTError(
+                    node.pos_start, node.pos_end, f"Cannot assign to undefined variable '{tok.value}'"
+                )
+        return None
+
     def visit_UnaryOpNode(self, node):
         res = RTResult()
         number = res.register(self.visit(node.node))
@@ -2725,7 +2833,10 @@ class Interpreter:
         elif isinstance(iterable, String):
             items = [String(char) for char in iterable.value]
         elif isinstance(iterable, Bag):
-            items = iterable.labels()
+            if len(node.var_name_toks) > 1:
+                items = [List([key.copy(), value.copy()]) for key, value in iterable.pairs.values()]
+            else:
+                items = iterable.labels()
         else:
             return res.failure(
                 RTError(
@@ -2735,13 +2846,19 @@ class Interpreter:
                 )
             )
 
-        var_name = node.var_name_tok.value
+        names = node.var_name_toks
+        var_name = names[0].value
         value = Number(0).set_pos(node.pos_start, node.pos_end)
 
         self.loop_depth += 1
         try:
             for item in items:
-                self.symbol_table.set(var_name, item.copy().set_pos(node.pos_start, node.pos_end))
+                if len(names) > 1:
+                    error = self.unpack(node, names, item)
+                    if error:
+                        return res.failure(error)
+                else:
+                    self.symbol_table.set(var_name, item.copy().set_pos(node.pos_start, node.pos_end))
 
                 body_value = self.run_block(res, node.body_node)
                 if res.error:

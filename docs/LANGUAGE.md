@@ -105,6 +105,16 @@ x = x + 1         # assign - the name must already exist
 x += 1            # also -= *= /=
 ```
 
+Several at once, from a pile:
+
+```text
+stash a, b = [1, 2]
+a, b = [b, a]              # swap
+stash lo, hi = bounds()    # a chore returning a pile
+```
+
+The pile must have exactly as many things as there are names.
+
 Assigning a name that was never `stash`ed is an error. `stash` always declares
 locally, so a parameter or local never clobbers an outer name.
 
@@ -174,10 +184,17 @@ grind word among ["a", "b"] ong
 bet
 ```
 
+```text
+grind label, value among scores ong
+    yap("{label}: {value}")
+bet
+```
+
 `grind ... til` ranges are **end-exclusive**. `by` defaults to `1` and may be
 negative; `by 0` is an error. `grind ... among` walks a pile, a yap one
-character at a time, or a bag's labels. `bail` and `skip` work in both loop
-kinds.
+character at a time, or a bag's labels. Two names walk a bag's label/value
+pairs, or unpack each element of a pile of piles. `bail` and `skip` work in
+both loop kinds.
 
 ---
 
@@ -342,6 +359,5 @@ statement's value.
 
 - No user-defined types
 - No `xs[0]` on a yap as an assignment target — yaps are immutable
-- No multiple return values or destructuring
 - No `whatever` branch on a loop
 - Call depth caps at 200

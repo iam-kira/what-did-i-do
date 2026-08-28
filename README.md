@@ -98,6 +98,7 @@ python shit.py --help
 
 - **Types** — numbers (`math`), strings (`yap`), lists (`pile`), dicts (`bag`), first-class functions (`chore`)
 - **Yap holes** — `"hi {name}, {1 + 2} points"`
+- **Destructuring** — `stash a, b = [1, 2]`, `grind k, v among bag`
 - **Control flow** — `fr`/`orfr`/`whatever`, `keep`, `grind ... til`, `grind ... among`, `bail`, `skip`, `yeet`
 - **Scoping** — lexical, with working closures and outer-variable mutation
 - **Operators** — `+ - * / % ^`, comparisons, `also`/`orelse`/`nah`, indexing, compound assignment
@@ -105,13 +106,13 @@ python shit.py --help
 - **Imports** — `summon("lib.shit")`, with cycle detection
 - **Error handling** — `risky` / `whoops` / `oops`, catching anything the runtime throws
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **224 tests** covering every stage
+- **242 tests** covering every stage
 
 ---
 
 ## Status
 
-Works. Not finished. Missing: user-defined types, destructuring.
+Works. Not finished. Missing: user-defined types.
 Known rough edges are listed at the end of
 [docs/LANGUAGE.md](docs/LANGUAGE.md) and in [CONTRIBUTING.md](CONTRIBUTING.md).
 
