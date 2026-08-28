@@ -1616,7 +1616,7 @@ class Function(BaseFunction):
         return res.success(value)
 
     def __repr__(self):
-        return f'<function {self.name}>'
+        return f'<chore {self.name}>'
 
 
 class BuiltInFunction(BaseFunction):
@@ -1635,7 +1635,7 @@ class BuiltInFunction(BaseFunction):
         return res.success(value)
 
     def __repr__(self):
-        return f'<built-in function {self.name}>'
+        return f'<built-in chore {self.name}>'
 
 
 # BUILT-IN FUNCTIONS
