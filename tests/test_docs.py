@@ -46,7 +46,8 @@ def test_every_doc_snippet_runs():
                        'stash scores = {"ana": 3}', 'stash xs = [1, 2, 3]',
                        'chore lastchar(s) ong yeet s[-1] bet',
                        'chore bounds() ong yeet [1, 9] bet',
-                       'stash grid = [[1, 2], [3, 4]]'):
+                       'stash grid = [[1, 2], [3, 4]]', 'stash i = 0',
+                       'stash b = {"x": 1}'):
             shit.run('<setup>', helper, table)
 
         _, error = shit.run(f'{name}#{index}', block, table)

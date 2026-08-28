@@ -132,6 +132,17 @@ locally, so a parameter or local never clobbers an outer name.
 Precedence, loosest first: `orelse` → `also` → `nah` → comparison → `+ -` →
 `* / %` → unary `+ -` → `^` → call/index.
 
+`also` and `orelse` short-circuit — the right side only runs when it can still
+change the answer, so this is safe on an empty pile:
+
+```text
+fr i < howmany(xs) also xs[i] == 1 ong
+    yap("found it")
+bet
+```
+
+Both always give back `1` or `0`, never the operand.
+
 `^` is right-associative, so `2 ^ 3 ^ 2` is `512`. Unary minus binds looser than
 `^`, so `-2 ^ 2` is `-4`.
 
@@ -261,6 +272,22 @@ yap(a["peek"]())
 ```
 
 Suffixes chain, so `a["bump"]()`, `fs[0]()`, `f()[0]` and `mk()()` all work.
+
+**Shared state has to be captured, not passed.** Arguments are copies, so a
+chore cannot change a pile or bag its caller holds:
+
+```text
+chore spoil(b) ong
+    b["x"] = 99
+bet
+
+stash mine = {"x": 1}
+spoil(mine)
+yap(mine)          # still {"x": 1}
+```
+
+Return the new value, or keep the state in a closure like `counter` above.
+[examples/calc.shit](../examples/calc.shit) uses a closure for exactly this.
 
 ---
 

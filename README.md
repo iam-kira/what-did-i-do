@@ -91,6 +91,7 @@ python shit.py --help
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the interpreter works, and where to add things |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, workflow, and what needs doing |
 | [example.shit](example.shit) | A program using most of the language |
+| [examples/calc.shit](examples/calc.shit) | A calculator written in shit: tokeniser, precedence-climbing parser, evaluator |
 
 ---
 
@@ -108,7 +109,7 @@ python shit.py --help
 - **Imports** — `summon("lib.shit")`, with cycle detection
 - **Error handling** — `risky` / `whoops` / `oops`, catching anything the runtime throws
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **410 tests**, including a robustness sweep that asserts no input ever raises a Python error
+- **416 tests**, including a robustness sweep that asserts no input ever raises a Python error
 
 ---
 

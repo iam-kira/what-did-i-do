@@ -1,0 +1,180 @@
+# A calculator written in shit.
+#
+# Tokenises, then parses with precedence climbing, then evaluates - the same
+# three stages shit.py uses, written in the language it implements.
+#
+# Supports: + - * / % ^, parentheses, unary minus, floats.
+#
+# Note the reader: values are copied when passed to a chore, so shared mutable
+# state lives in a closure, not in a bag handed around as an argument.
+
+stash DIGITS = "0123456789"
+stash OPERATORS = "+-*/%^()"
+
+# binding power per operator, loosest first
+stash PRECEDENCE = {"+": 1, "-": 1, "*": 2, "/": 2, "%": 2, "^": 3}
+
+# ---------------------------------------------------------------- tokenising
+
+chore tokenise(text) ong
+    stash tokens = []
+    stash i = 0
+
+    keep i < howmany(text) ong
+        stash c = text[i]
+
+        fr c == " " ong
+            i += 1
+            skip
+        bet
+
+        fr gotit(DIGITS, c) ong
+            stash number = ""
+            keep i < howmany(text) also gotit(DIGITS + ".", text[i]) ong
+                number += text[i]
+                i += 1
+            bet
+            tokens = stuff(tokens, {"kind": "math", "text": number})
+            skip
+        bet
+
+        fr gotit(OPERATORS, c) ong
+            tokens = stuff(tokens, {"kind": c, "text": c})
+            i += 1
+            skip
+        bet
+
+        oops "I do not know what '{c}' is"
+    bet
+
+    yeet tokens
+bet
+
+# ------------------------------------------------------------------- parsing
+
+chore new_reader(tokens) ong
+    stash at = 0
+
+    chore peek() ong
+        fr at >= howmany(tokens) ong
+            yeet "end"
+        bet
+        yeet tokens[at]["kind"]
+    bet
+
+    chore take() ong
+        stash token = tokens[at]
+        at += 1
+        yeet token
+    bet
+
+    yeet {"peek": peek, "take": take}
+bet
+
+chore parse_atom(reader) ong
+    stash kind = reader["peek"]()
+
+    fr kind == "-" ong
+        reader["take"]()
+        yeet 0 - parse_binding(reader, 4)
+    orfr kind == "+" ong
+        reader["take"]()
+        yeet parse_binding(reader, 4)
+    bet
+
+    fr kind == "(" ong
+        reader["take"]()
+        stash inner = parse_binding(reader, 1)
+        fr reader["peek"]() != ")" ong
+            oops "missing )"
+        bet
+        reader["take"]()
+        yeet inner
+    bet
+
+    fr kind == "math" ong
+        yeet mathify(reader["take"]()["text"])
+    bet
+
+    oops "expected a number, got {kind}"
+bet
+
+chore parse_binding(reader, least) ong
+    stash left = parse_atom(reader)
+
+    keep based ong
+        stash kind = reader["peek"]()
+        fr nah gotit(PRECEDENCE, kind) ong
+            bail
+        bet
+
+        stash power = PRECEDENCE[kind]
+        fr power < least ong
+            bail
+        bet
+        reader["take"]()
+
+        # ^ is right-associative, everything else leans left
+        stash next_least = power
+        fr kind != "^" ong
+            next_least = power + 1
+        bet
+
+        left = apply(kind, left, parse_binding(reader, next_least))
+    bet
+
+    yeet left
+bet
+
+chore apply(kind, a, b) ong
+    fr kind == "+" ong
+        yeet a + b
+    orfr kind == "-" ong
+        yeet a - b
+    orfr kind == "*" ong
+        yeet a * b
+    orfr kind == "/" ong
+        yeet a / b
+    orfr kind == "%" ong
+        yeet a % b
+    bet
+    yeet a ^ b
+bet
+
+# -------------------------------------------------------------------- driving
+
+chore calc(text) ong
+    stash reader = new_reader(tokenise(text))
+    stash value = parse_binding(reader, 1)
+
+    fr reader["peek"]() != "end" ong
+        oops "leftover input"
+    bet
+    yeet value
+bet
+
+chore show(text) ong
+    risky ong
+        yap("{text} = {calc(text)}")
+    whoops e ong
+        yap("{text} -> nope: {e["why"]}")
+    bet
+bet
+
+grind sum among [
+    "1 + 2 * 3",
+    "(1 + 2) * 3",
+    "2 ^ 3 ^ 2",
+    "-4 + 10",
+    "7 % 4",
+    "10 / 4",
+    "2 * (3 + 4) - 5",
+    "1.5 * 4",
+    "((2))",
+    "1 / 0",
+    "2 +",
+    "4 $ 2",
+    "(1 + 2",
+] ong
+    show(sum)
+bet

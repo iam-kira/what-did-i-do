@@ -2806,6 +2806,29 @@ class Interpreter:
         left = res.register(self.visit(node.left_node))
         if res.error:
             return res
+
+        # also / orelse short-circuit: the right side is only looked at when it
+        # can still change the answer, so `i < howmany(xs) also xs[i]` is safe
+        if node.op_tok.matches(TT_KEYWORD, 'also'):
+            if not left.is_true():
+                return res.success(Number(0).set_pos(node.pos_start, node.pos_end))
+            right = res.register(self.visit(node.right_node))
+            if res.error:
+                return res
+            return res.success(
+                Number(1 if right.is_true() else 0).set_pos(node.pos_start, node.pos_end)
+            )
+
+        if node.op_tok.matches(TT_KEYWORD, 'orelse'):
+            if left.is_true():
+                return res.success(Number(1).set_pos(node.pos_start, node.pos_end))
+            right = res.register(self.visit(node.right_node))
+            if res.error:
+                return res
+            return res.success(
+                Number(1 if right.is_true() else 0).set_pos(node.pos_start, node.pos_end)
+            )
+
         right = res.register(self.visit(node.right_node))
         if res.error:
             return res
@@ -2834,10 +2857,6 @@ class Interpreter:
             result, error = left.compare_lte(right)
         elif node.op_tok.type == TT_GTE:
             result, error = left.compare_gte(right)
-        elif node.op_tok.matches(TT_KEYWORD, 'also'):
-            result, error = (Number(1) if left.is_true() and right.is_true() else Number(0)), None
-        elif node.op_tok.matches(TT_KEYWORD, 'orelse'):
-            result, error = (Number(1) if left.is_true() or right.is_true() else Number(0)), None
         else:
             return res.failure(RTError(node.pos_start, node.pos_end, 'Unknown binary operator'))
 

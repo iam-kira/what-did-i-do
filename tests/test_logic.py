@@ -1,9 +1,11 @@
 import shit
 
+Q = '"'
+
 
 def ev(source):
     """Run source in a fresh scope, returning (last value, error)."""
-    result, error = shit.run('<stdin>', source, shit.SymbolTable())
+    result, error = shit.run('<stdin>', source, shit.new_symbol_table())
     if isinstance(result, list):
         result = result[-1] if result else None
     return result, error
@@ -76,3 +78,40 @@ def test_function_compares_unequal_to_number():
     result, error = ev('chore f() ong 1 bet\nf == 1')
     assert error is None
     assert repr(result) == '0'
+
+
+def test_also_short_circuits():
+    """The right side must not run when the left already decides it."""
+    result, error = ev('cringe also (1 / 0)')
+    assert error is None
+    assert repr(result) == '0'
+
+
+def test_orelse_short_circuits():
+    result, error = ev('based orelse (1 / 0)')
+    assert error is None
+    assert repr(result) == '1'
+
+
+def test_also_still_evaluates_the_right_when_it_matters():
+    result, error = ev('based also (1 / 0)')
+    assert result is None
+    assert 'Division by zero' in error.details
+
+
+def test_short_circuit_guards_an_index():
+    result, error = ev('stash xs = []\n0 < howmany(xs) also xs[0] == 1')
+    assert error is None
+    assert repr(result) == '0'
+
+    result, error = ev('stash xs = [1]\n0 < howmany(xs) also xs[0] == 1')
+    assert error is None
+    assert repr(result) == '1'
+
+
+def test_logic_operators_always_give_back_1_or_0():
+    for source, expected in (('5 also 3', '1'), (Q + 'a' + Q + ' orelse 0', '1'),
+                             ('[] orelse []', '0')):
+        result, error = ev(source)
+        assert error is None, source
+        assert repr(result) == expected, source
