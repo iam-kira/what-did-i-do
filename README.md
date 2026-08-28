@@ -1,6 +1,7 @@
 # shit 💩 - what-did-i-do 🤔
 
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![tests](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml/badge.svg)](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-WIP-orange)](https://github.com/iam-kira/what-did-i-do)
 [![Stars](https://img.shields.io/github/stars/iam-kira/what-did-i-do?style=flat)](https://github.com/iam-kira/what-did-i-do/stargazers)
 [![Last commit](https://img.shields.io/github/last-commit/iam-kira/what-did-i-do)](https://github.com/iam-kira/what-did-i-do/commits)
