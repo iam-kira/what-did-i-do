@@ -1,7 +1,52 @@
-var x = 10
-# comments are ignored
-var y = 3.5
-x + y   # so are trailing ones
-x = x * 2
-x
-x > y
+# fizzbuzz
+
+fun label(n) then
+    if n % 15 == 0 then
+        return "fizzbuzz"
+    elif n % 3 == 0 then
+        return "fizz"
+    elif n % 5 == 0 then
+        return "buzz"
+    end
+    return str(n)
+end
+
+for i = 1 to 16 then
+    print(label(i))
+end
+
+# recursion
+fun fact(n) then
+    if n <= 1 then
+        return 1
+    end
+    return n * fact(n - 1)
+end
+print("10! = " + str(fact(10)))
+
+# lists and strings
+var words = ["shit", "is", "a", "language"]
+var line = ""
+for i = 0 to len(words) then
+    line = line + words[i]
+    if i < len(words) - 1 then
+        line = line + " "
+    end
+end
+print(line)
+
+# while, break and continue
+var n = 0
+var evens = []
+while true then
+    n = n + 1
+    if n % 2 == 1 then
+        continue
+    end
+    if n > 10 then
+        break
+    end
+    evens = append(evens, n)
+end
+print(evens)
+print("2 ^ 16 = " + str(2 ^ 16))

@@ -44,24 +44,25 @@ Most language features touch four places, in this order:
 
 ## What needs doing
 
-Roughly in order — each one is easier if the one above it landed first:
+Roughly in order:
 
-- [ ] `Value` base class so `Number` isn't hardcoded into `visit_BinOpNode`
-- [ ] `Context` + call-stack tracebacks on `RTError`
-- [ ] `SymbolTable(parent=None)` with parent lookup
-- [ ] `true` / `false` / `null` keywords
-- [ ] `and` / `or` / `not`
-- [ ] `if` / `elif` / `else`
-- [ ] `while` and `for` loops, then `break` / `continue`
-- [ ] `fun` definitions, calls, and `return`
-- [ ] `String` and `List` values
-- [ ] Builtins: `print`, `input`, `len`
+- [ ] Call-stack traceback on runtime errors (currently only the innermost position)
+- [ ] Index assignment: `xs[0] = 1`
+- [ ] `for x in xs` iteration over lists and strings
+- [ ] Dictionaries / maps
+- [ ] Compound assignment: `x += 1`
+- [ ] A `run("other.shit")` builtin so files can import each other
+- [ ] `else` on loops, or `do ... while`
 
 Known smaller bugs, good first issues:
 
 - [ ] `1.5.5` reports "Illegal Character '.'" instead of a bad-number-literal error
-- [ ] `4 / 2` produces a float; `Number.__repr__` hides it
 - [ ] `Token.__init__` leaves `pos_start` undefined when given no positions
+- [ ] Assignment inside a function always writes to the local scope, so a function
+      shadows an outer name instead of mutating it (see the `ponytail:` note in
+      `Function.execute`)
+- [ ] Deep recursion hits Python's own recursion limit and raises rather than
+      reporting a shit-level error
 
 ## Pull requests
 
