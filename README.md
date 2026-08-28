@@ -62,7 +62,8 @@ See [example.shit](example.shit) for a longer one.
 | Number | `42`, `3.14` | ints and floats; `true` / `false` / `null` are `1` / `0` / `0` |
 | String | `"hi
 "` | escapes: `
-` `	` `` `\` `\"` |
+` `	` `
+` `\` `\"` |
 | List | `[1, "two", [3]]` | trailing comma allowed, may span lines |
 | Function | `fun f(a) then ... end` | first class — pass it, return it |
 
@@ -153,6 +154,16 @@ reports the file, line, and column.
 - `RTError` — runtime error (undefined variable, division by zero, bad index,
   wrong argument count, `break` outside a loop)
 
+Runtime errors inside functions print a call-stack traceback:
+
+```text
+Traceback (most recent call last):
+  File prog.shit, line 9, in outer
+  File prog.shit, line 6, in inner
+Runtime Error: Division by zero
+File prog.shit, line 2, col 16
+```
+
 ---
 
 ## Project structure
@@ -227,10 +238,12 @@ python -m pytest -q
 
 ## Not there yet
 
-- No `%=`-style compound assignment, no index assignment (`xs[0] = 1`)
+- No compound assignment (`x += 1`) and no index assignment (`xs[0] = 1`)
 - No dictionaries or `for x in xs` iteration
 - No modules or imports
-- No call-stack traceback on runtime errors — just the innermost position
+- Assignment inside a function always writes to the local scope, so a function
+  shadows an outer name rather than mutating it
+- Call depth is capped at 200
 
 ---
 

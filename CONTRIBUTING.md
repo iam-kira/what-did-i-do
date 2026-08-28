@@ -46,7 +46,6 @@ Most language features touch four places, in this order:
 
 Roughly in order:
 
-- [ ] Call-stack traceback on runtime errors (currently only the innermost position)
 - [ ] Index assignment: `xs[0] = 1`
 - [ ] `for x in xs` iteration over lists and strings
 - [ ] Dictionaries / maps
@@ -56,13 +55,10 @@ Roughly in order:
 
 Known smaller bugs, good first issues:
 
-- [ ] `1.5.5` reports "Illegal Character '.'" instead of a bad-number-literal error
 - [ ] `Token.__init__` leaves `pos_start` undefined when given no positions
 - [ ] Assignment inside a function always writes to the local scope, so a function
       shadows an outer name instead of mutating it (see the `ponytail:` note in
       `Function.execute`)
-- [ ] Deep recursion hits Python's own recursion limit and raises rather than
-      reporting a shit-level error
 
 ## Pull requests
 

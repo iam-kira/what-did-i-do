@@ -1,3 +1,10 @@
+import sys
+
+# A shit-level call costs roughly 20 Python frames, so MAX_CALL_DEPTH calls need
+# headroom above CPython's default 1000 or its limit fires before ours does.
+sys.setrecursionlimit(max(sys.getrecursionlimit(), 8000))
+
+
 # CONSTANTS
 #####################################
 DIGITS = '0123456789'
@@ -43,6 +50,29 @@ class InvalidSyntaxError(Error):
 class RTError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Runtime Error', details)
+        self.frames = []
+        self.frames_omitted = 0
+
+    MAX_FRAMES = 12
+
+    def add_frame(self, func_name, pos):
+        """Record a call the error unwound through, innermost first."""
+        if len(self.frames) < self.MAX_FRAMES:
+            self.frames.append((func_name, pos))
+        else:
+            self.frames_omitted += 1
+        return self
+
+    def as_string(self):
+        if not self.frames:
+            return super().as_string()
+
+        result = 'Traceback (most recent call last):\n'
+        if self.frames_omitted:
+            result += f'  ... {self.frames_omitted} more frame(s)\n'
+        for func_name, pos in reversed(self.frames):
+            result += f'  File {pos.filename}, line {pos.line + 1}, in {func_name}\n'
+        return result + super().as_string()
 
 
 # POSITION
@@ -148,7 +178,10 @@ class Lexer:
                 while self.current_char is not None and self.current_char != '\n':
                     self.advance()
             elif self.current_char in DIGITS:
-                tokens.append(self.make_number())
+                token, error = self.make_number()
+                if error:
+                    return [], error
+                tokens.append(token)
             elif self.current_char in LETTERS or self.current_char == '_':
                 tokens.append(self.make_identifier())
             elif self.current_char == '+':
@@ -216,15 +249,16 @@ class Lexer:
 
         while self.current_char is not None and self.current_char in DIGITS + '.':
             if self.current_char == '.':
-                if dot_count == 1:
-                    break
                 dot_count += 1
             num_str += self.current_char
             self.advance()
 
+        if dot_count > 1 or num_str.endswith('.'):
+            return None, ExpectedCharError(pos_start, self.pos.copy(), f"malformed number '{num_str}'")
+
         if dot_count == 0:
-            return Token(TT_INT, int(num_str), pos_start, self.pos)
-        return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
+            return Token(TT_INT, int(num_str), pos_start, self.pos), None
+        return Token(TT_FLOAT, float(num_str), pos_start, self.pos), None
 
     def make_string(self):
         text = ''
@@ -1429,6 +1463,15 @@ class Function(BaseFunction):
     def execute(self, args, interpreter, node):
         res = RTResult()
 
+        if interpreter.func_depth >= MAX_CALL_DEPTH:
+            return res.failure(
+                RTError(
+                    node.pos_start,
+                    node.pos_end,
+                    f'Maximum call depth of {MAX_CALL_DEPTH} exceeded',
+                )
+            )
+
         # ponytail: assignment inside a call writes to the local scope, so a
         # function shadows outer names instead of mutating them. Add explicit
         # scope resolution in SymbolTable.set if that ever bites.
@@ -1610,6 +1653,9 @@ class SymbolTable:
 
 # INTERPRETER
 ######################################
+MAX_CALL_DEPTH = 200
+
+
 class Interpreter:
     def __init__(self, symbol_table):
         self.symbol_table = symbol_table
@@ -1906,6 +1952,8 @@ class Interpreter:
 
         value = res.register(func.execute(args, self, node))
         if res.error:
+            if isinstance(res.error, RTError):
+                res.error.add_frame(func.name, node.pos_start)
             return res
 
         # a call is a fresh value; signals never leak past it
@@ -1961,7 +2009,13 @@ def run(filename, text, symbol_table=None):
         return None, ast.error
 
     interpreter = Interpreter(symbol_table if symbol_table is not None else global_symbol_table)
-    result = interpreter.visit(ast.node)
+    try:
+        result = interpreter.visit(ast.node)
+    except RecursionError:
+        # safety net: a non-call recursion (deeply nested expressions) blew the
+        # Python stack before MAX_CALL_DEPTH could catch it
+        return None, RTError(ast.node.pos_start, ast.node.pos_end, 'Expression nested too deeply')
+
     if result.error:
         return None, result.error
 
@@ -1974,7 +2028,6 @@ def run(filename, text, symbol_table=None):
 # CLI
 #######################################
 def main(argv=None):
-    import sys
     argv = sys.argv[1:] if argv is None else argv
 
     if not argv:
