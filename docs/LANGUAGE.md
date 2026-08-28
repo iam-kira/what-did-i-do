@@ -52,8 +52,12 @@ stash total = smol(
 | Dict | `bag` | `{"a": 1, 2: "b"}` |
 | Function | `chore` | `chore f(a) ong ... bet` |
 
-`based`, `cringe` and `ghosted` are `1`, `0` and `0`. There is no separate
-boolean type — anything non-zero, non-empty is truthy.
+`based` and `cringe` are `1` and `0`; there is no separate boolean type, and
+anything non-zero, non-empty is truthy.
+
+`ghosted` is its own value meaning *nothing here*. It is falsy, equal only to
+itself, and arithmetic on it is an error rather than a silent zero — so
+`ghosted == 0` is `0`, and `is_ghosted` is how you ask.
 
 String escapes: `\n` `\t` `\r` `\\` `\"` `{{` `}}`.
 
@@ -343,7 +347,7 @@ Return the new value, or keep the state in a closure like `counter` above.
 | `whatis(value)` | type name as a yap: `"math"`, `"yap"`, `"pile"`, `"bag"`, `"chore"` |
 | `yapify(value)` | anything → yap |
 | `mathify(value)` | yap → math, or explode trying |
-| `is_math` `is_yap` `is_pile` `is_chore` | type checks, `1` or `0` |
+| `is_math` `is_yap` `is_pile` `is_chore` `is_ghosted` | type checks, `1` or `0` |
 
 **Maths**
 

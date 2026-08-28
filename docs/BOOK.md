@@ -132,6 +132,7 @@ The types are renamed too, and the names show up in error messages:
 
 | type | called | why |
 |---|---|---|
+| nothing | `ghosted` | it is not there |
 | number | `math` | it is |
 | string | `yap` | it talks |
 | list | `pile` | things heaped up |
@@ -160,8 +161,22 @@ There is one rule worth knowing: **exact integer division stays an integer.**
 `4 / 2` is `2`, not `2.0`. `5 / 2` is `2.5`. This means `/` does what you meant
 in both cases without a second operator.
 
-`based`, `cringe` and `ghosted` are `1`, `0` and `0`. There is no separate
-boolean type — anything non-zero and non-empty is true.
+`based` and `cringe` are `1` and `0` — there is no separate boolean type, and
+anything non-zero and non-empty is true.
+
+`ghosted` is different. It is a value of its own meaning *nothing here*, not
+another way to write zero:
+
+```text
+cook(ghosted == 0)         # 0 - absent is not the same as zero
+cook(whatis(ghosted))      # "ghosted"
+cook(nah ghosted)          # 1 - it is falsy
+cook(is_ghosted(ghosted))  # 1
+```
+
+Arithmetic on it is an error rather than a silent `0`, which is what makes it
+useful: a missing value shows up where it went missing, not three steps later
+as a wrong total.
 
 ### Yaps
 
@@ -606,7 +621,7 @@ a cycle is reported rather than followed forever.
 
 ## 11. The standard library
 
-49 builtins. They live in a scope every program inherits, so you can shadow one
+50 builtins. They live in a scope every program inherits, so you can shadow one
 if you insist.
 
 **Talking and reading**
@@ -634,7 +649,7 @@ if you insist.
 | `whatis(value)` | type name as a yap |
 | `yapify(value)` | anything to a yap |
 | `mathify(value)` | a yap to a math, or an error |
-| `is_math` `is_yap` `is_pile` `is_chore` | `1` or `0` |
+| `is_math` `is_yap` `is_pile` `is_chore` `is_ghosted` | `1` or `0` |
 
 **Maths**
 

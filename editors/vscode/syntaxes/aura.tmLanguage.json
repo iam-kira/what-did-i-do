@@ -96,7 +96,7 @@
     },
     "builtin": {
       "name": "support.function.builtin.aura",
-      "match": "\\b(cook|beg|summon|slurp|spill|dribble|isthere|handed|bounce|howmany|whatis|yapify|mathify|is_math|is_yap|is_pile|is_chore|smol|chonk|total|absolutely|roundish|chunk|flip|where|gotit|stuff|yoink|sortof|glue|shred|shout|whisper|trim|labels|goods|eachof|keepif|smoosh|rummage|isfolder|stitch|swap|starts|ends|code|letter|numbered|pair)\\b(?=\\s*\\()"
+      "match": "\\b(cook|beg|summon|slurp|spill|dribble|isthere|handed|bounce|howmany|whatis|yapify|mathify|is_math|is_yap|is_pile|is_chore|smol|chonk|total|absolutely|roundish|chunk|flip|where|gotit|stuff|yoink|sortof|glue|shred|shout|whisper|trim|labels|goods|eachof|keepif|smoosh|rummage|isfolder|stitch|swap|starts|ends|code|letter|numbered|pair|is_ghosted)\\b(?=\\s*\\()"
     },
     "chore-name": {
       "match": "\\b(chore)\\s+([A-Za-z_][A-Za-z0-9_]*)",

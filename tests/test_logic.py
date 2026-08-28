@@ -12,7 +12,7 @@ def ev(source):
 
 
 def test_boolean_and_null_literals():
-    for source, expected in (('based', '1'), ('cringe', '0'), ('ghosted', '0')):
+    for source, expected in (('based', '1'), ('cringe', '0'), ('ghosted', 'ghosted')):
         result, error = ev(source)
         assert error is None
         assert repr(result) == expected

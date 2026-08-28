@@ -522,6 +522,15 @@ class NumberNode:
         return f'{self.tok}'
 
 
+class NothingNode:
+    def __init__(self, pos_start, pos_end):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return 'ghosted'
+
+
 class StringNode:
     def __init__(self, tok):
         self.tok = tok
@@ -1389,7 +1398,11 @@ class Parser:
                 return res
             return self.postfix_result(res, bag)
 
-        if tok.type == TT_KEYWORD and tok.value in ('based', 'cringe', 'ghosted'):
+        if tok.type == TT_KEYWORD and tok.value == 'ghosted':
+            self.advance()
+            return self.postfix_result(res, NothingNode(tok.pos_start, tok.pos_end))
+
+        if tok.type == TT_KEYWORD and tok.value in ('based', 'cringe'):
             self.advance()
             literal = 1 if tok.value == 'based' else 0
             return res.success(NumberNode(Token(TT_INT, literal, tok.pos_start, tok.pos_end)))
@@ -1681,12 +1694,15 @@ class Value:
         return False
 
     def illegal_operation(self, other=None):
+        """Names both sides: '1 + ghosted' blaming only 'math' helps nobody."""
         other = other if other is not None else self
-        return None, RTError(
-            self.pos_start,
-            other.pos_end,
-            f'Illegal operation for {self.TYPE_NAME}', kind='type',
-        )
+
+        if other is self or other.TYPE_NAME == self.TYPE_NAME:
+            detail = f'Illegal operation for {self.TYPE_NAME}'
+        else:
+            detail = f'Illegal operation between {self.TYPE_NAME} and {other.TYPE_NAME}'
+
+        return None, RTError(self.pos_start, other.pos_end, detail, kind='type')
 
     def added_to(self, other):
         return self.illegal_operation(other)
@@ -1834,6 +1850,28 @@ class Number(Value):
         if isinstance(self.value, float) and self.value.is_integer():
             return str(int(self.value))
         return str(self.value)
+
+
+class Nothing(Value):
+    """The absence of a value. Falsy, equal only to itself, and refuses to
+    pretend it is a number - so `ghosted + 1` is an error rather than 1."""
+
+    TYPE_NAME = 'ghosted'
+
+    def copy(self):
+        return Nothing().set_pos(self.pos_start, self.pos_end)
+
+    def compare_eq(self, other):
+        return Number(1 if isinstance(other, Nothing) else 0), None
+
+    def compare_ne(self, other):
+        return Number(0 if isinstance(other, Nothing) else 1), None
+
+    def is_true(self):
+        return False
+
+    def __repr__(self):
+        return 'ghosted'
 
 
 class String(Value):
@@ -2825,6 +2863,10 @@ def bi_whatis(args, node):
     return String(args[0].TYPE_NAME), None
 
 
+def bi_is_ghosted(args, node):
+    return Number(1 if isinstance(args[0], Nothing) else 0), None
+
+
 def bi_is_num(args, node):
     return Number(1 if isinstance(args[0], Number) else 0), None
 
@@ -2887,6 +2929,7 @@ BUILTINS = {
     'stitch': (['part', '*more'], bi_stitch),
     'bounce': (['?code'], bi_bounce),
     'whatis': (['value'], bi_whatis),
+    'is_ghosted': (['value'], bi_is_ghosted),
     'is_math': (['value'], bi_is_num),
     'is_yap': (['value'], bi_is_str),
     'is_pile': (['value'], bi_is_list),
@@ -2956,6 +2999,9 @@ class Interpreter:
 
     def visit_NumberNode(self, node):
         return RTResult().success(Number(node.tok.value).set_pos(node.pos_start, node.pos_end))
+
+    def visit_NothingNode(self, node):
+        return RTResult().success(Nothing().set_pos(node.pos_start, node.pos_end))
 
     def visit_StringNode(self, node):
         return RTResult().success(String(node.tok.value).set_pos(node.pos_start, node.pos_end))
