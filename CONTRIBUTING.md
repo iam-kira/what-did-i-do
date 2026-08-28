@@ -54,7 +54,8 @@ supports. A new builtin is one function plus one row in `BUILTINS`.
 Roughly in order:
 
 - [ ] `whatever` branch on a loop, or `do ... keep`
-- [ ] Real user-defined types - a bag of chores works but has no identity or dot access
+- [ ] Real user-defined types - a bag of chores with dot access works, but has
+      no identity, no whatis name of its own, and no shared behaviour
 - [ ] A `--time` flag, or anything resembling a profiler
 - [ ] Directory listing, so a script can walk more than one named file
 - [ ] `slurp` reads the whole file; no streaming and no binary

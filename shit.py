@@ -140,6 +140,7 @@ TT_FSTRING = 'FSTRING'
 TT_LCURLY = 'LCURLY'
 TT_RCURLY = 'RCURLY'
 TT_COLON = 'COLON'
+TT_DOT = 'DOT'
 TT_LSQUARE = 'LSQUARE'
 TT_RSQUARE = 'RSQUARE'
 TT_LPAREN = 'LPAREN'
@@ -242,6 +243,9 @@ class Lexer:
                 self.advance()
             elif self.current_char == ':':
                 tokens.append(Token(TT_COLON, pos_start=self.pos))
+                self.advance()
+            elif self.current_char == '.':
+                tokens.append(Token(TT_DOT, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '[':
                 tokens.append(Token(TT_LSQUARE, pos_start=self.pos))
@@ -1514,6 +1518,21 @@ class Parser:
                 if res.error:
                     return res
 
+            elif self.current_tok.type == TT_DOT:
+                self.advance()
+                if self.current_tok.type not in (TT_IDENTIFIER, TT_KEYWORD):
+                    return res.failure(
+                        InvalidSyntaxError(
+                            self.current_tok.pos_start, self.current_tok.pos_end, "Expected a label after '.'"
+                        )
+                    )
+                label = self.current_tok
+                pos_end = label.pos_end.copy()
+                self.advance()
+                # d.name is exactly d["name"], so assignment and calls come free
+                key = StringNode(Token(TT_STRING, label.value, label.pos_start, label.pos_end))
+                node = IndexNode(node, key, node.pos_start, pos_end)
+
             else:
                 return res.success(node)
 
@@ -1903,6 +1922,13 @@ class List(Value):
 
 
 def index_into(container, sequence, index, wrap):
+    if isinstance(index, String):
+        return None, RTError(
+            index.pos_start,
+            index.pos_end,
+            f'A {container.TYPE_NAME} is indexed by whole maths, not labels',
+        )
+
     """Shared bounds-checked indexing for String and List.
 
     Negative indices count from the end, as in Python.

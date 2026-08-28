@@ -59,7 +59,7 @@ chore new_reader(tokens) ong
         fr at >= howmany(tokens) ong
             yeet "end"
         bet
-        yeet tokens[at]["kind"]
+        yeet tokens[at].kind
     bet
 
     chore take() ong
@@ -72,28 +72,28 @@ chore new_reader(tokens) ong
 bet
 
 chore parse_atom(reader) ong
-    stash kind = reader["peek"]()
+    stash kind = reader.peek()
 
     fr kind == "-" ong
-        reader["take"]()
+        reader.take()
         yeet 0 - parse_binding(reader, 4)
     orfr kind == "+" ong
-        reader["take"]()
+        reader.take()
         yeet parse_binding(reader, 4)
     bet
 
     fr kind == "(" ong
-        reader["take"]()
+        reader.take()
         stash inner = parse_binding(reader, 1)
-        fr reader["peek"]() != ")" ong
+        fr reader.peek() != ")" ong
             oops "missing )"
         bet
-        reader["take"]()
+        reader.take()
         yeet inner
     bet
 
     fr kind == "math" ong
-        yeet mathify(reader["take"]()["text"])
+        yeet mathify(reader.take().text)
     bet
 
     oops "expected a number, got {kind}"
@@ -103,7 +103,7 @@ chore parse_binding(reader, least) ong
     stash left = parse_atom(reader)
 
     keep based ong
-        stash kind = reader["peek"]()
+        stash kind = reader.peek()
         fr nah gotit(PRECEDENCE, kind) ong
             bail
         bet
@@ -112,7 +112,7 @@ chore parse_binding(reader, least) ong
         fr power < least ong
             bail
         bet
-        reader["take"]()
+        reader.take()
 
         # ^ is right-associative, everything else leans left
         stash next_least = power
@@ -147,7 +147,7 @@ chore calc(text) ong
     stash reader = new_reader(tokenise(text))
     stash value = parse_binding(reader, 1)
 
-    fr reader["peek"]() != "end" ong
+    fr reader.peek() != "end" ong
         oops "leftover input"
     bet
     yeet value

@@ -108,11 +108,11 @@ python shit.py --help
 - **39 builtins** — printing, input, files, maths, slicing, sorting, splitting, joining, type checks
 - **Scriptable** — `handed()` for arguments, `slurp`/`spill` for files, `bounce(code)` for exit status
 - **Higher-order chores** — `eachof`, `keepif`, `smoosh`, and `sortof` with a key chore
-- **Objects, sort of** — a chore returning a bag of chores over captured state
+- **Objects, sort of** — a chore returning a bag of chores over captured state, reached with `thing.name()`
 - **Imports** — `summon("lib.shit")`, with cycle detection
 - **Error handling** — `risky` / `whoops` / `oops`, catching anything the runtime throws
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **436 tests**, including a robustness sweep that asserts no input ever raises a Python error
+- **449 tests**, including a robustness sweep that asserts no input ever raises a Python error
 
 ---
 

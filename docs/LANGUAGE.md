@@ -106,6 +106,18 @@ stash fewer = yoink(scores, "ana")
 `+` merges two bags, right-hand side winning. `==` compares by value. An empty
 bag is falsy.
 
+`d.name` is shorthand for `d["name"]` — the same thing everywhere, so it reads
+and it assigns:
+
+```text
+stash player = {"name": "ana", "score": 0}
+player.score += 10
+player.title = "champ"
+yap(player.name)
+```
+
+Only bags have labels; dotting a pile or yap says so.
+
 ---
 
 ## Variables
@@ -138,7 +150,7 @@ locally, so a parameter or local never clobbers an outer name.
 | Arithmetic | `+` `-` `*` `/` `%` `^` |
 | Comparison | `==` `!=` `<` `>` `<=` `>=` |
 | Logic | `also` `orelse` `nah` |
-| Index | `xs[0]`, `xs[-1]`, `bag["label"]` |
+| Index | `xs[0]`, `xs[-1]`, `bag["label"]`, `bag.label` |
 
 Precedence, loosest first: `orelse` → `also` → `nah` → comparison → `+ -` →
 `* / %` → unary `+ -` → `^` → call/index.
@@ -282,7 +294,8 @@ a["bump"]()
 yap(a["peek"]())
 ```
 
-Suffixes chain, so `a["bump"]()`, `fs[0]()`, `f()[0]` and `mk()()` all work.
+Suffixes chain, so `a.bump()`, `fs[0]()`, `f()[0]` and `mk()()` all work — which
+is what makes the bag above read like an object.
 
 **Shared state has to be captured, not passed.** Arguments are copies, so a
 chore cannot change a pile or bag its caller holds:
