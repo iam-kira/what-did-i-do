@@ -23,8 +23,9 @@ while True:
     if error:
         print(error.as_string())
     elif result is not None:
+        # repr, so a string echoes as "1" and a number as 1
         if isinstance(result, list):
             for value in result:
-                print(value)
+                print(repr(value))
         else:
-            print(result)
+            print(repr(result))
