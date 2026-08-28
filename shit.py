@@ -6,6 +6,7 @@ LETTERS_DIGITS = LETTERS + DIGITS + '_'
 KEYWORDS = [
     'var', 'if', 'then', 'elif', 'else', 'end', 'while', 'fun',
     'and', 'or', 'not', 'true', 'false', 'null',
+    'for', 'to', 'step', 'break', 'continue', 'return',
 ]
 
 
@@ -338,6 +339,48 @@ class WhileNode:
         return f'(while {self.condition_node} then {self.body_node})'
 
 
+class ForNode:
+    def __init__(self, var_name_tok, start_node, end_node, step_node, body_node, pos_start, pos_end):
+        self.var_name_tok = var_name_tok
+        self.start_node = start_node
+        self.end_node = end_node
+        self.step_node = step_node
+        self.body_node = body_node
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return f'(for {self.var_name_tok.value} = {self.start_node} to {self.end_node})'
+
+
+class ReturnNode:
+    def __init__(self, node_to_return, pos_start, pos_end):
+        self.node_to_return = node_to_return
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return f'(return {self.node_to_return})'
+
+
+class ContinueNode:
+    def __init__(self, pos_start, pos_end):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return '(continue)'
+
+
+class BreakNode:
+    def __init__(self, pos_start, pos_end):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return '(break)'
+
+
 class FuncDefNode:
     def __init__(self, var_name_tok, arg_name_toks, body_node, pos_start, pos_end):
         self.var_name_tok = var_name_tok
@@ -451,6 +494,12 @@ class Parser:
 
         return res.success(ListNode(statements, pos_start, self.current_tok.pos_end.copy()))
 
+    def at_statement_end(self):
+        """True when nothing more of the current statement can follow."""
+        if self.current_tok.type in (TT_NEWLINE, TT_EOF):
+            return True
+        return self.current_tok.type == TT_KEYWORD and self.current_tok.value in ('end', 'elif', 'else')
+
     def at_block_end(self, stop_keywords):
         if self.current_tok.type == TT_EOF:
             return True
@@ -464,6 +513,32 @@ class Parser:
 
         if self.current_tok.matches(TT_KEYWORD, 'while'):
             return self.while_expr()
+
+        if self.current_tok.matches(TT_KEYWORD, 'for'):
+            return self.for_expr()
+
+        if self.current_tok.matches(TT_KEYWORD, 'return'):
+            pos_start = self.current_tok.pos_start.copy()
+            pos_end = self.current_tok.pos_end.copy()
+            self.advance()
+
+            value = None
+            if not self.at_statement_end():
+                value = res.register(self.expr())
+                if res.error:
+                    return res
+                pos_end = value.pos_end.copy()
+            return res.success(ReturnNode(value, pos_start, pos_end))
+
+        if self.current_tok.matches(TT_KEYWORD, 'continue'):
+            node = ContinueNode(self.current_tok.pos_start.copy(), self.current_tok.pos_end.copy())
+            self.advance()
+            return res.success(node)
+
+        if self.current_tok.matches(TT_KEYWORD, 'break'):
+            node = BreakNode(self.current_tok.pos_start.copy(), self.current_tok.pos_end.copy())
+            self.advance()
+            return res.success(node)
 
         if self.current_tok.matches(TT_KEYWORD, 'fun'):
             return self.func_def()
@@ -573,6 +648,64 @@ class Parser:
         pos_end = self.current_tok.pos_end.copy()
         self.advance()
         return res.success(WhileNode(condition, body, pos_start, pos_end))
+
+    def for_expr(self):
+        res = ParseResult()
+        pos_start = self.current_tok.pos_start.copy()
+        self.advance()
+
+        if self.current_tok.type != TT_IDENTIFIER:
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 'Expected identifier')
+            )
+        var_name_tok = self.current_tok
+        self.advance()
+
+        if self.current_tok.type != TT_EQ:
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected '='")
+            )
+        self.advance()
+
+        start_node = res.register(self.expr())
+        if res.error:
+            return res
+
+        if not self.current_tok.matches(TT_KEYWORD, 'to'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'to'")
+            )
+        self.advance()
+
+        end_node = res.register(self.expr())
+        if res.error:
+            return res
+
+        step_node = None
+        if self.current_tok.matches(TT_KEYWORD, 'step'):
+            self.advance()
+            step_node = res.register(self.expr())
+            if res.error:
+                return res
+
+        if not self.current_tok.matches(TT_KEYWORD, 'then'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'then'")
+            )
+        self.advance()
+
+        body = res.register(self.statements(('end',)))
+        if res.error:
+            return res
+
+        if not self.current_tok.matches(TT_KEYWORD, 'end'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'end'")
+            )
+
+        pos_end = self.current_tok.pos_end.copy()
+        self.advance()
+        return res.success(ForNode(var_name_tok, start_node, end_node, step_node, body, pos_start, pos_end))
 
     def func_def(self):
         res = ParseResult()
@@ -766,16 +899,46 @@ class Parser:
 ######################################
 class RTResult:
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.value = None
         self.error = None
+        self.func_return_value = None
+        self.loop_should_continue = False
+        self.loop_should_break = False
 
     def register(self, res):
         if res.error:
             self.error = res.error
+        self.func_return_value = res.func_return_value
+        self.loop_should_continue = res.loop_should_continue
+        self.loop_should_break = res.loop_should_break
         return res.value
+
+    def should_return(self):
+        """True when control must unwind: an error, a return, or break/continue."""
+        return (
+            self.error is not None
+            or self.func_return_value is not None
+            or self.loop_should_continue
+            or self.loop_should_break
+        )
 
     def success(self, value):
         self.value = value
+        return self
+
+    def success_return(self, value):
+        self.func_return_value = value
+        return self
+
+    def success_continue(self):
+        self.loop_should_continue = True
+        return self
+
+    def success_break(self):
+        self.loop_should_break = True
         return self
 
     def failure(self, error):
@@ -967,6 +1130,8 @@ class SymbolTable:
 class Interpreter:
     def __init__(self, symbol_table):
         self.symbol_table = symbol_table
+        self.loop_depth = 0
+        self.func_depth = 0
 
     def visit(self, node):
         method_name = f'visit_{type(node).__name__}'
@@ -1088,18 +1253,111 @@ class Interpreter:
         res = RTResult()
         value = Number(0).set_pos(node.pos_start, node.pos_end)
 
-        while True:
-            cond_value = res.register(self.visit(node.condition_node))
-            if res.error:
-                return res
-            if not cond_value.is_true():
-                break
+        self.loop_depth += 1
+        try:
+            while True:
+                cond_value = res.register(self.visit(node.condition_node))
+                if res.error:
+                    return res
+                if not cond_value.is_true():
+                    break
 
-            value = self.run_block(res, node.body_node)
-            if res.error:
-                return res
+                body_value = self.run_block(res, node.body_node)
+                if res.error:
+                    return res
+                if res.func_return_value is not None:
+                    return res
+                if res.loop_should_break:
+                    res.loop_should_break = False
+                    break
+                if res.loop_should_continue:
+                    res.loop_should_continue = False
+                    continue
+                value = body_value
+        finally:
+            self.loop_depth -= 1
 
         return res.success(value)
+
+    def visit_ForNode(self, node):
+        res = RTResult()
+
+        start_value = res.register(self.visit(node.start_node))
+        if res.error:
+            return res
+        end_value = res.register(self.visit(node.end_node))
+        if res.error:
+            return res
+
+        if node.step_node is not None:
+            step_value = res.register(self.visit(node.step_node))
+            if res.error:
+                return res
+        else:
+            step_value = Number(1)
+
+        for name, val in (('start', start_value), ('end', end_value), ('step', step_value)):
+            if not isinstance(val, Number):
+                return res.failure(
+                    RTError(node.pos_start, node.pos_end, f"'for' {name} value must be a number")
+                )
+
+        if step_value.value == 0:
+            return res.failure(RTError(node.pos_start, node.pos_end, "'for' step cannot be 0"))
+
+        var_name = node.var_name_tok.value
+        i = start_value.value
+        value = Number(0).set_pos(node.pos_start, node.pos_end)
+
+        self.loop_depth += 1
+        try:
+            while (i < end_value.value) if step_value.value > 0 else (i > end_value.value):
+                self.symbol_table.set(var_name, Number(i).set_pos(node.pos_start, node.pos_end))
+                i += step_value.value
+
+                body_value = self.run_block(res, node.body_node)
+                if res.error:
+                    return res
+                if res.func_return_value is not None:
+                    return res
+                if res.loop_should_break:
+                    res.loop_should_break = False
+                    break
+                if res.loop_should_continue:
+                    res.loop_should_continue = False
+                    continue
+                value = body_value
+        finally:
+            self.loop_depth -= 1
+
+        return res.success(value)
+
+    def visit_ReturnNode(self, node):
+        res = RTResult()
+
+        if self.func_depth == 0:
+            return res.failure(RTError(node.pos_start, node.pos_end, "'return' outside of a function"))
+
+        if node.node_to_return is not None:
+            value = res.register(self.visit(node.node_to_return))
+            if res.error:
+                return res
+        else:
+            value = Number(0).set_pos(node.pos_start, node.pos_end)
+
+        return res.success_return(value)
+
+    def visit_ContinueNode(self, node):
+        res = RTResult()
+        if self.loop_depth == 0:
+            return res.failure(RTError(node.pos_start, node.pos_end, "'continue' outside of a loop"))
+        return res.success_continue()
+
+    def visit_BreakNode(self, node):
+        res = RTResult()
+        if self.loop_depth == 0:
+            return res.failure(RTError(node.pos_start, node.pos_end, "'break' outside of a loop"))
+        return res.success_break()
 
     def visit_FuncDefNode(self, node):
         res = RTResult()
@@ -1144,30 +1402,48 @@ class Interpreter:
 
         outer_table = self.symbol_table
         self.symbol_table = call_table
+        outer_loop_depth = self.loop_depth
+        self.loop_depth = 0
+        self.func_depth += 1
         try:
             value = self.run_block(res, func.body_node)
         finally:
             self.symbol_table = outer_table
+            self.loop_depth = outer_loop_depth
+            self.func_depth -= 1
 
         if res.error:
             return res
-        return res.success(value.set_pos(node.pos_start, node.pos_end))
+
+        if res.func_return_value is not None:
+            value = res.func_return_value
+
+        # signals stop at the call boundary
+        res.func_return_value = None
+        res.loop_should_break = False
+        res.loop_should_continue = False
+        return res.success(value.copy().set_pos(node.pos_start, node.pos_end))
 
     def run_block(self, res, body):
         # a block evaluates to its last statement's value, 0 when empty
         values = res.register(self.visit(body))
         if res.error:
             return None
-        return values[-1] if values else Number(0).set_pos(body.pos_start, body.pos_end)
+        if not values or values[-1] is None:
+            return Number(0).set_pos(body.pos_start, body.pos_end)
+        return values[-1]
 
     def visit_ListNode(self, node):
         res = RTResult()
         values = []
 
         for element in node.element_nodes:
-            values.append(res.register(self.visit(element)))
+            value = res.register(self.visit(element))
             if res.error:
                 return res
+            values.append(value)
+            if res.should_return():
+                break
 
         return res.success(values)
 
