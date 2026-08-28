@@ -1,24 +1,24 @@
 {
-  "name": "shit-lang",
-  "displayName": "shit",
-  "description": "Syntax highlighting for the shit programming language",
+  "name": "aura-lang",
+  "displayName": "aura",
+  "description": "Syntax highlighting for the aura programming language",
   "version": "0.1.0",
   "engines": { "vscode": "^1.60.0" },
   "categories": ["Programming Languages"],
   "contributes": {
     "languages": [
       {
-        "id": "shit",
-        "aliases": ["shit"],
-        "extensions": [".shit"],
+        "id": "aura",
+        "aliases": ["aura"],
+        "extensions": [".aura"],
         "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
       {
-        "language": "shit",
-        "scopeName": "source.shit",
-        "path": "./syntaxes/shit.tmLanguage.json"
+        "language": "aura",
+        "scopeName": "source.aura",
+        "path": "./syntaxes/aura.tmLanguage.json"
       }
     ]
   }

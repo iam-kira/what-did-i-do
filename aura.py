@@ -1,4 +1,4 @@
-"""shit - a small interpreted language.
+"""aura - a small interpreted language.
 
 Copyright (c) 2026 iam-kira (Vijay Biradar)
 Licensed under the MIT License. See LICENSE for the full text.
@@ -9,7 +9,7 @@ products, but the copyright notice above must travel with every copy.
 
 import sys
 
-# A shit-level call costs roughly 20 Python frames, so MAX_CALL_DEPTH calls need
+# A aura-level call costs roughly 20 Python frames, so MAX_CALL_DEPTH calls need
 # headroom above CPython's default 1000 or its limit fires before ours does.
 sys.setrecursionlimit(max(sys.getrecursionlimit(), 8000))
 
@@ -23,7 +23,7 @@ KEYWORDS = [
     'stash', 'fr', 'ong', 'orfr', 'whatever', 'bet', 'keep', 'chore',
     'also', 'orelse', 'nah', 'based', 'cringe', 'ghosted',
     'grind', 'til', 'by', 'among', 'bail', 'skip', 'yeet',
-    'risky', 'whoops', 'oops',
+    'sus', 'whoops', 'oops',
 ]
 
 
@@ -90,7 +90,7 @@ class InvalidSyntaxError(Error):
 
 
 class BounceError(Error):
-    """Raised by bounce(). Unwinds like an error but no risky may catch it."""
+    """Raised by bounce(). Unwinds like an error but no sus may catch it."""
 
     def __init__(self, pos_start, pos_end, code):
         super().__init__(pos_start, pos_end, 'Bounced', f'exit code {code}')
@@ -98,7 +98,7 @@ class BounceError(Error):
 
 
 class RTError(Error):
-    """A runtime failure. `kind` is a short slug shit code can branch on."""
+    """A runtime failure. `kind` is a short slug aura code can branch on."""
 
     KINDS = frozenset({
         'runtime', 'math', 'name', 'index', 'label', 'type', 'arity',
@@ -711,7 +711,7 @@ class RiskyNode:
         self.pos_end = pos_end
 
     def __repr__(self):
-        return f'(risky {self.body_node} whoops {self.catch_name_tok.value})'
+        return f'(sus {self.body_node} whoops {self.catch_name_tok.value})'
 
 
 class OopsNode:
@@ -899,7 +899,7 @@ class Parser:
         if self.current_tok.matches(TT_KEYWORD, 'grind'):
             return self.for_expr()
 
-        if self.current_tok.matches(TT_KEYWORD, 'risky'):
+        if self.current_tok.matches(TT_KEYWORD, 'sus'):
             return self.risky_expr()
 
         if self.current_tok.matches(TT_KEYWORD, 'oops'):
@@ -2476,7 +2476,7 @@ def bi_sortof(args, node):
 
 
 def call_chore(func, call_args, node, interpreter):
-    """Call a shit chore from inside a builtin. Returns (value, error)."""
+    """Call a aura chore from inside a builtin. Returns (value, error)."""
     if not isinstance(func, BaseFunction):
         return None, RTError(node.pos_start, node.pos_end, f'{func} is not a chore', kind='type')
 
@@ -2734,7 +2734,7 @@ def bi_stitch(args, node):
 
     if not parts:
         return None, RTError(node.pos_start, node.pos_end, "'stitch' needs at least one yap", kind='type')
-    # forward slashes everywhere, so a shit program reads the same on any box
+    # forward slashes everywhere, so a aura program reads the same on any box
     return String(os.path.join(*parts).replace(os.sep, '/')), None
 
 
@@ -2773,7 +2773,7 @@ def bi_is_fun(args, node):
 
 
 BUILTINS = {
-    'yap': (['value'], bi_print),
+    'cook': (['value'], bi_print),
     'beg': (['?prompt'], bi_input),
     'howmany': (['value'], bi_len),
     'yapify': (['value'], bi_str),
@@ -3483,14 +3483,14 @@ def run(filename, text, symbol_table=None):
 
 # CLI
 #######################################
-USAGE = """shit - a language with regrettable keywords
+USAGE = """aura - a language with regrettable keywords
 
 usage:
-  python shit.py                 open the REPL
-  python shit.py FILE [ARG...]   run a program, passing it the extra args
-  python shit.py --tokens FILE   show the token stream, then stop
-  python shit.py --ast FILE      show the parse tree, then stop
-  python shit.py --help          this
+  python aura.py                 open the REPL
+  python aura.py FILE [ARG...]   run a program, passing it the extra args
+  python aura.py --tokens FILE   show the token stream, then stop
+  python aura.py --ast FILE      show the parse tree, then stop
+  python aura.py --help          this
 """
 
 
@@ -3511,12 +3511,12 @@ def main(argv=None):
 
     unknown = [flag for flag in flags if flag not in ('--tokens', '--ast', '--help')]
     if unknown:
-        print(f"shit: unknown option {unknown[0]}")
+        print(f"aura: unknown option {unknown[0]}")
         print(USAGE, end='')
         return 2
 
     if not paths:
-        print('shit: expected a file')
+        print('aura: expected a file')
         print(USAGE, end='')
         return 2
 
@@ -3528,7 +3528,7 @@ def main(argv=None):
         with open(path, encoding='utf-8') as handle:
             source = handle.read()
     except OSError as exc:
-        print(f'shit: cannot read {path}: {exc.strerror}')
+        print(f'aura: cannot read {path}: {exc.strerror}')
         return 1
 
     if '--tokens' in flags or '--ast' in flags:

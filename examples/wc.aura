@@ -1,11 +1,11 @@
-# A word counter: python shit.py examples/wc.shit FILE-OR-FOLDER...
+# A word counter: python aura.py examples/wc.aura FILE-OR-FOLDER...
 #
 # Folders are walked one level deep. Missing paths are reported, not fatal.
 
 stash targets = handed()
 
 fr howmany(targets) == 0 ong
-    yap("give me a file or a folder")
+    cook("give me a file or a folder")
     bounce(2)
 bet
 
@@ -13,12 +13,12 @@ chore count(path) ong
     stash text = slurp(path)
     stash lines = howmany(shred(text, "
 "))
-    yap("{path}: {lines} lines, {howmany(shred(text))} words, {howmany(text)} chars")
+    cook("{path}: {lines} lines, {howmany(shred(text))} words, {howmany(text)} chars")
 bet
 
 grind path among targets ong
     fr nah isthere(path) ong
-        yap("{path}: not there")
+        cook("{path}: not there")
         skip
     bet
 
@@ -26,19 +26,19 @@ grind path among targets ong
         grind name among rummage(path) ong
             stash inner = stitch(path, name)
             fr nah isfolder(inner) ong
-                risky ong
+                sus ong
                     count(inner)
                 whoops e ong
-                    yap("{inner}: {e.why}")
+                    cook("{inner}: {e.why}")
                 bet
             bet
         bet
         skip
     bet
 
-    risky ong
+    sus ong
         count(path)
     whoops e ong
-        yap("{path}: {e.why}")
+        cook("{path}: {e.why}")
     bet
 bet

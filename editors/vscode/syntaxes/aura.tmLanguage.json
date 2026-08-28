@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "shit",
-  "scopeName": "source.shit",
+  "name": "aura",
+  "scopeName": "source.aura",
   "patterns": [
     {
       "include": "#comment"
@@ -27,30 +27,30 @@
   ],
   "repository": {
     "comment": {
-      "name": "comment.line.number-sign.shit",
+      "name": "comment.line.number-sign.aura",
       "match": "#.*$"
     },
     "yap": {
-      "name": "string.quoted.double.shit",
+      "name": "string.quoted.double.aura",
       "begin": "\"",
       "end": "\"",
       "patterns": [
         {
-          "name": "constant.character.escape.shit",
+          "name": "constant.character.escape.aura",
           "match": "\\\\."
         },
         {
-          "name": "meta.embedded.line.shit",
+          "name": "meta.embedded.line.aura",
           "begin": "(?<!\\{)\\{(?!\\{)",
           "end": "\\}",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.section.embedded.begin.shit"
+              "name": "punctuation.section.embedded.begin.aura"
             }
           },
           "endCaptures": {
             "0": {
-              "name": "punctuation.section.embedded.end.shit"
+              "name": "punctuation.section.embedded.end.aura"
             }
           },
           "patterns": [
@@ -71,46 +71,46 @@
       ]
     },
     "math": {
-      "name": "constant.numeric.shit",
+      "name": "constant.numeric.aura",
       "match": "\\b\\d+(\\.\\d+)?\\b"
     },
     "keyword": {
       "patterns": [
         {
-          "name": "keyword.control.shit",
-          "match": "\\b(fr|orfr|whatever|keep|grind|til|by|among|bail|skip|yeet|risky|whoops|oops|ong|bet)\\b"
+          "name": "keyword.control.aura",
+          "match": "\\b(fr|orfr|whatever|keep|grind|til|by|among|bail|skip|yeet|sus|whoops|oops|ong|bet)\\b"
         },
         {
-          "name": "keyword.declaration.shit",
+          "name": "keyword.declaration.aura",
           "match": "\\b(stash|chore)\\b"
         },
         {
-          "name": "keyword.operator.logical.shit",
+          "name": "keyword.operator.logical.aura",
           "match": "\\b(also|orelse|nah)\\b"
         },
         {
-          "name": "constant.language.shit",
+          "name": "constant.language.aura",
           "match": "\\b(based|cringe|ghosted)\\b"
         }
       ]
     },
     "builtin": {
-      "name": "support.function.builtin.shit",
-      "match": "\\b(yap|beg|summon|slurp|spill|dribble|isthere|handed|bounce|howmany|whatis|yapify|mathify|is_math|is_yap|is_pile|is_chore|smol|chonk|total|absolutely|roundish|chunk|flip|where|gotit|stuff|yoink|sortof|glue|shred|shout|whisper|trim|labels|goods|eachof|keepif|smoosh|rummage|isfolder|stitch)\\b(?=\\s*\\()"
+      "name": "support.function.builtin.aura",
+      "match": "\\b(cook|beg|summon|slurp|spill|dribble|isthere|handed|bounce|howmany|whatis|yapify|mathify|is_math|is_yap|is_pile|is_chore|smol|chonk|total|absolutely|roundish|chunk|flip|where|gotit|stuff|yoink|sortof|glue|shred|shout|whisper|trim|labels|goods|eachof|keepif|smoosh|rummage|isfolder|stitch)\\b(?=\\s*\\()"
     },
     "chore-name": {
       "match": "\\b(chore)\\s+([A-Za-z_][A-Za-z0-9_]*)",
       "captures": {
         "1": {
-          "name": "keyword.declaration.shit"
+          "name": "keyword.declaration.aura"
         },
         "2": {
-          "name": "entity.name.function.shit"
+          "name": "entity.name.function.aura"
         }
       }
     },
     "operator": {
-      "name": "keyword.operator.shit",
+      "name": "keyword.operator.aura",
       "match": "(\\+=|-=|\\*=|/=|==|!=|<=|>=|[-+*/%^<>=])"
     }
   }

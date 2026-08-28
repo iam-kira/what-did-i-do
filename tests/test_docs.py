@@ -1,8 +1,8 @@
-"""Every shit snippet in the docs has to actually run.
+"""Every aura snippet in the docs has to actually run.
 
 Docs drift silently; this makes them fail loudly instead.
 
-The convention: a ```text fence holds runnable shit, so it gets executed here.
+The convention: a ```text fence holds runnable aura, so it gets executed here.
 Notation - grammars, pipeline diagrams, word listings - uses a bare fence.
 """
 
@@ -10,7 +10,7 @@ import io
 import os
 import re
 
-import shit
+import aura
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # every markdown file in the repo root and docs/, so a new one is covered by default
@@ -47,7 +47,7 @@ def test_every_doc_snippet_runs():
     failures = []
 
     for name, index, block in snippets():
-        table = shit.new_symbol_table()
+        table = aura.new_symbol_table()
         # snippets often reference names a nearby paragraph set up
         for helper in ('stash x = 7', 'stash n = 3', 'stash name = "ana"',
                        'stash scores = {"ana": 3}', 'stash xs = [1, 2, 3]',
@@ -59,10 +59,10 @@ def test_every_doc_snippet_runs():
                        'stash player = {"name": "ana", "score": 0}',
                        'stash score = 7', 'stash n = 3', 'stash count = 0',
                        'stash scores = {"ana": 3}'):
-            shit.run('<setup>', helper, table)
+            aura.run('<setup>', helper, table)
 
-        _, error = shit.run(f'{name}#{index}', block, table)
-        if isinstance(error, shit.BounceError):
+        _, error = aura.run(f'{name}#{index}', block, table)
+        if isinstance(error, aura.BounceError):
             continue  # a snippet showing bounce() is behaving correctly
         if error:
             failures.append(f'{name} snippet {index}: {error.details}\n{block.strip()[:200]}')

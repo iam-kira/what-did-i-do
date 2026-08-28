@@ -1,23 +1,17 @@
-# shit 💩 - what-did-i-do 🤔
+# aura
 
 [![tests](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml/badge.svg)](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![Status](https://img.shields.io/badge/status-WIP-orange)](https://github.com/iam-kira/what-did-i-do)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/iam-kira/what-did-i-do?style=flat)](https://github.com/iam-kira/what-did-i-do/stargazers)
-[![Last commit](https://img.shields.io/github/last-commit/iam-kira/what-did-i-do)](https://github.com/iam-kira/what-did-i-do/commits)
 
-A tiny interpreted programming language written in Python from scratch.
+**A programming language with a serious name and no seriousness whatsoever.**
 
-> 😆OK - I thought I can write some programming language, well it wasn't too easy as expected lol. So, That day I started doing it and completed with lexer and parser part, and thought to move on to the interpreter part.. ok ok still on the way xD.
+Written in Python from scratch — lexer, parser, tree-walking interpreter, zero
+dependencies. It has closures, dictionaries, string interpolation, error
+handling and a 42-function standard library.
 
----
-
-## What is shit?
-
-A tiny interpreted language written in Python from scratch — lexer, parser, and
-tree-walking interpreter, no dependencies. It has numbers, strings, lists,
-closures, control flow, and a builtin library. It also refuses to use a single
-normal keyword.
+It also does not contain a single normal keyword.
 
 ```text
 chore label(n) ong
@@ -32,27 +26,27 @@ chore label(n) ong
 bet
 
 grind i = 1 til 16 ong
-    yap(label(i))
+    cook(label(i))
 bet
 ```
 
-Yes, `ong` opens a block and `bet` closes it. `chore` defines a function,
-`yeet` returns, `stash` declares, `yap` prints. The full vocabulary is in
-[docs/LANGUAGE.md](docs/LANGUAGE.md).
+`ong` opens a block and `bet` closes it. `chore` defines a function, `yeet`
+returns, `stash` declares, `cook` prints. That is the entire joke, and it is
+load-bearing.
 
 ---
 
-## Install and run
+## Try it in thirty seconds
 
-Python 3.9+, nothing else.
+Python 3.9 or newer. Nothing else to install.
 
 ```bash
 git clone https://github.com/iam-kira/what-did-i-do
 cd what-did-i-do
-python shit.py example.shit
+python aura.py
 ```
 
-Bare `python shit.py` opens the REPL:
+That opens the REPL, and it reads multi-line blocks:
 
 ```text
 shell :> stash xs = [1, 2, 3]
@@ -60,9 +54,6 @@ shell :> stash xs = [1, 2, 3]
 
 shell :> xs[-1] * 10
 30
-
-shell :> {"a": 1, "b": 2}
-{"a": 1, "b": 2}
 
 shell :> chore sq(n) ong
    ...  >     yeet n ^ 2
@@ -73,61 +64,112 @@ shell :> sq(9)
 81
 ```
 
-It reads multi-line blocks — an unfinished one keeps prompting with `...  >`.
-Other ways in:
+Or run a file:
 
 ```bash
-python shit.py prog.shit a b        # a and b land in handed()
-python shit.py --tokens prog.shit   # token stream
-python shit.py --ast prog.shit      # parse tree
-python shit.py --help
+python aura.py example.aura        # a tour of the language
+python aura.py prog.aura a b       # a and b arrive in handed()
+python aura.py --ast prog.aura     # show the parse tree
+python aura.py --help
 ```
 
 ---
 
-## Docs
+## What it can actually do
+
+Not a calculator with silly words. A real small language:
+
+```text
+# closures, and state that outlives the call
+chore counter() ong
+    stash n = 0
+    chore tick() ong
+        n += 1
+        yeet n
+    bet
+    yeet tick
+bet
+
+stash next = counter()
+cook("{next()} then {next()}")
+
+# bags, dot access, and yap holes
+stash player = {"name": "ana", "score": 0}
+player.score += 10
+cook("{player.name} is on {player.score}")
+
+# errors you can catch and branch on
+sus ong
+    stash text = slurp("notes.txt")
+whoops e ong
+    fr e.kind == "file" ong
+        cook("no notes yet, carrying on")
+    bet
+bet
+```
 
 | | |
 |---|---|
-| [docs/BOOK.md](docs/BOOK.md) | **The book** — the whole language and the whole interpreter, in the order you would learn them |
-| [docs/LANGUAGE.md](docs/LANGUAGE.md) | The language — vocabulary, values, operators, control flow, closures, builtins, errors |
+| **Types** | numbers (`math`), strings (`yap`), lists (`pile`), dicts (`bag`), first-class functions (`chore`) |
+| **Control flow** | `fr`/`orfr`/`whatever`, `keep`, `grind ... til`, `grind ... among`, `bail`, `skip`, `yeet` |
+| **Scoping** | lexical, with real closures and outer-variable mutation |
+| **Yap holes** | `"hi {name}, {1 + 2} points"` |
+| **Destructuring** | `stash a, b = [1, 2]`, `grind k, v among bag` |
+| **Errors** | `sus` / `whoops` / `oops`, a `kind` on every error, tracebacks, and a caret under the offending code |
+| **Higher-order** | `eachof`, `keepif`, `smoosh`, `sortof` with a key chore |
+| **Scriptable** | `handed()` for arguments, `slurp`/`spill` for files, `rummage` for folders, `bounce(code)` for exit status |
+| **Imports** | `summon("lib.aura")`, with cycle detection |
+
+When something breaks, it tells you exactly where:
+
+```text
+Runtime Error: 'nope' is not defined
+File prog.aura, line 3, col 14
+      total += nope
+               ^^^^
+```
+
+---
+
+## Read it
+
+| | |
+|---|---|
+| **[docs/BOOK.md](docs/BOOK.md)** | **The book** — the whole language, then the whole interpreter, in the order you would learn them. Start here. |
+| [docs/LANGUAGE.md](docs/LANGUAGE.md) | Quick reference — vocabulary, operators, builtins, errors |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the interpreter works, and where to add things |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, workflow, and what needs doing |
-| [editors/](editors/) | VS Code syntax highlighting for `.shit` files |
-| [example.shit](example.shit) | A program using most of the language |
-| [examples/calc.shit](examples/calc.shit) | A calculator written in shit: tokeniser, precedence-climbing parser, evaluator |
-| [examples/wc.shit](examples/wc.shit) | A word counter that walks files and folders |
+| [editors/](editors/) | VS Code syntax highlighting for `.aura` files |
+
+**Programs written in aura:** [example.aura](example.aura) tours the language,
+[examples/calc.aura](examples/calc.aura) is a calculator with its own tokeniser
+and precedence-climbing parser, and [examples/wc.aura](examples/wc.aura) is a
+word counter that walks folders.
 
 ---
 
-## What it can do
+## Why "aura"
 
-- **Types** — numbers (`math`), strings (`yap`), lists (`pile`), dicts (`bag`), first-class functions (`chore`)
-- **Yap holes** — `"hi {name}, {1 + 2} points"`
-- **Destructuring** — `stash a, b = [1, 2]`, `grind k, v among bag`
-- **Control flow** — `fr`/`orfr`/`whatever`, `keep`, `grind ... til`, `grind ... among`, `bail`, `skip`, `yeet`
-- **Scoping** — lexical, with working closures and outer-variable mutation
-- **Operators** — `+ - * / % ^`, comparisons, `also`/`orelse`/`nah`, indexing, compound assignment
-- **42 builtins** — printing, input, files and folders, maths, slicing, sorting, splitting, joining, type checks
-- **Scriptable** — `handed()` for arguments, `slurp`/`spill` for files, `bounce(code)` for exit status
-- **Higher-order chores** — `eachof`, `keepif`, `smoosh`, and `sortof` with a key chore
-- **Objects, sort of** — a chore returning a bag of chores over captured state, reached with `thing.name()`
-- **Imports** — `summon("lib.shit")`, with cycle detection
-- **Error handling** — `risky` / `whoops` / `oops`, with a `kind` on every error so you can branch instead of string-matching
-- **Errors** — returned as values, showing the offending line with a caret, plus a call-stack traceback
-- **500 tests**, including a robustness sweep that asserts no input ever raises a Python error
+Every keyword in the language is a joke. The name is the straight man — it
+lets the contents be the punchline, and it will still read fine when the slang
+has moved on.
+
+The repo is called `what-did-i-do` for the same reason.
 
 ---
 
-## Status
+## Under the hood
 
-Works. Not finished. Missing: a real type system, and any concern for speed.
-Known rough edges are listed at the end of
-[docs/LANGUAGE.md](docs/LANGUAGE.md) and in [CONTRIBUTING.md](CONTRIBUTING.md).
+One file, 3,600 lines, no dependencies. `Lexer` → `Parser` → `Interpreter`,
+readable top to bottom.
 
----
+Errors are values, never exceptions: every stage returns a `(result, error)`
+pair carrying a source position, which is why a runtime failure can print the
+line it happened on.
 
-## Run tests
+**500 tests**, including a fuzz sweep asserting no input ever escapes as a
+Python traceback, a checker that executes every code snippet in these docs, and
+a test that diffs the syntax highlighting against the real keyword list.
 
 ```bash
 pip install pytest
@@ -136,17 +178,25 @@ python -m pytest -q
 
 ---
 
+## Status
+
+Works. Not finished — no type system, and no concern for speed. Rough edges are
+listed at the end of [docs/LANGUAGE.md](docs/LANGUAGE.md) and in
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
 ## Credit and licence
 
-shit was created by **Vijay Biradar** ([iam-kira](https://github.com/iam-kira)).
+aura was created by **Vijay Biradar** ([iam-kira](https://github.com/iam-kira)).
 
-It is released under the [MIT Licence](LICENSE), which lets anyone use, modify
-and sell it — including inside closed-source products — on one condition:
+Released under the [MIT Licence](LICENSE), which lets anyone use, modify and
+sell it — including inside closed-source products — on one condition:
 
 > The above copyright notice and this permission notice shall be included in
 > all copies or substantial portions of the Software.
 
-So if you ship shit, or anything substantially built from it, the copyright
+So if you ship aura, or anything substantially built from it, the copyright
 notice comes with it. That is not optional, and it applies to commercial use
 too.
 

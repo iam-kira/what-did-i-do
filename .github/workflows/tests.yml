@@ -28,6 +28,6 @@ jobs:
 
       - name: Run the examples
         run: |
-          python shit.py example.shit
-          python shit.py examples/calc.shit
-          python shit.py examples/wc.shit README.md
+          python aura.py example.aura
+          python aura.py examples/calc.aura
+          python aura.py examples/wc.aura README.md

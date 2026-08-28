@@ -1,12 +1,12 @@
 """Errors should show the offending line, not just describe it."""
 
-import shit
+import aura
 
 Q = '"'
 
 
-def error_text(source, filename='prog.shit'):
-    _, error = shit.run(filename, source, shit.new_symbol_table())
+def error_text(source, filename='prog.aura'):
+    _, error = aura.run(filename, source, aura.new_symbol_table())
     assert error is not None, source
     return error.as_string()
 
@@ -45,14 +45,14 @@ def test_tabs_do_not_shift_the_caret():
 
 
 def test_an_error_at_the_end_of_a_line_still_shows_it():
-    out = lines_of('fr 1 ong\nyap(1)')
+    out = lines_of('fr 1 ong\ncook(1)')
     assert "Expected 'bet'" in out[0]
-    assert out[2] == '  yap(1)'
+    assert out[2] == '  cook(1)'
 
 
 def test_an_error_past_the_last_line_shows_no_excerpt():
     # the trailing newline puts EOF on a line that does not exist
-    out = lines_of('fr 1 ong\nyap(1)\n')
+    out = lines_of('fr 1 ong\ncook(1)\n')
     assert "Expected 'bet'" in out[0]
     assert len(out) == 2
 
@@ -83,9 +83,9 @@ def test_the_excerpt_survives_a_source_with_no_trailing_newline():
 
 
 def test_an_error_in_a_summoned_file_shows_that_files_line(tmp_path):
-    (tmp_path / 'lib.shit').write_text('stash bad = 1 / 0\n', encoding='utf-8')
-    main = tmp_path / 'main.shit'
-    main.write_text('summon(' + Q + 'lib.shit' + Q + ')\n', encoding='utf-8')
+    (tmp_path / 'lib.aura').write_text('stash bad = 1 / 0\n', encoding='utf-8')
+    main = tmp_path / 'main.aura'
+    main.write_text('summon(' + Q + 'lib.aura' + Q + ')\n', encoding='utf-8')
 
     text = error_text(main.read_text(encoding='utf-8'), filename=str(main))
     assert 'Division by zero' in text
@@ -93,5 +93,5 @@ def test_an_error_in_a_summoned_file_shows_that_files_line(tmp_path):
 
 
 def test_excerpt_is_empty_when_there_is_no_source():
-    error = shit.RTError(None, None, 'nowhere', kind='runtime')
+    error = aura.RTError(None, None, 'nowhere', kind='runtime')
     assert error.excerpt() == ''

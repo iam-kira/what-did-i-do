@@ -1,10 +1,10 @@
-"""The shit REPL.
+"""The aura REPL.
 
 Copyright (c) 2026 iam-kira (Vijay Biradar)
 Licensed under the MIT License. See LICENSE for the full text.
 """
 
-import shit
+import aura
 
 PROMPT = 'shell :> '
 CONTINUED = '   ...  > '
@@ -20,7 +20,7 @@ def show(result):
 
 
 def main(symbol_table=None):
-    table = shit.global_symbol_table if symbol_table is None else symbol_table
+    table = aura.global_symbol_table if symbol_table is None else symbol_table
     buffer = []
 
     while True:
@@ -49,13 +49,13 @@ def main(symbol_table=None):
         source = '\n'.join(buffer)
 
         # a blank line forces the block to end, so a typo cannot trap you
-        if line.strip() and shit.wants_more('<stdin>', source):
+        if line.strip() and aura.wants_more('<stdin>', source):
             continue
         buffer = []
 
-        result, error = shit.run('<stdin>', source, table)
+        result, error = aura.run('<stdin>', source, table)
 
-        if isinstance(error, shit.BounceError):
+        if isinstance(error, aura.BounceError):
             return error.code
         if error:
             print(error.as_string())

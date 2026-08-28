@@ -1,6 +1,6 @@
 """Nothing should ever escape as a Python exception.
 
-Every failure mode in shit is a returned error with a position. If a Python
+Every failure mode in aura is a returned error with a position. If a Python
 traceback reaches the user, that is a bug in the interpreter, not their program.
 """
 
@@ -9,7 +9,7 @@ import random
 
 import pytest
 
-import shit
+import aura
 
 AWKWARD = [
     '', ' ', '\n\n', '#', '#only comment', ';;;', '()', '(', ')', '[', ']', '{', '}',
@@ -20,9 +20,9 @@ AWKWARD = [
     'keep', 'keep ong bet', 'grind', 'grind ong', 'grind x', 'grind x =',
     'grind x among', 'grind x among [] ong bet', 'chore', 'chore f', 'chore f(',
     'chore f() ong', 'chore f() ong bet', 'chore f(,) ong bet',
-    'yeet', 'bail', 'skip', 'oops', 'risky', 'risky ong bet', 'whoops',
+    'yeet', 'bail', 'skip', 'oops', 'sus', 'sus ong bet', 'whoops',
     'summon', 'summon()', 'summon("")',
-    'yap', 'yap(', 'yap()', 'yap(,)', 'yap(1,)',
+    'yap', 'cook(', 'cook()', 'cook(,)', 'cook(1,)',
     '[][0]', '""[0]', '{}["a"]', '[1][1.5]', '[1]["a"]', '{}[[]]', '{}[{}]',
     '1[0]', '1()', 'based', 'cringe', 'ghosted', 'nah', 'also', 'orelse',
     'based also', 'nah nah nah 1',
@@ -43,12 +43,12 @@ AWKWARD = [
 
 PIECES = ['stash', 'x', '=', '1', '+', '(', ')', '[', ']', '{', '}', ':', ',',
           'fr', 'ong', 'bet', 'chore', 'yeet', 'grind', 'among', 'keep',
-          '"a"', '"{x}"', 'yap', 'risky', 'whoops', 'oops', 'nah', 'also', '.', '$']
+          '"a"', '"{x}"', 'yap', 'sus', 'whoops', 'oops', 'nah', 'also', '.', '$']
 
 
 def run_quietly(source):
     """Run and return nothing; the point is that it must not raise."""
-    shit.run('<robustness>', source, shit.new_symbol_table())
+    aura.run('<robustness>', source, aura.new_symbol_table())
 
 
 @pytest.mark.parametrize('source', AWKWARD, ids=range(len(AWKWARD)))
@@ -69,13 +69,13 @@ def test_every_ordered_pair_of_tokens_never_raises():
 
 
 def test_runaway_recursion_reports_rather_than_blowing_the_python_stack():
-    _, error = shit.run('<robustness>', 'chore f() ong\nyeet f()\nbet\nf()', shit.new_symbol_table())
+    _, error = aura.run('<robustness>', 'chore f() ong\nyeet f()\nbet\nf()', aura.new_symbol_table())
     assert error is not None
     assert 'Maximum call depth' in error.details
 
 
 def test_deeply_nested_expressions_survive():
     source = '(' * 400 + '1' + ')' * 400
-    result, error = shit.run('<robustness>', source, shit.new_symbol_table())
+    result, error = aura.run('<robustness>', source, aura.new_symbol_table())
     assert error is None
     assert repr(result) == '1'

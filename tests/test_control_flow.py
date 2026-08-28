@@ -1,8 +1,8 @@
-import shit
+import aura
 
 
 def ev(source):
-    result, error = shit.run('<stdin>', source, shit.SymbolTable())
+    result, error = aura.run('<stdin>', source, aura.SymbolTable())
     if isinstance(result, list):
         result = result[-1] if result else None
     return result, error

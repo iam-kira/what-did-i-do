@@ -1,6 +1,6 @@
-# How shit works
+# How aura works
 
-One file, `shit.py`, in pipeline order. Read it top to bottom and it tells the
+One file, `aura.py`, in pipeline order. Read it top to bottom and it tells the
 whole story.
 
 ```text
@@ -168,7 +168,7 @@ Builtin arg names carry prefixes: `?name` is optional and arrives as `None`,
 
 | Where | What |
 |---|---|
-| `shit.py` | constants, errors, `Position`, `Token`, `Lexer` |
+| `aura.py` | constants, errors, `Position`, `Token`, `Lexer` |
 | | AST nodes, `ParseResult`, `Parser` |
 | | `RTResult`, `Value` and friends, builtins, `SymbolTable`, `Interpreter` |
 | | `run()`, `main()` |

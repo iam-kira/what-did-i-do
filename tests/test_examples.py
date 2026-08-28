@@ -1,18 +1,18 @@
 import os
 
-import shit
+import aura
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def run_example(name, capsys):
-    exit_code = shit.main([os.path.join(REPO, name)])
+    exit_code = aura.main([os.path.join(REPO, name)])
     return exit_code, capsys.readouterr().out.splitlines()
 
 
 def test_calculator_example(capsys):
-    """A calculator written in shit - the language exercising itself."""
-    exit_code, out = run_example(os.path.join('examples', 'calc.shit'), capsys)
+    """A calculator written in aura - the language exercising itself."""
+    exit_code, out = run_example(os.path.join('examples', 'calc.aura'), capsys)
 
     assert exit_code == 0
     assert out == [
@@ -36,7 +36,7 @@ def test_word_count_example_reads_a_file(tmp_path, capsys):
     sample = tmp_path / 'sample.txt'
     sample.write_text('one two three\nfour five\n', encoding='utf-8')
 
-    exit_code = shit.main([os.path.join(REPO, 'examples', 'wc.shit'), str(sample)])
+    exit_code = aura.main([os.path.join(REPO, 'examples', 'wc.aura'), str(sample)])
     out = capsys.readouterr().out.strip()
 
     assert exit_code == 0
@@ -49,7 +49,7 @@ def test_word_count_example_walks_a_folder(tmp_path, capsys):
     (tmp_path / 'b.txt').write_text('three\n', encoding='utf-8')
     (tmp_path / 'sub').mkdir()
 
-    exit_code = shit.main([os.path.join(REPO, 'examples', 'wc.shit'), str(tmp_path)])
+    exit_code = aura.main([os.path.join(REPO, 'examples', 'wc.aura'), str(tmp_path)])
     out = capsys.readouterr().out.strip().splitlines()
 
     assert exit_code == 0
@@ -59,14 +59,14 @@ def test_word_count_example_walks_a_folder(tmp_path, capsys):
 
 
 def test_word_count_example_complains_with_no_file(capsys):
-    exit_code = shit.main([os.path.join(REPO, 'examples', 'wc.shit')])
+    exit_code = aura.main([os.path.join(REPO, 'examples', 'wc.aura')])
 
     assert exit_code == 2
     assert 'give me a file' in capsys.readouterr().out
 
 
 def test_word_count_example_survives_a_missing_file(tmp_path, capsys):
-    exit_code = shit.main([os.path.join(REPO, 'examples', 'wc.shit'), str(tmp_path / 'gone.txt')])
+    exit_code = aura.main([os.path.join(REPO, 'examples', 'wc.aura'), str(tmp_path / 'gone.txt')])
 
     assert exit_code == 0
     assert 'not there' in capsys.readouterr().out

@@ -1,4 +1,4 @@
-# Contributing to shit
+# Contributing to aura
 
 It's a toy language built to learn how interpreters work. PRs welcome — especially
 from people learning the same thing.
@@ -16,24 +16,24 @@ pip install pytest
 ## Run it
 
 ```bash
-python shit.py              # REPL
-python shit.py example.shit # run a file
+python aura.py              # REPL
+python aura.py example.aura # run a file
 python -m pytest -q         # tests
 ```
 
 ## Where the code lives
 
 ```text
-shit.py    # everything: Lexer -> Parser -> Interpreter -> run()
+aura.py    # everything: Lexer -> Parser -> Interpreter -> run()
 shell.py   # REPL loop
 docs/      # language reference and architecture notes
-examples/  # programs written in shit
+examples/  # programs written in aura
 editors/   # VS Code syntax highlighting
 tests/     # one file per concern
 ```
 
 If you add a keyword or a builtin, add it to
-`editors/vscode/syntaxes/shit.tmLanguage.json` too - a test compares the
+`editors/vscode/syntaxes/aura.tmLanguage.json` too - a test compares the
 grammar against the real lists and will fail if you forget.
 
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains the pipeline, the
@@ -86,7 +86,7 @@ Known smaller things, good first issues:
 
 ## Licensing
 
-shit is MIT licensed and copyright iam-kira (Vijay Biradar). By opening a pull request you agree
+aura is MIT licensed and copyright iam-kira (Vijay Biradar). By opening a pull request you agree
 your contribution is released under the same licence, and that the project's
 copyright notice stays intact.
 

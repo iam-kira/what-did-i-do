@@ -1,14 +1,14 @@
 import ast
 import os
 
-import shit
+import aura
 
 Q = '"'
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def ev(source):
-    result, error = shit.run('<stdin>', source, shit.new_symbol_table())
+    result, error = aura.run('<stdin>', source, aura.new_symbol_table())
     if isinstance(result, list):
         result = result[-1] if result else None
     return result, error
@@ -28,13 +28,13 @@ CASES = {
     'label': ['{}[' + Q + 'z' + Q + ']', '{}[[]]'],
     'type': [Q + 'a' + Q + ' + 1', 'stash n = 5\nn()', 'chunk(5)', 'smol(' + Q + 'a' + Q + ')',
              'grind x among 5 ong\n1\nbet'],
-    'arity': ['yap(1, 2)', 'chore f(a) ong\n1\nbet\nf()'],
+    'arity': ['cook(1, 2)', 'chore f(a) ong\n1\nbet\nf()'],
     'flow': ['bail', 'skip', 'yeet 1'],
     'unpack': ['stash a, b = [1]', 'stash a, b = 5'],
     'depth': ['chore f() ong\nyeet f()\nbet\nf()'],
     'custom': ['oops ' + Q + 'boom' + Q],
     'file': ['slurp(' + Q + 'definitely-not-here.txt' + Q + ')',
-             'summon(' + Q + 'definitely-not-here.shit' + Q + ')'],
+             'summon(' + Q + 'definitely-not-here.aura' + Q + ')'],
 }
 
 
@@ -51,20 +51,20 @@ def test_every_case_reports_its_kind():
 def test_kinds_are_from_the_known_set():
     for sources in CASES.values():
         for source in sources:
-            assert kind_of(source) in shit.RTError.KINDS, source
+            assert kind_of(source) in aura.RTError.KINDS, source
 
 
 def test_the_whoops_bag_carries_the_kind():
-    source = ('risky ong\n1 / 0\nwhoops e ong\ne.kind\nbet')
+    source = ('sus ong\n1 / 0\nwhoops e ong\ne.kind\nbet')
     result, error = ev(source)
     assert error is None
     assert result.value == 'math'
 
 
-def test_shit_code_can_branch_on_the_kind():
+def test_aura_code_can_branch_on_the_kind():
     source = (
         'chore describe(thunk) ong\n'
-        'risky ong\n'
+        'sus ong\n'
         'thunk()\n'
         'yeet ' + Q + 'fine' + Q + '\n'
         'whoops e ong\n'
@@ -87,7 +87,7 @@ def test_shit_code_can_branch_on_the_kind():
 
 
 def test_the_whoops_bag_still_carries_why_file_and_line():
-    result, error = ev('risky ong\n\n1 / 0\nwhoops e ong\ne\nbet')
+    result, error = ev('sus ong\n\n1 / 0\nwhoops e ong\ne\nbet')
     assert error is None
     assert repr(result) == (
         '{"why": "Division by zero", "kind": "math", "file": "<stdin>", "line": 3}'
@@ -96,7 +96,7 @@ def test_the_whoops_bag_still_carries_why_file_and_line():
 
 def test_every_error_site_in_the_source_declares_a_kind():
     """A new RTError with no kind would silently report as 'runtime'."""
-    with open(os.path.join(REPO, 'shit.py'), encoding='utf-8') as handle:
+    with open(os.path.join(REPO, 'aura.py'), encoding='utf-8') as handle:
         tree = ast.parse(handle.read())
 
     untagged = [

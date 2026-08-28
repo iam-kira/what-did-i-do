@@ -1,11 +1,11 @@
-import shit
+import aura
 
 Q = '"'
 
 
 def ev(source):
     """Run source in a fresh scope, returning (last value, error)."""
-    result, error = shit.run('<stdin>', source, shit.new_symbol_table())
+    result, error = aura.run('<stdin>', source, aura.new_symbol_table())
     if isinstance(result, list):
         result = result[-1] if result else None
     return result, error

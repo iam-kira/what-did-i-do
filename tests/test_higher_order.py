@@ -1,4 +1,4 @@
-import shit
+import aura
 
 Q = '"'
 
@@ -12,7 +12,7 @@ PRELUDE = (
 
 def ev(source, prelude=True):
     text = (PRELUDE if prelude else '') + source
-    result, error = shit.run('<stdin>', text, shit.new_symbol_table())
+    result, error = aura.run('<stdin>', text, aura.new_symbol_table())
     if isinstance(result, list):
         result = result[-1] if result else None
     return result, error
@@ -121,7 +121,7 @@ def test_first_argument_must_be_a_pile():
 
 
 def test_an_error_inside_a_chore_is_catchable():
-    source = ('risky ong\neachof([1], howmany)\nwhoops e ong\n' + Q + 'caught' + Q + '\nbet')
+    source = ('sus ong\neachof([1], howmany)\nwhoops e ong\n' + Q + 'caught' + Q + '\nbet')
     result, error = ev(source)
     assert error is None
     assert result.value == 'caught'

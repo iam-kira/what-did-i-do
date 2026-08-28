@@ -3,7 +3,7 @@
 import pytest
 
 import shell
-import shit
+import aura
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def repl(monkeypatch, capsys):
                 raise EOFError
 
         monkeypatch.setattr('builtins.input', fake_input)
-        code = shell.main(shit.new_symbol_table())
+        code = shell.main(aura.new_symbol_table())
         return code, capsys.readouterr().out.splitlines()
 
     return run
@@ -112,6 +112,6 @@ def test_builtins_are_available(repl):
 
 
 def test_yap_prints_raw_while_the_echo_is_repr(repl):
-    _, out = repl('yap("hi")')
+    _, out = repl('cook("hi")')
     assert 'hi' in out
     assert '0' in out

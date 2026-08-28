@@ -1,4 +1,4 @@
-# shit — language reference
+# aura — language reference
 
 Everything the language currently does. For how the interpreter is built, see
 [ARCHITECTURE.md](ARCHITECTURE.md).
@@ -7,9 +7,9 @@ Everything the language currently does. For how the interpreter is built, see
 
 ## Vocabulary
 
-shit does not speak Python. Same ideas, worse names.
+aura does not speak Python. Same ideas, worse names.
 
-| shit | means | shit | means |
+| aura | means | aura | means |
 |---|---|---|---|
 | `stash` | declare a variable | `chore` | define a function |
 | `fr` | if | `yeet` | return |
@@ -18,7 +18,7 @@ shit does not speak Python. Same ideas, worse names.
 | `ong` | then (opens a block) | `also` | and |
 | `bet` | end (closes a block) | `orelse` | or |
 | `keep` | while | `nah` | not |
-| `risky` | try | `whoops` | catch |
+| `sus` | try | `whoops` | catch |
 | `oops` | raise | | |
 | `grind` | for | `based` | true |
 | `til` | to | `cringe` | false |
@@ -65,8 +65,8 @@ calls, lookups, arithmetic, even another yap:
 stash name = "ana"
 stash scores = {"ana": 3}
 
-yap("hi {name}, you have {scores[name]} points")
-yap("{1 + 2} and {smol(9, 4)}")
+cook("hi {name}, you have {scores[name]} points")
+cook("{1 + 2} and {smol(9, 4)}")
 ```
 
 Yaps interpolate as their text, everything else as it would print. `{{` and
@@ -96,10 +96,10 @@ is an error, so check first with `gotit`.
 stash scores = {"ana": 3}
 scores["bo"] = 5          # add
 scores["ana"] += 1        # update
-yap(howmany(scores))      # 2
-yap(labels(scores))       # ["ana", "bo"]
-yap(goods(scores))        # [4, 5]
-yap(gotit(scores, "cy"))  # 0
+cook(howmany(scores))      # 2
+cook(labels(scores))       # ["ana", "bo"]
+cook(goods(scores))        # [4, 5]
+cook(gotit(scores, "cy"))  # 0
 stash fewer = yoink(scores, "ana")
 ```
 
@@ -113,7 +113,7 @@ and it assigns:
 stash player = {"name": "ana", "score": 0}
 player.score += 10
 player.title = "champ"
-yap(player.name)
+cook(player.name)
 ```
 
 Only bags have labels; dotting a pile or yap says so.
@@ -160,7 +160,7 @@ change the answer, so this is safe on an empty pile:
 
 ```text
 fr i < howmany(xs) also xs[i] == 1 ong
-    yap("found it")
+    cook("found it")
 bet
 ```
 
@@ -191,11 +191,11 @@ Yaps are immutable — `s[0] = "z"` is an error.
 
 ```text
 fr x > 10 ong
-    yap("big")
+    cook("big")
 orfr x > 5 ong
-    yap("medium")
+    cook("medium")
 whatever
-    yap("small")
+    cook("small")
 bet
 ```
 
@@ -210,17 +210,17 @@ grind i = 0 til 10 by 2 ong
     fr i == 6 ong
         skip
     bet
-    yap(i)
+    cook(i)
 bet
 
 grind word among ["a", "b"] ong
-    yap(word)
+    cook(word)
 bet
 ```
 
 ```text
 grind label, value among scores ong
-    yap("{label}: {value}")
+    cook("{label}: {value}")
 bet
 ```
 
@@ -260,8 +260,8 @@ chore counter() ong
 bet
 
 stash c = counter()
-yap(c())   # 1
-yap(c())   # 2
+cook(c())   # 1
+cook(c())   # 2
 ```
 
 A chore with no `yeet` evaluates to its last statement. Call depth is capped at
@@ -291,7 +291,7 @@ bet
 stash a = counter()
 a["bump"]()
 a["bump"]()
-yap(a["peek"]())
+cook(a["peek"]())
 ```
 
 Suffixes chain, so `a.bump()`, `fs[0]()`, `f()[0]` and `mk()()` all work — which
@@ -307,11 +307,11 @@ bet
 
 stash mine = {"x": 1}
 spoil(mine)
-yap(mine)          # still {"x": 1}
+cook(mine)          # still {"x": 1}
 ```
 
 Return the new value, or keep the state in a closure like `counter` above.
-[examples/calc.shit](../examples/calc.shit) uses a closure for exactly this.
+[examples/calc.aura](../examples/calc.aura) uses a closure for exactly this.
 
 ---
 
@@ -321,7 +321,7 @@ Return the new value, or keep the state in a closure like `counter` above.
 
 | Chore | Does |
 |---|---|
-| `yap(value)` | print a line, gives back `0` |
+| `cook(value)` | print a line, gives back `0` |
 | `beg(prompt?)` | read a line as a yap; the prompt is optional |
 | `summon(path)` | run another file here, so its chores and stashes land in this scope |
 | `slurp(path)` | read a whole file as a yap |
@@ -332,7 +332,7 @@ Return the new value, or keep the state in a closure like `counter` above.
 | `rummage(path?)` | sorted names inside a folder; defaults to here |
 | `stitch(part, ...)` | join path parts with `/` |
 | `handed()` | a pile of the arguments the program was given |
-| `bounce(code?)` | stop the program with an exit code; no `risky` catches it |
+| `bounce(code?)` | stop the program with an exit code; no `sus` catches it |
 
 **Everything**
 
@@ -383,10 +383,10 @@ chore dbl(n) ong yeet n * 2 bet
 chore odd(n) ong yeet n % 2 == 1 bet
 chore add(a, b) ong yeet a + b bet
 
-yap(eachof([1, 2, 3], dbl))          # [2, 4, 6]
-yap(keepif([1, 2, 3, 4], odd))       # [1, 3]
-yap(smoosh([1, 2, 3, 4], add))       # 10
-yap(sortof(["bx", "az"], lastchar))  # sorted by whatever the chore returns
+cook(eachof([1, 2, 3], dbl))          # [2, 4, 6]
+cook(keepif([1, 2, 3, 4], odd))       # [1, 3]
+cook(smoosh([1, 2, 3, 4], add))       # 10
+cook(sortof(["bx", "az"], lastchar))  # sorted by whatever the chore returns
 ```
 
 Closures work here, so a chore can build the chore you pass:
@@ -399,7 +399,7 @@ chore times(k) ong
     yeet go
 bet
 
-yap(eachof([1, 2, 3], times(10)))    # [10, 20, 30]
+cook(eachof([1, 2, 3], times(10)))    # [10, 20, 30]
 ```
 
 Nothing mutates in place — `stuff`, `yoink`, `sortof`, `chunk`, `flip`,
@@ -413,20 +413,20 @@ Builtins live in a scope every program inherits, so you can shadow one:
 
 ## Going wrong on purpose
 
-`oops` raises. `risky ... whoops name ong ... bet` catches, binding a bag with
+`oops` raises. `sus ... whoops name ong ... bet` catches, binding a bag with
 `why`, `kind`, `file` and `line`:
 
 ```text
 chore safe_div(a, b) ong
-    risky ong
+    sus ong
         yeet a / b
     whoops e ong
-        yap("nope: " + e["why"])
+        cook("nope: " + e["why"])
         yeet 0
     bet
 bet
 
-yap(safe_div(10, 0))   # nope: Division by zero  /  0
+cook(safe_div(10, 0))   # nope: Division by zero  /  0
 ```
 
 `kind` is a short slug you can branch on instead of matching the message:
@@ -446,11 +446,11 @@ yap(safe_div(10, 0))   # nope: Division by zero  /  0
 | `custom` | whatever `oops` raised |
 
 ```text
-risky ong
+sus ong
     stash text = slurp(path)
 whoops e ong
     fr e.kind == "file" ong
-        yap("no such file, carrying on")
+        cook("no such file, carrying on")
     whatever
         oops e.why
     bet
@@ -459,7 +459,7 @@ bet
 
 Every runtime error is catchable, including undefined names, bad indexes and
 runaway recursion. Syntax errors are not — those happen before anything runs.
-`yeet`, `bail` and `skip` pass straight through a `risky` untouched, and so
+`yeet`, `bail` and `skip` pass straight through a `sus` untouched, and so
 does `bounce`.
 
 ---
@@ -480,7 +480,7 @@ under the offending part:
 
 ```text
 Runtime Error: 'nope' is not defined
-File prog.shit, line 3, col 14
+File prog.aura, line 3, col 14
       total += nope
                ^^^^
 ```
@@ -489,10 +489,10 @@ Runtime errors inside chores carry a traceback as well:
 
 ```text
 Traceback (most recent call last):
-  File prog.shit, line 7, in outer
-  File prog.shit, line 5, in inner
+  File prog.aura, line 7, in outer
+  File prog.aura, line 5, in inner
 Runtime Error: Division by zero
-File prog.shit, line 2, col 14
+File prog.aura, line 2, col 14
       yeet n / 0
                ^
 ```
@@ -502,17 +502,17 @@ File prog.shit, line 2, col 14
 ## Running things
 
 ```bash
-python shit.py                 # REPL - it reads multi-line blocks
-python shit.py prog.shit       # run a file
-python shit.py --tokens f.shit # dump the token stream
-python shit.py --ast f.shit    # dump the parse tree
-python shit.py --help
+python aura.py                 # REPL - it reads multi-line blocks
+python aura.py prog.aura       # run a file
+python aura.py --tokens f.aura # dump the token stream
+python aura.py --ast f.aura    # dump the parse tree
+python aura.py --help
 ```
 
 In the REPL, an unfinished block keeps prompting with `...  >`. A blank line
 force-ends it, and ctrl-c throws the buffer away.
 
-File mode prints nothing on its own — use `yap`. The REPL echoes each
+File mode prints nothing on its own — use `cook`. The REPL echoes each
 statement's value.
 
 ---

@@ -1,12 +1,12 @@
-import shit
+import aura
 
 
 def parse_ast(text):
-    lexer = shit.Lexer('<stdin>', text)
+    lexer = aura.Lexer('<stdin>', text)
     tokens, error = lexer.make_tokens()
     assert error is None
 
-    parser = shit.Parser(tokens)
+    parser = aura.Parser(tokens)
     result = parser.parse()
     assert result.error is None
     return result.node

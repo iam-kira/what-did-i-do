@@ -1,8 +1,8 @@
-import shit
+import aura
 
 
 def ev(source, filename='<stdin>'):
-    result, error = shit.run(filename, source, shit.new_symbol_table())
+    result, error = aura.run(filename, source, aura.new_symbol_table())
     if isinstance(result, list):
         result = result[-1] if result else None
     return result, error
@@ -14,7 +14,7 @@ def test_runtime_error_records_call_frames():
         'chore outer(n) ong\nyeet inner(n)\nbet\n'
         'outer(5)'
     )
-    result, error = ev(source, 'prog.shit')
+    result, error = ev(source, 'prog.aura')
     assert result is None
     assert [name for name, _ in error.frames] == ['inner', 'outer']
 
@@ -39,7 +39,7 @@ def test_runaway_recursion_reports_a_language_error():
 
 def test_traceback_is_capped_and_says_how_many_it_dropped():
     result, error = ev('chore boom(n) ong\nyeet boom(n + 1)\nbet\nboom(0)')
-    assert len(error.frames) == shit.RTError.MAX_FRAMES
+    assert len(error.frames) == aura.RTError.MAX_FRAMES
     assert error.frames_omitted > 0
     assert 'more frame(s)' in error.as_string()
 
@@ -65,9 +65,9 @@ def test_valid_numbers_still_lex():
 
 
 def test_error_reports_file_line_and_column():
-    result, error = ev('stash x = 1\nx + $', 'prog.shit')
+    result, error = ev('stash x = 1\nx + $', 'prog.aura')
     assert result is None
     text = error.as_string()
-    assert 'File prog.shit' in text
+    assert 'File prog.aura' in text
     assert 'line 2' in text
     assert 'col 5' in text

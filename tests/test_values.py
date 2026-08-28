@@ -1,10 +1,10 @@
-import shit
+import aura
 
 Q = '"'
 
 
 def ev(source):
-    result, error = shit.run('<stdin>', source, shit.new_symbol_table())
+    result, error = aura.run('<stdin>', source, aura.new_symbol_table())
     if isinstance(result, list):
         result = result[-1] if result else None
     return result, error
@@ -195,7 +195,7 @@ def test_type_predicates():
     cases = {
         'is_math(1)': '1', 'is_math(' + Q + 'a' + Q + ')': '0',
         'is_yap(' + Q + 'a' + Q + ')': '1', 'is_pile([])': '1',
-        'is_chore(yap)': '1', 'is_chore(1)': '0',
+        'is_chore(cook)': '1', 'is_chore(1)': '0',
     }
     for source, expected in cases.items():
         result, error = ev(source)
@@ -204,13 +204,13 @@ def test_type_predicates():
 
 
 def test_builtin_arity_is_checked():
-    result, error = ev('yap(1, 2)')
+    result, error = ev('cook(1, 2)')
     assert result is None
     assert 'takes 1 argument(s), got 2' in error.details
 
 
 def test_print_returns_zero(capsys):
-    result, error = ev('yap(' + Q + 'hi' + Q + ')')
+    result, error = ev('cook(' + Q + 'hi' + Q + ')')
     assert error is None
     assert repr(result) == '0'
     assert capsys.readouterr().out == 'hi\n'

@@ -1,4 +1,4 @@
-# shit: the book
+# aura: the book
 
 The complete reference for the language and the interpreter behind it.
 
@@ -52,7 +52,7 @@ You need Python 3.9 or newer. Nothing else.
 ```bash
 git clone https://github.com/iam-kira/what-did-i-do
 cd what-did-i-do
-python shit.py
+python aura.py
 ```
 
 That opens the REPL. Type something:
@@ -86,26 +86,26 @@ chore double(n) ong
     yeet n * 2
 bet
 
-yap(double(21))
+cook(double(21))
 ```
 
 Run it:
 
 ```bash
-python shit.py double.shit
+python aura.py double.aura
 ```
 
-File mode prints nothing on its own — `yap` is how a program speaks. The REPL
+File mode prints nothing on its own — `cook` is how a program speaks. The REPL
 echoes; files do not.
 
 ---
 
 ## 2. The vocabulary
 
-shit does not use a single normal keyword. This is the whole trick, and the
+aura does not use a single normal keyword. This is the whole trick, and the
 whole joke. The semantics underneath are ordinary; only the words changed.
 
-| shit | usual name | shit | usual name |
+| aura | usual name | aura | usual name |
 |---|---|---|---|
 | `stash` | `var` / `let` | `chore` | `def` / `function` |
 | `fr` | `if` | `yeet` | `return` |
@@ -117,7 +117,7 @@ whole joke. The semantics underneath are ordinary; only the words changed.
 | `grind` | `for` | `based` | `true` |
 | `til` | `to` | `cringe` | `false` |
 | `by` | `step` | `ghosted` | `null` |
-| `among` | `in` | `risky` | `try` |
+| `among` | `in` | `sus` | `try` |
 | `oops` | `raise` | `whoops` | `catch` |
 
 Every block opens with `ong` and closes with `bet`. There are no braces and
@@ -189,7 +189,7 @@ identical in every position, so it reads and it assigns:
 ```text
 player.score += 10
 player.title = "champ"
-yap(player.name)
+cook(player.name)
 ```
 
 ### Truthiness
@@ -215,7 +215,7 @@ bet
 
 stash mine = {"x": 1}
 spoil(mine)
-yap(mine)
+cook(mine)
 ```
 
 That prints `{"x": 1}`. The bag inside `spoil` was a copy. Return the new value,
@@ -227,7 +227,7 @@ The same applies between names:
 stash a = [1, 2]
 stash b = a
 b[0] = 9
-yap(a)
+cook(a)
 ```
 
 `a` is still `[1, 2]`.
@@ -310,7 +310,7 @@ answer. That makes the standard guard safe:
 ```text
 stash xs = []
 fr howmany(xs) > 0 also xs[0] == 1 ong
-    yap("found it")
+    cook("found it")
 bet
 ```
 
@@ -337,11 +337,11 @@ Comments run from `#` to end of line.
 
 ```text
 fr score > 10 ong
-    yap("big")
+    cook("big")
 orfr score > 5 ong
-    yap("medium")
+    cook("medium")
 whatever
-    yap("small")
+    cook("small")
 bet
 ```
 
@@ -355,15 +355,15 @@ bet
 
 ```text
 grind i = 0 til 10 by 2 ong
-    yap(i)
+    cook(i)
 bet
 
 grind word among ["a", "b"] ong
-    yap(word)
+    cook(word)
 bet
 
 grind label, value among scores ong
-    yap("{label}: {value}")
+    cook("{label}: {value}")
 bet
 ```
 
@@ -414,8 +414,8 @@ chore counter() ong
 bet
 
 stash c = counter()
-yap(c())
-yap(c())
+cook(c())
+cook(c())
 ```
 
 That prints `1` then `2`. Two counters do not interfere — each call to
@@ -428,9 +428,9 @@ chore dbl(n) ong yeet n * 2 bet
 chore odd(n) ong yeet n % 2 == 1 bet
 chore add(a, b) ong yeet a + b bet
 
-yap(eachof([1, 2, 3], dbl))
-yap(keepif([1, 2, 3, 4], odd))
-yap(smoosh([1, 2, 3, 4], add))
+cook(eachof([1, 2, 3], dbl))
+cook(keepif([1, 2, 3, 4], odd))
+cook(smoosh([1, 2, 3, 4], add))
 ```
 
 `sortof` takes an optional key chore, run once per item.
@@ -459,7 +459,7 @@ bet
 stash c = counter()
 c.bump()
 c.bump()
-yap(c.peek())
+cook(c.peek())
 ```
 
 Suffixes chain, so `c.bump()`, `fs[0]()`, `f()[0]` and `mk()()` all work.
@@ -477,8 +477,8 @@ share mutable state between chores. Handing a bag around will not do it.
 stash name = "ana"
 stash scores = {"ana": 3}
 
-yap("hi {name}, you have {scores[name]} points")
-yap("{1 + 2} and {smol(9, 4)}")
+cook("hi {name}, you have {scores[name]} points")
+cook("{1 + 2} and {smol(9, 4)}")
 ```
 
 Any expression works — arithmetic, calls, lookups, even another yap:
@@ -501,7 +501,7 @@ pair, and every error knows where it came from:
 
 ```text
 Runtime Error: 'nope' is not defined
-File prog.shit, line 3, col 14
+File prog.aura, line 3, col 14
       total += nope
                ^^^^
 ```
@@ -512,10 +512,10 @@ Inside chores you get a traceback as well, innermost call last.
 
 ```text
 chore safe_div(a, b) ong
-    risky ong
+    sus ong
         yeet a / b
     whoops e ong
-        yap("nope: {e.why}")
+        cook("nope: {e.why}")
         yeet 0
     bet
 bet
@@ -542,11 +542,11 @@ The `whoops` name is bound to a bag with `why`, `kind`, `file` and `line`.
 | `custom` | whatever `oops` raised |
 
 ```text
-risky ong
+sus ong
     stash text = slurp(path)
 whoops e ong
     fr e.kind == "file" ong
-        yap("no such file, carrying on")
+        cook("no such file, carrying on")
     whatever
         oops e.why
     bet
@@ -559,7 +559,7 @@ bet
 
 Everything the runtime throws is catchable — undefined names, bad indexes, even
 runaway recursion. Syntax errors are not, because they happen before anything
-runs. `yeet`, `bail`, `skip` and `bounce` pass straight through a `risky`
+runs. `yeet`, `bail`, `skip` and `bounce` pass straight through a `sus`
 untouched: only errors are caught.
 
 ---
@@ -567,12 +567,12 @@ untouched: only errors are caught.
 ## 10. Programs
 
 ```bash
-python shit.py                  # REPL
-python shit.py prog.shit        # run a file
-python shit.py prog.shit a b    # a and b land in handed()
-python shit.py --tokens f.shit  # token stream
-python shit.py --ast f.shit     # parse tree
-python shit.py --help
+python aura.py                  # REPL
+python aura.py prog.aura        # run a file
+python aura.py prog.aura a b    # a and b land in handed()
+python aura.py --tokens f.aura  # token stream
+python aura.py --ast f.aura     # parse tree
+python aura.py --help
 ```
 
 A program reads its arguments with `handed()`, its files with `slurp`, and sets
@@ -582,12 +582,12 @@ its exit status with `bounce(code)`. `bounce` is not catchable — it means stop
 stash targets = handed()
 
 fr howmany(targets) == 0 ong
-    yap("give me a file")
+    cook("give me a file")
     bounce(2)
 bet
 ```
 
-`summon("lib.shit")` runs another file in the current scope, so its chores and
+`summon("lib.aura")` runs another file in the current scope, so its chores and
 stashes land here. Paths resolve relative to the file doing the summoning, and
 a cycle is reported rather than followed forever.
 
@@ -602,7 +602,7 @@ if you insist.
 
 | chore | does |
 |---|---|
-| `yap(value)` | print a line, gives back `0` |
+| `cook(value)` | print a line, gives back `0` |
 | `beg(prompt?)` | read a line as a yap |
 | `slurp(path)` | read a whole file |
 | `spill(path, text)` | write a file, replacing it |
@@ -661,7 +661,7 @@ it: `xs[0] = 99`.
 
 # Part II — the interpreter
 
-Everything lives in `shit.py`, in pipeline order. Read it top to bottom and it
+Everything lives in `aura.py`, in pipeline order. Read it top to bottom and it
 tells the whole story.
 
 ## 12. The pipeline
@@ -751,7 +751,7 @@ right-associative one — that is how `^` works. Operators match by token type,
 or by `(TT_KEYWORD, 'also')` tuples for word operators.
 
 `statement()` dispatches the keyword forms — `fr`, `keep`, `grind`, `chore`,
-`stash`, `risky`, `oops`, `yeet`, `bail`, `skip` — then falls through to
+`stash`, `sus`, `oops`, `yeet`, `bail`, `skip` — then falls through to
 parsing an expression. If an `=` or `+=` follows that expression,
 `assignment()` decides what it was:
 
@@ -859,9 +859,9 @@ Argument names carry prefixes: `?name` is optional and arrives as `None`,
 `*name` soaks up any number more. A builtin that needs the interpreter itself
 goes in `NEEDS_INTERPRETER` and receives it as a third argument — that is how
 `summon` runs a file in the caller's scope, and how `eachof` calls back into
-shit code.
+aura code.
 
-Then add the name to `editors/vscode/syntaxes/shit.tmLanguage.json`; a test
+Then add the name to `editors/vscode/syntaxes/aura.tmLanguage.json`; a test
 compares the grammar against the real lists and fails if you forget.
 
 ### A new value type
@@ -872,7 +872,7 @@ in the interpreter changes.
 ### A new error
 
 Construct `RTError(pos_start, pos_end, message, kind='...')` with a kind from
-`RTError.KINDS`. A test walks `shit.py`'s own AST and fails if any `RTError` is
+`RTError.KINDS`. A test walks `aura.py`'s own AST and fails if any `RTError` is
 built without one.
 
 ### House rules
@@ -900,7 +900,7 @@ statement   := 'stash' IDENT (',' IDENT)* '=' expr
              | 'grind' IDENT '=' expr 'til' expr ('by' expr)? 'ong' statements 'bet'
              | 'grind' IDENT (',' IDENT)* 'among' expr 'ong' statements 'bet'
              | 'chore' IDENT '(' (IDENT (',' IDENT)*)? ')' 'ong' statements 'bet'
-             | 'risky' 'ong' statements 'whoops' IDENT 'ong' statements 'bet'
+             | 'sus' 'ong' statements 'whoops' IDENT 'ong' statements 'bet'
              | 'oops' expr
              | 'yeet' expr?
              | 'bail' | 'skip'
@@ -933,7 +933,7 @@ bag         := '{' (expr ':' expr (',' expr ':' expr)* ','?)? '}'
 stash   fr      ong     orfr    whatever  bet
 keep    chore   also    orelse  nah       based
 cringe  ghosted grind   til     by        among
-bail    skip    yeet    risky   whoops    oops
+bail    skip    yeet    sus   whoops    oops
 ```
 
 ## C. Builtins
@@ -960,7 +960,7 @@ more specific.
 
 Things that will trip you up:
 
-| Python | shit |
+| Python | aura |
 |---|---|
 | `4 / 2` is `2.0` | `4 / 2` is `2`, `5 / 2` is `2.5` |
 | assignment creates a variable | assignment requires `stash` first |
@@ -969,7 +969,7 @@ Things that will trip you up:
 | `x and y` gives back `y` | `x also y` gives back `1` or `0` |
 | `round(2.5)` is `2` | `roundish(2.5)` is `3` |
 | indentation defines blocks | `ong` and `bet` do; indentation is decoration |
-| exceptions | `(result, error)` pairs, and `risky`/`whoops` on top |
+| exceptions | `(result, error)` pairs, and `sus`/`whoops` on top |
 
 And the one that catches everyone: `for i in range(3)` is
 `grind i = 0 til 3 ong ... bet`, end-exclusive, same as Python.
@@ -978,5 +978,5 @@ And the one that catches everyone: `for i in range(3)` is
 
 ## Credit
 
-shit was created by **Vijay Biradar** (iam-kira), and is released under the MIT Licence. Use it,
+aura was created by **Vijay Biradar** (iam-kira), and is released under the MIT Licence. Use it,
 change it, sell it — but the copyright notice travels with every copy.

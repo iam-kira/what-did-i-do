@@ -5,7 +5,7 @@ import glob
 import os
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SOURCES = ['shit.py', 'shell.py'] + sorted(
+SOURCES = ['aura.py', 'shell.py'] + sorted(
     os.path.relpath(path, REPO) for path in glob.glob(os.path.join(REPO, 'tests', '*.py'))
 )
 
@@ -26,8 +26,8 @@ def test_every_source_file_parses_as_python_39():
 
 
 def test_no_runtime_dependencies_are_imported():
-    """shit.py must run on a bare interpreter - stdlib only."""
-    with open(os.path.join(REPO, 'shit.py'), encoding='utf-8') as handle:
+    """aura.py must run on a bare interpreter - stdlib only."""
+    with open(os.path.join(REPO, 'aura.py'), encoding='utf-8') as handle:
         tree = ast.parse(handle.read())
 
     stdlib = {'sys', 'os', 'math'}

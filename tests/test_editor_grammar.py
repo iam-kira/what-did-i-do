@@ -8,10 +8,10 @@ import json
 import os
 import re
 
-import shit
+import aura
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GRAMMAR = os.path.join(REPO, 'editors', 'vscode', 'syntaxes', 'shit.tmLanguage.json')
+GRAMMAR = os.path.join(REPO, 'editors', 'vscode', 'syntaxes', 'aura.tmLanguage.json')
 
 
 def load():
@@ -50,8 +50,8 @@ def test_grammar_knows_every_keyword():
     for pattern in patterns:
         highlighted |= words_in(pattern)
 
-    missing = set(shit.KEYWORDS) - highlighted
-    extra = highlighted - set(shit.KEYWORDS)
+    missing = set(aura.KEYWORDS) - highlighted
+    extra = highlighted - set(aura.KEYWORDS)
 
     assert not missing, f'grammar does not highlight: {sorted(missing)}'
     assert not extra, f'grammar highlights words the language dropped: {sorted(extra)}'
@@ -60,19 +60,19 @@ def test_grammar_knows_every_keyword():
 def test_grammar_knows_every_builtin():
     highlighted = words_in(load()['repository']['builtin']['match'])
 
-    missing = set(shit.BUILTINS) - highlighted
-    extra = highlighted - set(shit.BUILTINS)
+    missing = set(aura.BUILTINS) - highlighted
+    extra = highlighted - set(aura.BUILTINS)
 
     assert not missing, f'grammar does not highlight: {sorted(missing)}'
     assert not extra, f'grammar highlights builtins that do not exist: {sorted(extra)}'
 
 
-def test_extension_declares_the_shit_extension():
+def test_extension_declares_the_aura_extension():
     with open(os.path.join(REPO, 'editors', 'vscode', 'package.json'), encoding='utf-8') as handle:
         package = json.load(handle)
 
     language = package['contributes']['languages'][0]
-    assert language['extensions'] == ['.shit']
+    assert language['extensions'] == ['.aura']
     assert package['contributes']['grammars'][0]['scopeName'] == load()['scopeName']
 
 
@@ -85,4 +85,4 @@ def test_language_configuration_matches_the_block_words():
     assert 'ong' in rules['increaseIndentPattern']
     for word in ('bet', 'whatever', 'orfr', 'whoops'):
         assert word in rules['decreaseIndentPattern'], word
-        assert word in shit.KEYWORDS, word
+        assert word in aura.KEYWORDS, word

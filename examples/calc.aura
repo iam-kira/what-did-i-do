@@ -1,7 +1,7 @@
-# A calculator written in shit.
+# A calculator written in aura.
 #
 # Tokenises, then parses with precedence climbing, then evaluates - the same
-# three stages shit.py uses, written in the language it implements.
+# three stages aura.py uses, written in the language it implements.
 #
 # Supports: + - * / % ^, parentheses, unary minus, floats.
 #
@@ -154,10 +154,10 @@ chore calc(text) ong
 bet
 
 chore show(text) ong
-    risky ong
-        yap("{text} = {calc(text)}")
+    sus ong
+        cook("{text} = {calc(text)}")
     whoops e ong
-        yap("{text} -> nope: {e["why"]}")
+        cook("{text} -> nope: {e["why"]}")
     bet
 bet
 
