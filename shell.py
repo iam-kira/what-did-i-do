@@ -1,6 +1,6 @@
 """The shit REPL.
 
-Copyright (c) 2026 Vijay Biradar
+Copyright (c) 2026 iam-kira (Vijay Biradar)
 Licensed under the MIT License. See LICENSE for the full text.
 """
 

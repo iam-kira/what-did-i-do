@@ -86,7 +86,7 @@ Known smaller things, good first issues:
 
 ## Licensing
 
-shit is MIT licensed and copyright Vijay Biradar. By opening a pull request you agree
+shit is MIT licensed and copyright iam-kira (Vijay Biradar). By opening a pull request you agree
 your contribution is released under the same licence, and that the project's
 copyright notice stays intact.
 

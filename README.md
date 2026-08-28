@@ -138,7 +138,7 @@ python -m pytest -q
 
 ## Credit and licence
 
-shit was created by **Vijay Biradar**.
+shit was created by **Vijay Biradar** ([iam-kira](https://github.com/iam-kira)).
 
 It is released under the [MIT Licence](LICENSE), which lets anyone use, modify
 and sell it — including inside closed-source products — on one condition:

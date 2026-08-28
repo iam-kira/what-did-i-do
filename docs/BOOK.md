@@ -978,5 +978,5 @@ And the one that catches everyone: `for i in range(3)` is
 
 ## Credit
 
-shit was created by **Vijay Biradar**, and is released under the MIT Licence. Use it,
+shit was created by **Vijay Biradar** (iam-kira), and is released under the MIT Licence. Use it,
 change it, sell it — but the copyright notice travels with every copy.
