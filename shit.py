@@ -14,6 +14,7 @@ KEYWORDS = [
     'stash', 'fr', 'ong', 'orfr', 'whatever', 'bet', 'keep', 'chore',
     'also', 'orelse', 'nah', 'based', 'cringe', 'ghosted',
     'grind', 'til', 'by', 'among', 'bail', 'skip', 'yeet',
+    'risky', 'whoops', 'oops',
 ]
 
 
@@ -531,6 +532,28 @@ class IndexAssignNode:
         return f'({self.index_node} = {self.value_node})'
 
 
+class RiskyNode:
+    def __init__(self, body_node, catch_name_tok, catch_body_node, pos_start, pos_end):
+        self.body_node = body_node
+        self.catch_name_tok = catch_name_tok
+        self.catch_body_node = catch_body_node
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return f'(risky {self.body_node} whoops {self.catch_name_tok.value})'
+
+
+class OopsNode:
+    def __init__(self, node_to_raise, pos_start, pos_end):
+        self.node_to_raise = node_to_raise
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self):
+        return f'(oops {self.node_to_raise})'
+
+
 class ReturnNode:
     def __init__(self, node_to_return, pos_start, pos_end):
         self.node_to_return = node_to_return
@@ -685,7 +708,9 @@ class Parser:
         """True when nothing more of the current statement can follow."""
         if self.current_tok.type in (TT_NEWLINE, TT_EOF):
             return True
-        return self.current_tok.type == TT_KEYWORD and self.current_tok.value in ('bet', 'orfr', 'whatever')
+        return self.current_tok.type == TT_KEYWORD and self.current_tok.value in (
+            'bet', 'orfr', 'whatever', 'whoops'
+        )
 
     def at_block_end(self, stop_keywords):
         if self.current_tok.type == TT_EOF:
@@ -703,6 +728,17 @@ class Parser:
 
         if self.current_tok.matches(TT_KEYWORD, 'grind'):
             return self.for_expr()
+
+        if self.current_tok.matches(TT_KEYWORD, 'risky'):
+            return self.risky_expr()
+
+        if self.current_tok.matches(TT_KEYWORD, 'oops'):
+            pos_start = self.current_tok.pos_start.copy()
+            self.advance()
+            value = res.register(self.expr())
+            if res.error:
+                return res
+            return res.success(OopsNode(value, pos_start, value.pos_end.copy()))
 
         if self.current_tok.matches(TT_KEYWORD, 'yeet'):
             pos_start = self.current_tok.pos_start.copy()
@@ -852,6 +888,55 @@ class Parser:
         pos_end = self.current_tok.pos_end.copy()
         self.advance()
         return res.success(WhileNode(condition, body, pos_start, pos_end))
+
+    def risky_expr(self):
+        res = ParseResult()
+        pos_start = self.current_tok.pos_start.copy()
+        self.advance()
+
+        if not self.current_tok.matches(TT_KEYWORD, 'ong'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'ong'")
+            )
+        self.advance()
+
+        body = res.register(self.statements(('whoops', 'bet')))
+        if res.error:
+            return res
+
+        if not self.current_tok.matches(TT_KEYWORD, 'whoops'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'whoops'")
+            )
+        self.advance()
+
+        if self.current_tok.type != TT_IDENTIFIER:
+            return res.failure(
+                InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end, 'Expected a name for the whoops'
+                )
+            )
+        catch_name_tok = self.current_tok
+        self.advance()
+
+        if not self.current_tok.matches(TT_KEYWORD, 'ong'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'ong'")
+            )
+        self.advance()
+
+        catch_body = res.register(self.statements(('bet',)))
+        if res.error:
+            return res
+
+        if not self.current_tok.matches(TT_KEYWORD, 'bet'):
+            return res.failure(
+                InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected 'bet'")
+            )
+
+        pos_end = self.current_tok.pos_end.copy()
+        self.advance()
+        return res.success(RiskyNode(body, catch_name_tok, catch_body, pos_start, pos_end))
 
     def for_expr(self):
         res = ParseResult()
@@ -2598,6 +2683,48 @@ class Interpreter:
         return res.failure(
             RTError(node.pos_start, node.pos_end, 'Cannot assign into this expression')
         )
+
+    def visit_OopsNode(self, node):
+        res = RTResult()
+
+        value = res.register(self.visit(node.node_to_raise))
+        if res.error:
+            return res
+
+        detail = str(value) if isinstance(value, String) else repr(value)
+        return res.failure(RTError(node.pos_start, node.pos_end, detail))
+
+    def visit_RiskyNode(self, node):
+        res = RTResult()
+
+        value = self.run_block(res, node.body_node)
+        if res.error is None:
+            return res.success(value)
+
+        caught = res.error
+        if not isinstance(caught, RTError):
+            return res
+
+        # the whoops runs with the error bound to a name, in its own result
+        res = RTResult()
+        self.symbol_table.set(node.catch_name_tok.value, self.describe(caught, node))
+
+        value = self.run_block(res, node.catch_body_node)
+        if res.error:
+            return res
+        return res.success(value)
+
+    def describe(self, error, node):
+        """An RTError as a bag the program can read."""
+        bag = Bag().set_pos(node.pos_start, node.pos_end)
+        pos = error.pos_start
+        for label, value in (
+            ('why', String(error.details)),
+            ('file', String(pos.filename if pos else '?')),
+            ('line', Number(pos.line + 1 if pos else 0)),
+        ):
+            bag.set_index(String(label), value)
+        return bag
 
     def visit_ReturnNode(self, node):
         res = RTResult()

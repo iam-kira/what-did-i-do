@@ -102,8 +102,9 @@ python shit.py --help
 - **Operators** — `+ - * / % ^`, comparisons, `also`/`orelse`/`nah`, indexing, compound assignment
 - **27 builtins** — printing, input, maths, slicing, sorting, splitting, joining, type checks
 - **Imports** — `summon("lib.shit")`, with cycle detection
+- **Error handling** — `risky` / `whoops` / `oops`, catching anything the runtime throws
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **189 tests** covering every stage
+- **205 tests** covering every stage
 
 ---
 

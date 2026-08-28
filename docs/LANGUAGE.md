@@ -18,6 +18,8 @@ shit does not speak Python. Same ideas, worse names.
 | `ong` | then (opens a block) | `also` | and |
 | `bet` | end (closes a block) | `orelse` | or |
 | `keep` | while | `nah` | not |
+| `risky` | try | `whoops` | catch |
+| `oops` | raise | | |
 | `grind` | for | `based` | true |
 | `til` | to | `cringe` | false |
 | `by` | step | `ghosted` | null |
@@ -251,6 +253,30 @@ it: `xs[0] = 99`.
 
 Builtins live in a scope every program inherits, so you can shadow one:
 `stash howmany = 5` is legal, if unwise.
+
+---
+
+## Going wrong on purpose
+
+`oops` raises. `risky ... whoops name ong ... bet` catches, binding a bag with
+`why`, `file` and `line`:
+
+```text
+chore safe_div(a, b) ong
+    risky ong
+        yeet a / b
+    whoops e ong
+        yap("nope: " + e["why"])
+        yeet 0
+    bet
+bet
+
+yap(safe_div(10, 0))   # nope: Division by zero  /  0
+```
+
+Every runtime error is catchable, including undefined names, bad indexes and
+runaway recursion. Syntax errors are not — those happen before anything runs.
+`yeet`, `bail` and `skip` pass straight through a `risky` untouched.
 
 ---
 
