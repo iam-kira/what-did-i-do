@@ -47,7 +47,8 @@ def test_every_doc_snippet_runs():
                        'chore lastchar(s) ong yeet s[-1] bet',
                        'chore bounds() ong yeet [1, 9] bet',
                        'stash grid = [[1, 2], [3, 4]]', 'stash i = 0',
-                       'stash b = {"x": 1}'):
+                       'stash b = {"x": 1}',
+                       'stash path = "no-such-file.txt"'):
             shit.run('<setup>', helper, table)
 
         _, error = shit.run(f'{name}#{index}', block, table)

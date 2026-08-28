@@ -60,8 +60,17 @@ class BounceError(Error):
 
 
 class RTError(Error):
-    def __init__(self, pos_start, pos_end, details):
+    """A runtime failure. `kind` is a short slug shit code can branch on."""
+
+    KINDS = frozenset({
+        'runtime', 'math', 'name', 'index', 'label', 'type', 'arity',
+        'file', 'depth', 'flow', 'unpack', 'custom',
+    })
+
+    def __init__(self, pos_start, pos_end, details, kind='runtime'):
         super().__init__(pos_start, pos_end, 'Runtime Error', details)
+        assert kind in self.KINDS, kind
+        self.kind = kind
         self.frames = []
         self.frames_omitted = 0
 
@@ -1646,7 +1655,7 @@ class Value:
         return None, RTError(
             self.pos_start,
             other.pos_end,
-            f'Illegal operation for {self.TYPE_NAME}',
+            f'Illegal operation for {self.TYPE_NAME}', kind='type',
         )
 
     def added_to(self, other):
@@ -1693,12 +1702,12 @@ class Value:
 
     def get_index(self, index):
         return None, RTError(
-            self.pos_start, index.pos_end, f'{self.TYPE_NAME} is not indexable'
+            self.pos_start, index.pos_end, f'{self.TYPE_NAME} is not indexable', kind='index'
         )
 
     def set_index(self, index, value):
         return RTError(
-            self.pos_start, index.pos_end, f'Cannot assign into a {self.TYPE_NAME}'
+            self.pos_start, index.pos_end, f'Cannot assign into a {self.TYPE_NAME}', kind='index'
         )
 
     def length(self):
@@ -1734,7 +1743,7 @@ class Number(Value):
         if not isinstance(other, Number):
             return self.illegal_operation(other)
         if other.value == 0:
-            return None, RTError(other.pos_start, other.pos_end, 'Division by zero')
+            return None, RTError(other.pos_start, other.pos_end, 'Division by zero', kind='math')
         if isinstance(self.value, int) and isinstance(other.value, int):
             if self.value % other.value == 0:
                 return Number(self.value // other.value), None
@@ -1774,7 +1783,7 @@ class Number(Value):
         if not isinstance(other, Number):
             return self.illegal_operation(other)
         if other.value == 0:
-            return None, RTError(other.pos_start, other.pos_end, 'Modulo by zero')
+            return None, RTError(other.pos_start, other.pos_end, 'Modulo by zero', kind='math')
         return Number(self.value % other.value), None
 
     def powed_by(self, other):
@@ -1783,9 +1792,9 @@ class Number(Value):
         try:
             result = self.value ** other.value
         except (OverflowError, ZeroDivisionError) as exc:
-            return None, RTError(self.pos_start, other.pos_end, str(exc))
+            return None, RTError(self.pos_start, other.pos_end, str(exc), kind='math')
         if isinstance(result, complex):
-            return None, RTError(self.pos_start, other.pos_end, 'Result is not a real number')
+            return None, RTError(self.pos_start, other.pos_end, 'Result is not a real number', kind='math')
         return Number(result), None
 
     def is_true(self):
@@ -1926,7 +1935,7 @@ def index_into(container, sequence, index, wrap):
         return None, RTError(
             index.pos_start,
             index.pos_end,
-            f'A {container.TYPE_NAME} is indexed by whole maths, not labels',
+            f'A {container.TYPE_NAME} is indexed by whole maths, not labels', kind='index',
         )
 
     """Shared bounds-checked indexing for String and List.
@@ -1934,14 +1943,14 @@ def index_into(container, sequence, index, wrap):
     Negative indices count from the end, as in Python.
     """
     if not isinstance(index, Number) or not isinstance(index.value, int):
-        return None, RTError(index.pos_start, index.pos_end, 'Index must be a whole math')
+        return None, RTError(index.pos_start, index.pos_end, 'Index must be a whole math', kind='index')
 
     i = index.value
     if i < 0:
         i += len(sequence)
     if not 0 <= i < len(sequence):
         return None, RTError(
-            index.pos_start, index.pos_end, f'Index {index.value} out of range (length {len(sequence)})'
+            index.pos_start, index.pos_end, f'Index {index.value} out of range (length {len(sequence)})', kind='index'
         )
 
     item = sequence[i]
@@ -1985,7 +1994,7 @@ class BaseFunction(Value):
         return RTError(
             pos_start,
             pos_end,
-            f"'{self.name}' takes {wanted} argument(s), got {len(args)}",
+            f"'{self.name}' takes {wanted} argument(s), got {len(args)}", kind='arity',
         )
 
     def is_true(self):
@@ -2042,15 +2051,15 @@ class Bag(Value):
     def get_index(self, index):
         key = self.key_of(index)
         if key is None:
-            return None, RTError(index.pos_start, index.pos_end, 'A bag label must be a math or a yap')
+            return None, RTError(index.pos_start, index.pos_end, 'A bag label must be a math or a yap', kind='label')
         if key not in self.pairs:
-            return None, RTError(index.pos_start, index.pos_end, f'No label {index!r} in this bag')
+            return None, RTError(index.pos_start, index.pos_end, f'No label {index!r} in this bag', kind='label')
         return self.pairs[key][1], None
 
     def set_index(self, index, value):
         key = self.key_of(index)
         if key is None:
-            return RTError(index.pos_start, index.pos_end, 'A bag label must be a math or a yap')
+            return RTError(index.pos_start, index.pos_end, 'A bag label must be a math or a yap', kind='label')
         self.pairs[key] = (index.copy(), value)
         return None
 
@@ -2093,7 +2102,7 @@ class Function(BaseFunction):
                 RTError(
                     node.pos_start,
                     node.pos_end,
-                    f'Maximum call depth of {MAX_CALL_DEPTH} exceeded',
+                    f'Maximum call depth of {MAX_CALL_DEPTH} exceeded', kind='depth',
                 )
             )
 
@@ -2161,7 +2170,7 @@ class BuiltInFunction(BaseFunction):
 # BUILT-IN FUNCTIONS
 ######################################
 def _type_error(node, message):
-    return None, RTError(node.pos_start, node.pos_end, message)
+    return None, RTError(node.pos_start, node.pos_end, message, kind='type')
 
 
 def bi_print(args, node):
@@ -2222,7 +2231,7 @@ def bi_pop(args, node):
     if isinstance(target, Bag):
         key = Bag.key_of(index)
         if key is None or key not in target.pairs:
-            return None, RTError(node.pos_start, node.pos_end, f'No label {index!r} in this bag')
+            return None, RTError(node.pos_start, node.pos_end, f'No label {index!r} in this bag', kind='label')
         remaining = dict(target.pairs)
         del remaining[key]
         return Bag(remaining), None
@@ -2240,7 +2249,7 @@ def bi_pop(args, node):
 
 def _need(node, value, cls, what, who):
     if not isinstance(value, cls):
-        return RTError(node.pos_start, node.pos_end, f"'{who}' needs a {what}, got {value.TYPE_NAME}")
+        return RTError(node.pos_start, node.pos_end, f"'{who}' needs a {what}, got {value.TYPE_NAME}", kind='type')
     return None
 
 
@@ -2248,7 +2257,7 @@ def _numbers(args, node, who):
     """Flatten a single pile argument, or loose maths, into Python numbers."""
     values = args[0].elements if len(args) == 1 and isinstance(args[0], List) else args
     if not values:
-        return None, RTError(node.pos_start, node.pos_end, f"'{who}' needs at least one math")
+        return None, RTError(node.pos_start, node.pos_end, f"'{who}' needs at least one math", kind='type')
     out = []
     for value in values:
         error = _need(node, value, Number, 'math', who)
@@ -2308,7 +2317,7 @@ def bi_total(args, node):
 def bi_chunk(args, node):
     target = args[0]
     if not isinstance(target, (String, List)):
-        return None, RTError(node.pos_start, node.pos_end, "'chunk' needs a yap or pile")
+        return None, RTError(node.pos_start, node.pos_end, "'chunk' needs a yap or pile", kind='type')
 
     length = target.length()
     bounds = []
@@ -2334,7 +2343,7 @@ def bi_flip(args, node):
         return String(target.value[::-1]), None
     if isinstance(target, List):
         return List([item.copy() for item in reversed(target.elements)]), None
-    return None, RTError(node.pos_start, node.pos_end, "'flip' needs a yap or pile")
+    return None, RTError(node.pos_start, node.pos_end, "'flip' needs a yap or pile", kind='type')
 
 
 def bi_glue(args, node):
@@ -2347,7 +2356,7 @@ def bi_glue(args, node):
     elif isinstance(args[1], String):
         separator = args[1].value
     else:
-        return None, RTError(node.pos_start, node.pos_end, "'glue' separator must be a yap")
+        return None, RTError(node.pos_start, node.pos_end, "'glue' separator must be a yap", kind='type')
 
     parts = [item.value if isinstance(item, String) else repr(item) for item in args[0].elements]
     return String(separator.join(parts)), None
@@ -2396,7 +2405,7 @@ def _members(container):
 def bi_where(args, node):
     members = _members(args[0])
     if members is None:
-        return None, RTError(node.pos_start, node.pos_end, "'where' needs a yap or pile")
+        return None, RTError(node.pos_start, node.pos_end, "'where' needs a yap or pile", kind='type')
     for i, item in enumerate(members):
         equal, error = item.compare_eq(args[1])
         if error:
@@ -2409,7 +2418,7 @@ def bi_where(args, node):
 def bi_gotit(args, node):
     index, error = bi_where(args, node)
     if error:
-        return None, RTError(node.pos_start, node.pos_end, "'gotit' needs a yap or pile")
+        return None, RTError(node.pos_start, node.pos_end, "'gotit' needs a yap or pile", kind='type')
     return Number(1 if index.value >= 0 else 0), None
 
 
@@ -2424,14 +2433,14 @@ def bi_sortof(args, node):
     elif all(isinstance(item, String) for item in items):
         items.sort(key=lambda item: item.value)
     elif items:
-        return None, RTError(node.pos_start, node.pos_end, "'sortof' needs a pile of all maths or all yaps")
+        return None, RTError(node.pos_start, node.pos_end, "'sortof' needs a pile of all maths or all yaps", kind='type')
     return List(items), None
 
 
 def call_chore(func, call_args, node, interpreter):
     """Call a shit chore from inside a builtin. Returns (value, error)."""
     if not isinstance(func, BaseFunction):
-        return None, RTError(node.pos_start, node.pos_end, f'{func} is not a chore')
+        return None, RTError(node.pos_start, node.pos_end, f'{func} is not a chore', kind='type')
 
     error = func.check_args(call_args, node.pos_start, node.pos_end)
     if error:
@@ -2492,7 +2501,7 @@ def bi_smoosh(args, node, interpreter):
     elif items:
         carried = items.pop(0).copy()
     else:
-        return None, RTError(node.pos_start, node.pos_end, "'smoosh' needs a starting value for an empty pile")
+        return None, RTError(node.pos_start, node.pos_end, "'smoosh' needs a starting value for an empty pile", kind='type')
 
     for item in items:
         carried, error = call_chore(func, [carried, item.copy()], node, interpreter)
@@ -2518,12 +2527,12 @@ def bi_sortof_by(args, node, interpreter):
             return None, error
         if not isinstance(key, (Number, String)):
             return None, RTError(
-                node.pos_start, node.pos_end, f'A sort key must be a math or a yap, got {key.TYPE_NAME}'
+                node.pos_start, node.pos_end, f'A sort key must be a math or a yap, got {key.TYPE_NAME}', kind='type'
             )
         decorated.append((key, item.copy()))
 
     if len({type(key) for key, _ in decorated}) > 1:
-        return None, RTError(node.pos_start, node.pos_end, 'Sort keys must be all maths or all yaps')
+        return None, RTError(node.pos_start, node.pos_end, 'Sort keys must be all maths or all yaps', kind='type')
 
     decorated.sort(key=lambda pair: pair[0].value)
     return List([item for _, item in decorated]), None
@@ -2561,13 +2570,13 @@ def bi_summon(args, node, interpreter):
     full = os.path.normpath(full)
 
     if full in _summoning:
-        return None, RTError(node.pos_start, node.pos_end, f"'{target}' is summoning itself")
+        return None, RTError(node.pos_start, node.pos_end, f"'{target}' is summoning itself", kind='file')
 
     try:
         with open(full, encoding='utf-8') as handle:
             source = handle.read()
     except OSError as exc:
-        return None, RTError(node.pos_start, node.pos_end, f"Cannot summon '{target}': {exc.strerror}")
+        return None, RTError(node.pos_start, node.pos_end, f"Cannot summon '{target}': {exc.strerror}", kind='file')
 
     _summoning.add(full)
     try:
@@ -2608,9 +2617,9 @@ def bi_slurp(args, node):
         with open(target, encoding='utf-8') as handle:
             return String(handle.read()), None
     except OSError as exc:
-        return None, RTError(node.pos_start, node.pos_end, f"Cannot slurp '{target}': {exc.strerror}")
+        return None, RTError(node.pos_start, node.pos_end, f"Cannot slurp '{target}': {exc.strerror}", kind='file')
     except UnicodeDecodeError:
-        return None, RTError(node.pos_start, node.pos_end, f"'{target}' is not text")
+        return None, RTError(node.pos_start, node.pos_end, f"'{target}' is not text", kind='file')
 
 
 def _write(args, node, who, mode):
@@ -2624,7 +2633,7 @@ def _write(args, node, who, mode):
         with open(target, mode, encoding='utf-8') as handle:
             handle.write(args[1].value)
     except OSError as exc:
-        return None, RTError(node.pos_start, node.pos_end, f"Cannot {who} '{target}': {exc.strerror}")
+        return None, RTError(node.pos_start, node.pos_end, f"Cannot {who} '{target}': {exc.strerror}", kind='file')
     return Number(len(args[1].value)), None
 
 
@@ -2850,7 +2859,7 @@ class Interpreter:
         value = self.symbol_table.get(var_name)
 
         if value is None:
-            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined"))
+            return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", kind='name'))
 
         return res.success(value.copy().set_pos(node.pos_start, node.pos_end))
 
@@ -2867,7 +2876,7 @@ class Interpreter:
 
         if not self.symbol_table.set_existing(var_name, value.copy()):
             return res.failure(
-                RTError(node.pos_start, node.pos_end, f"Cannot assign to undefined variable '{var_name}'")
+                RTError(node.pos_start, node.pos_end, f"Cannot assign to undefined variable '{var_name}'", kind='name')
             )
         return res.success(value)
 
@@ -2887,13 +2896,13 @@ class Interpreter:
         """Bind a pile's elements to several names. Returns an error, or None."""
         if not isinstance(value, List):
             return RTError(
-                node.pos_start, node.pos_end, f'Can only unpack a pile, got {value.TYPE_NAME}'
+                node.pos_start, node.pos_end, f'Can only unpack a pile, got {value.TYPE_NAME}', kind='unpack'
             )
         if len(value.elements) != len(name_toks):
             return RTError(
                 node.pos_start,
                 node.pos_end,
-                f'Need {len(name_toks)} things to unpack, got {len(value.elements)}',
+                f'Need {len(name_toks)} things to unpack, got {len(value.elements)}', kind='unpack',
             )
 
         declaring = getattr(node, 'is_declaration', True)
@@ -2902,7 +2911,7 @@ class Interpreter:
                 self.symbol_table.set(tok.value, item.copy())
             elif not self.symbol_table.set_existing(tok.value, item.copy()):
                 return RTError(
-                    node.pos_start, node.pos_end, f"Cannot assign to undefined variable '{tok.value}'"
+                    node.pos_start, node.pos_end, f"Cannot assign to undefined variable '{tok.value}'", kind='name'
                 )
         return None
 
@@ -2981,7 +2990,7 @@ class Interpreter:
         elif node.op_tok.type == TT_GTE:
             result, error = left.compare_gte(right)
         else:
-            return res.failure(RTError(node.pos_start, node.pos_end, 'Unknown binary operator'))
+            return res.failure(RTError(node.pos_start, node.pos_end, 'Unknown binary operator', kind='type'))
 
         if error:
             return res.failure(error)
@@ -3059,11 +3068,11 @@ class Interpreter:
         for name, val in (('start', start_value), ('til', end_value), ('by', step_value)):
             if not isinstance(val, Number):
                 return res.failure(
-                    RTError(node.pos_start, node.pos_end, f"'grind' {name} value must be a math")
+                    RTError(node.pos_start, node.pos_end, f"'grind' {name} value must be a math", kind='type')
                 )
 
         if step_value.value == 0:
-            return res.failure(RTError(node.pos_start, node.pos_end, "'grind' by cannot be 0"))
+            return res.failure(RTError(node.pos_start, node.pos_end, "'grind' by cannot be 0", kind='math'))
 
         var_name = node.var_name_tok.value
         i = start_value.value
@@ -3114,6 +3123,7 @@ class Interpreter:
                     node.iterable_node.pos_start,
                     node.iterable_node.pos_end,
                     f'Cannot iterate over a {iterable.TYPE_NAME}',
+                    kind='type',
                 )
             )
 
@@ -3177,7 +3187,7 @@ class Interpreter:
             var_name = node.var_name_tok.value
             value = self.symbol_table.get(var_name)
             if value is None:
-                return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined"))
+                return res.failure(RTError(node.pos_start, node.pos_end, f"'{var_name}' is not defined", kind='name'))
             return res.success(value)
 
         if isinstance(node, IndexNode):
@@ -3193,7 +3203,7 @@ class Interpreter:
             return res.success(value)
 
         return res.failure(
-            RTError(node.pos_start, node.pos_end, 'Cannot assign into this expression')
+            RTError(node.pos_start, node.pos_end, 'Cannot assign into this expression', kind='index')
         )
 
     def visit_OopsNode(self, node):
@@ -3204,7 +3214,7 @@ class Interpreter:
             return res
 
         detail = str(value) if isinstance(value, String) else repr(value)
-        return res.failure(RTError(node.pos_start, node.pos_end, detail))
+        return res.failure(RTError(node.pos_start, node.pos_end, detail, kind='custom'))
 
     def visit_RiskyNode(self, node):
         res = RTResult()
@@ -3232,6 +3242,7 @@ class Interpreter:
         pos = error.pos_start
         for label, value in (
             ('why', String(error.details)),
+            ('kind', String(getattr(error, 'kind', 'runtime'))),
             ('file', String(pos.filename if pos else '?')),
             ('line', Number(pos.line + 1 if pos else 0)),
         ):
@@ -3242,7 +3253,7 @@ class Interpreter:
         res = RTResult()
 
         if self.func_depth == 0:
-            return res.failure(RTError(node.pos_start, node.pos_end, "'yeet' outside of a function"))
+            return res.failure(RTError(node.pos_start, node.pos_end, "'yeet' outside of a function", kind='flow'))
 
         if node.node_to_return is not None:
             value = res.register(self.visit(node.node_to_return))
@@ -3256,13 +3267,13 @@ class Interpreter:
     def visit_ContinueNode(self, node):
         res = RTResult()
         if self.loop_depth == 0:
-            return res.failure(RTError(node.pos_start, node.pos_end, "'skip' outside of a loop"))
+            return res.failure(RTError(node.pos_start, node.pos_end, "'skip' outside of a loop", kind='flow'))
         return res.success_continue()
 
     def visit_BreakNode(self, node):
         res = RTResult()
         if self.loop_depth == 0:
-            return res.failure(RTError(node.pos_start, node.pos_end, "'bail' outside of a loop"))
+            return res.failure(RTError(node.pos_start, node.pos_end, "'bail' outside of a loop", kind='flow'))
         return res.success_break()
 
     def visit_FuncDefNode(self, node):
@@ -3284,7 +3295,7 @@ class Interpreter:
             return res
 
         if not isinstance(func, BaseFunction):
-            return res.failure(RTError(node.pos_start, node.pos_end, f'{func} is not a chore'))
+            return res.failure(RTError(node.pos_start, node.pos_end, f'{func} is not a chore', kind='type'))
 
         args = []
         for arg_node in node.arg_nodes:
@@ -3372,7 +3383,7 @@ def run(filename, text, symbol_table=None):
     except RecursionError:
         # safety net: a non-call recursion (deeply nested expressions) blew the
         # Python stack before MAX_CALL_DEPTH could catch it
-        return None, RTError(ast.node.pos_start, ast.node.pos_end, 'Expression nested too deeply')
+        return None, RTError(ast.node.pos_start, ast.node.pos_end, 'Expression nested too deeply', kind='depth')
 
     if result.error:
         return None, result.error

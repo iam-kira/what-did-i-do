@@ -411,7 +411,7 @@ Builtins live in a scope every program inherits, so you can shadow one:
 ## Going wrong on purpose
 
 `oops` raises. `risky ... whoops name ong ... bet` catches, binding a bag with
-`why`, `file` and `line`:
+`why`, `kind`, `file` and `line`:
 
 ```text
 chore safe_div(a, b) ong
@@ -426,9 +426,38 @@ bet
 yap(safe_div(10, 0))   # nope: Division by zero  /  0
 ```
 
+`kind` is a short slug you can branch on instead of matching the message:
+
+| kind | when |
+|---|---|
+| `math` | `/ 0`, `% 0`, a power with no real answer, `by 0` |
+| `name` | undefined name, or assigning to one |
+| `index` | out of range, wrong index type, assigning into a yap |
+| `label` | no such label in a bag, or a label that is not a math or yap |
+| `type` | wrong type for an operator or a builtin |
+| `arity` | wrong number of arguments |
+| `flow` | `bail` or `skip` outside a loop, `yeet` outside a chore |
+| `unpack` | destructuring the wrong shape |
+| `depth` | recursion past the call cap |
+| `file` | `slurp`, `spill` or `summon` could not do it |
+| `custom` | whatever `oops` raised |
+
+```text
+risky ong
+    stash text = slurp(path)
+whoops e ong
+    fr e.kind == "file" ong
+        yap("no such file, carrying on")
+    whatever
+        oops e.why
+    bet
+bet
+```
+
 Every runtime error is catchable, including undefined names, bad indexes and
 runaway recursion. Syntax errors are not — those happen before anything runs.
-`yeet`, `bail` and `skip` pass straight through a `risky` untouched.
+`yeet`, `bail` and `skip` pass straight through a `risky` untouched, and so
+does `bounce`.
 
 ---
 

@@ -22,10 +22,12 @@ def test_the_body_value_survives_when_nothing_goes_wrong():
     assert repr(result) == '42'
 
 
-def test_the_whoops_bag_carries_why_file_and_line():
+def test_the_whoops_bag_carries_why_kind_file_and_line():
     result, error = ev('risky ong\n\n1 / 0\nwhoops e ong\ne\nbet')
     assert error is None
-    assert repr(result) == '{"why": "Division by zero", "file": "<stdin>", "line": 3}'
+    assert repr(result) == (
+        '{"why": "Division by zero", "kind": "math", "file": "<stdin>", "line": 3}'
+    )
 
 
 def test_oops_raises_a_yap():

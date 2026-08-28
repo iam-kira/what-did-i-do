@@ -112,9 +112,9 @@ python shit.py --help
 - **Higher-order chores** — `eachof`, `keepif`, `smoosh`, and `sortof` with a key chore
 - **Objects, sort of** — a chore returning a bag of chores over captured state, reached with `thing.name()`
 - **Imports** — `summon("lib.shit")`, with cycle detection
-- **Error handling** — `risky` / `whoops` / `oops`, catching anything the runtime throws
+- **Error handling** — `risky` / `whoops` / `oops`, with a `kind` on every error so you can branch instead of string-matching
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **474 tests**, including a robustness sweep that asserts no input ever raises a Python error
+- **480 tests**, including a robustness sweep that asserts no input ever raises a Python error
 
 ---
 
