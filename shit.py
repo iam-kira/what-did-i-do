@@ -1548,14 +1548,37 @@ class BaseFunction(Value):
         self.name = name
         self.arg_names = arg_names
 
+    # arg name prefixes: '?' optional, '*' soaks up any number more
+    @property
+    def fixed_names(self):
+        return [name for name in self.arg_names if not name.startswith('*')]
+
+    @property
+    def is_variadic(self):
+        return len(self.fixed_names) != len(self.arg_names)
+
+    @property
+    def required_count(self):
+        return len([name for name in self.fixed_names if not name.startswith('?')])
+
     def check_args(self, args, pos_start, pos_end):
-        if len(args) != len(self.arg_names):
-            return RTError(
-                pos_start,
-                pos_end,
-                f"'{self.name}' takes {len(self.arg_names)} argument(s), got {len(args)}",
-            )
-        return None
+        low = self.required_count
+        high = None if self.is_variadic else len(self.fixed_names)
+
+        if len(args) >= low and (high is None or len(args) <= high):
+            return None
+
+        if high is None:
+            wanted = f'at least {low}'
+        elif low == high:
+            wanted = str(low)
+        else:
+            wanted = f'{low} to {high}'
+        return RTError(
+            pos_start,
+            pos_end,
+            f"'{self.name}' takes {wanted} argument(s), got {len(args)}",
+        )
 
     def is_true(self):
         return True
@@ -1629,6 +1652,9 @@ class BuiltInFunction(BaseFunction):
 
     def execute(self, args, interpreter, node):
         res = RTResult()
+        count = len(self.fixed_names)
+        # missing optionals arrive as None; anything past the fixed names rides along
+        args = list(args[:count]) + [None] * (count - len(args)) + list(args[count:])
         value, error = self.fn(args, node)
         if error:
             return res.failure(error)
@@ -1650,8 +1676,9 @@ def bi_print(args, node):
 
 
 def bi_input(args, node):
+    prompt = '' if args[0] is None else (str(args[0]) if isinstance(args[0], String) else repr(args[0]))
     try:
-        return String(input(str(args[0]) if isinstance(args[0], String) else repr(args[0]))), None
+        return String(input(prompt)), None
     except EOFError:
         return String(''), None
 
@@ -1705,6 +1732,183 @@ def bi_pop(args, node):
     return List(remaining), None
 
 
+def _need(node, value, cls, what, who):
+    if not isinstance(value, cls):
+        return RTError(node.pos_start, node.pos_end, f"'{who}' needs a {what}, got {value.TYPE_NAME}")
+    return None
+
+
+def _numbers(args, node, who):
+    """Flatten a single pile argument, or loose maths, into Python numbers."""
+    values = args[0].elements if len(args) == 1 and isinstance(args[0], List) else args
+    if not values:
+        return None, RTError(node.pos_start, node.pos_end, f"'{who}' needs at least one math")
+    out = []
+    for value in values:
+        error = _need(node, value, Number, 'math', who)
+        if error:
+            return None, error
+        out.append(value.value)
+    return out, None
+
+
+def bi_smol(args, node):
+    values, error = _numbers([a for a in args if a is not None], node, 'smol')
+    return (None, error) if error else (Number(min(values)), None)
+
+
+def bi_chonk(args, node):
+    values, error = _numbers([a for a in args if a is not None], node, 'chonk')
+    return (None, error) if error else (Number(max(values)), None)
+
+
+def bi_absolutely(args, node):
+    error = _need(node, args[0], Number, 'math', 'absolutely')
+    return (None, error) if error else (Number(abs(args[0].value)), None)
+
+
+def bi_roundish(args, node):
+    error = _need(node, args[0], Number, 'math', 'roundish')
+    if error:
+        return None, error
+    if args[1] is None:
+        return Number(int(round(args[0].value))), None
+    error = _need(node, args[1], Number, 'math', 'roundish')
+    if error:
+        return None, error
+    return Number(round(args[0].value, int(args[1].value))), None
+
+
+def bi_total(args, node):
+    values, error = _numbers([a for a in args if a is not None], node, 'total')
+    return (None, error) if error else (Number(sum(values)), None)
+
+
+def bi_chunk(args, node):
+    target = args[0]
+    if not isinstance(target, (String, List)):
+        return None, RTError(node.pos_start, node.pos_end, "'chunk' needs a yap or pile")
+
+    length = target.length()
+    bounds = []
+    for arg, default in ((args[1], 0), (args[2], length)):
+        if arg is None:
+            bounds.append(default)
+            continue
+        error = _need(node, arg, Number, 'whole math', 'chunk')
+        if error:
+            return None, error
+        index = int(arg.value)
+        bounds.append(index + length if index < 0 else index)
+
+    start, stop = max(0, bounds[0]), min(length, bounds[1])
+    if isinstance(target, String):
+        return String(target.value[start:stop]), None
+    return List([item.copy() for item in target.elements[start:stop]]), None
+
+
+def bi_flip(args, node):
+    target = args[0]
+    if isinstance(target, String):
+        return String(target.value[::-1]), None
+    if isinstance(target, List):
+        return List([item.copy() for item in reversed(target.elements)]), None
+    return None, RTError(node.pos_start, node.pos_end, "'flip' needs a yap or pile")
+
+
+def bi_glue(args, node):
+    error = _need(node, args[0], List, 'pile', 'glue')
+    if error:
+        return None, error
+
+    if args[1] is None:
+        separator = ''
+    elif isinstance(args[1], String):
+        separator = args[1].value
+    else:
+        return None, RTError(node.pos_start, node.pos_end, "'glue' separator must be a yap")
+
+    parts = [item.value if isinstance(item, String) else repr(item) for item in args[0].elements]
+    return String(separator.join(parts)), None
+
+
+def bi_shred(args, node):
+    error = _need(node, args[0], String, 'yap', 'shred')
+    if error:
+        return None, error
+
+    if args[1] is None:
+        pieces = args[0].value.split()
+    else:
+        error = _need(node, args[1], String, 'yap', 'shred')
+        if error:
+            return None, error
+        pieces = list(args[0].value) if args[1].value == '' else args[0].value.split(args[1].value)
+    return List([String(piece) for piece in pieces]), None
+
+
+def bi_shout(args, node):
+    error = _need(node, args[0], String, 'yap', 'shout')
+    return (None, error) if error else (String(args[0].value.upper()), None)
+
+
+def bi_whisper(args, node):
+    error = _need(node, args[0], String, 'yap', 'whisper')
+    return (None, error) if error else (String(args[0].value.lower()), None)
+
+
+def bi_trim(args, node):
+    error = _need(node, args[0], String, 'yap', 'trim')
+    return (None, error) if error else (String(args[0].value.strip()), None)
+
+
+def _members(container):
+    if isinstance(container, List):
+        return container.elements
+    if isinstance(container, String):
+        return [String(char) for char in container.value]
+    return None
+
+
+def bi_where(args, node):
+    members = _members(args[0])
+    if members is None:
+        return None, RTError(node.pos_start, node.pos_end, "'where' needs a yap or pile")
+    for i, item in enumerate(members):
+        equal, error = item.compare_eq(args[1])
+        if error:
+            return None, error
+        if equal.is_true():
+            return Number(i), None
+    return Number(-1), None
+
+
+def bi_gotit(args, node):
+    index, error = bi_where(args, node)
+    if error:
+        return None, RTError(node.pos_start, node.pos_end, "'gotit' needs a yap or pile")
+    return Number(1 if index.value >= 0 else 0), None
+
+
+def bi_sortof(args, node):
+    error = _need(node, args[0], List, 'pile', 'sortof')
+    if error:
+        return None, error
+
+    items = [item.copy() for item in args[0].elements]
+    if all(isinstance(item, Number) for item in items):
+        items.sort(key=lambda item: item.value)
+    elif all(isinstance(item, String) for item in items):
+        items.sort(key=lambda item: item.value)
+    elif items:
+        return None, RTError(node.pos_start, node.pos_end, "'sortof' needs a pile of all maths or all yaps")
+    return List(items), None
+
+
+def bi_whatis(args, node):
+    return String(args[0].TYPE_NAME), None
+
+
 def bi_is_num(args, node):
     return Number(1 if isinstance(args[0], Number) else 0), None
 
@@ -1723,12 +1927,28 @@ def bi_is_fun(args, node):
 
 BUILTINS = {
     'yap': (['value'], bi_print),
-    'beg': (['prompt'], bi_input),
+    'beg': (['?prompt'], bi_input),
     'howmany': (['value'], bi_len),
     'yapify': (['value'], bi_str),
     'mathify': (['value'], bi_num),
     'stuff': (['list', 'value'], bi_append),
     'yoink': (['list', 'index'], bi_pop),
+    'smol': (['value', '*more'], bi_smol),
+    'chonk': (['value', '*more'], bi_chonk),
+    'absolutely': (['value'], bi_absolutely),
+    'roundish': (['value', '?places'], bi_roundish),
+    'total': (['value', '*more'], bi_total),
+    'chunk': (['value', '?start', '?stop'], bi_chunk),
+    'flip': (['value'], bi_flip),
+    'glue': (['pile', '?separator'], bi_glue),
+    'shred': (['yap', '?separator'], bi_shred),
+    'shout': (['yap'], bi_shout),
+    'whisper': (['yap'], bi_whisper),
+    'trim': (['yap'], bi_trim),
+    'where': (['value', 'needle'], bi_where),
+    'gotit': (['value', 'needle'], bi_gotit),
+    'sortof': (['pile'], bi_sortof),
+    'whatis': (['value'], bi_whatis),
     'is_math': (['value'], bi_is_num),
     'is_yap': (['value'], bi_is_str),
     'is_pile': (['value'], bi_is_list),
