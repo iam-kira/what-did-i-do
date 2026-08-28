@@ -104,16 +104,17 @@ python shit.py --help
 - **Operators** — `+ - * / % ^`, comparisons, `also`/`orelse`/`nah`, indexing, compound assignment
 - **33 builtins** — printing, input, maths, slicing, sorting, splitting, joining, type checks
 - **Higher-order chores** — `eachof`, `keepif`, `smoosh`, and `sortof` with a key chore
+- **Objects, sort of** — a chore returning a bag of chores over captured state
 - **Imports** — `summon("lib.shit")`, with cycle detection
 - **Error handling** — `risky` / `whoops` / `oops`, catching anything the runtime throws
 - **Errors** — returned as values with file/line/column and a call-stack traceback
-- **258 tests** covering every stage
+- **265 tests** covering every stage
 
 ---
 
 ## Status
 
-Works. Not finished. Missing: user-defined types.
+Works. Not finished. Missing: a real type system, and any concern for speed.
 Known rough edges are listed at the end of
 [docs/LANGUAGE.md](docs/LANGUAGE.md) and in [CONTRIBUTING.md](CONTRIBUTING.md).
 

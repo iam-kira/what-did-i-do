@@ -233,6 +233,35 @@ yap(c())   # 2
 A chore with no `yeet` evaluates to its last statement. Call depth is capped at
 200.
 
+### Things that look like objects
+
+There is no `class`. A chore that captures state and hands back a bag of chores
+does the same job, and each call gets its own state:
+
+```text
+chore counter() ong
+    stash n = 0
+
+    chore bump() ong
+        n += 1
+        yeet n
+    bet
+
+    chore peek() ong
+        yeet n
+    bet
+
+    yeet {"bump": bump, "peek": peek}
+bet
+
+stash a = counter()
+a["bump"]()
+a["bump"]()
+yap(a["peek"]())
+```
+
+Suffixes chain, so `a["bump"]()`, `fs[0]()`, `f()[0]` and `mk()()` all work.
+
 ---
 
 ## Built-in chores

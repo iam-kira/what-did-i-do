@@ -54,13 +54,12 @@ supports. A new builtin is one function plus one row in `BUILTINS`.
 Roughly in order:
 
 - [ ] `whatever` branch on a loop, or `do ... keep`
-- [ ] User-defined types, or at least a bag with named chores attached
+- [ ] Real user-defined types - a bag of chores works but has no identity or dot access
 - [ ] A `--time` flag, or anything resembling a profiler
 - [ ] Speed: every value copies on read, which is simple and wasteful
 
 Known smaller things, good first issues:
 
-- [ ] `mathify` accepts `"  12  "` but not `"1e3"`
 - [ ] Error text mixes dialect and English on purpose: type names are dialect
       (`math`, `yap`), the surrounding sentence is plain English so errors stay
       readable. Keep that split if you add messages.

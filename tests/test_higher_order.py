@@ -125,3 +125,51 @@ def test_an_error_inside_a_chore_is_catchable():
     result, error = ev(source)
     assert error is None
     assert result.value == 'caught'
+
+
+# --- postfix chaining ---
+
+def test_calling_a_chore_stored_in_a_bag():
+    source = ('chore f() ong\nyeet 7\nbet\nstash d = {}\n'
+              'd[' + Q + 'go' + Q + '] = f\nd[' + Q + 'go' + Q + ']()')
+    result, error = ev(source, prelude=False)
+    assert error is None
+    assert repr(result) == '7'
+
+
+def test_calling_a_chore_stored_in_a_pile():
+    source = 'chore g() ong\nyeet 9\nbet\nstash fs = [0]\nfs[0] = g\nfs[0]()'
+    result, error = ev(source, prelude=False)
+    assert error is None
+    assert repr(result) == '9'
+
+
+def test_calling_the_chore_a_chore_returned():
+    source = 'chore mk() ong\nchore inner() ong\nyeet 3\nbet\nyeet inner\nbet\nmk()()'
+    result, error = ev(source, prelude=False)
+    assert error is None
+    assert repr(result) == '3'
+
+
+def test_indexing_what_a_call_returned():
+    source = 'chore f() ong\nyeet [1, 2]\nbet\nf()[1]'
+    result, error = ev(source, prelude=False)
+    assert error is None
+    assert repr(result) == '2'
+
+
+def test_a_bag_of_chores_behaves_like_an_object():
+    source = (
+        'chore counter() ong\n'
+        'stash n = 0\n'
+        'chore bump() ong\nn += 1\nyeet n\nbet\n'
+        'chore peek() ong\nyeet n\nbet\n'
+        'yeet {' + Q + 'bump' + Q + ': bump, ' + Q + 'peek' + Q + ': peek}\n'
+        'bet\n'
+        'stash a = counter()\nstash b = counter()\n'
+        'a[' + Q + 'bump' + Q + ']()\na[' + Q + 'bump' + Q + ']()\nb[' + Q + 'bump' + Q + ']()\n'
+        '[a[' + Q + 'peek' + Q + '](), b[' + Q + 'peek' + Q + ']()]'
+    )
+    result, error = ev(source, prelude=False)
+    assert error is None
+    assert repr(result) == '[2, 1]'

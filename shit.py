@@ -1346,11 +1346,6 @@ class Parser:
 
         if tok.type == TT_IDENTIFIER:
             self.advance()
-            if self.current_tok.type == TT_LPAREN:
-                called = res.register(self.call(VarAccessNode(tok)))
-                if res.error:
-                    return res
-                return self.postfix_result(res, called)
             return self.postfix_result(res, VarAccessNode(tok))
 
         if tok.type == TT_LPAREN:
@@ -1475,20 +1470,31 @@ class Parser:
             self.advance()
 
     def postfix_result(self, res, node):
-        """Attach any trailing [index] suffixes to an already-parsed atom."""
-        while self.current_tok.type == TT_LSQUARE:
-            self.advance()
-            index = res.register(self.expr())
-            if res.error:
-                return res
-            if self.current_tok.type != TT_RSQUARE:
-                return res.failure(
-                    InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ']'")
-                )
-            pos_end = self.current_tok.pos_end.copy()
-            self.advance()
-            node = IndexNode(node, index, node.pos_start, pos_end)
-        return res.success(node)
+        """Attach any trailing [index] and (call) suffixes to a parsed atom.
+
+        One loop, so d["go"](), fs[0](), f()[0] and mk()() all chain.
+        """
+        while True:
+            if self.current_tok.type == TT_LSQUARE:
+                self.advance()
+                index = res.register(self.expr())
+                if res.error:
+                    return res
+                if self.current_tok.type != TT_RSQUARE:
+                    return res.failure(
+                        InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, "Expected ']'")
+                    )
+                pos_end = self.current_tok.pos_end.copy()
+                self.advance()
+                node = IndexNode(node, index, node.pos_start, pos_end)
+
+            elif self.current_tok.type == TT_LPAREN:
+                node = res.register(self.call(node))
+                if res.error:
+                    return res
+
+            else:
+                return res.success(node)
 
     def op_matches(self, ops):
         for op in ops:
