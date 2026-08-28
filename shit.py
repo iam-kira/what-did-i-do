@@ -3400,8 +3400,9 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
 
     if not argv:
-        import shell  # noqa: F401  (importing shell starts the REPL)
-        return 0
+        import shell
+
+        return shell.main()
 
     flags = [arg for arg in argv if arg.startswith('--')]
     paths = [arg for arg in argv if not arg.startswith('--')]

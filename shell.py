@@ -2,9 +2,19 @@ import shit
 
 PROMPT = 'shell :> '
 CONTINUED = '   ...  > '
+QUIT_WORDS = ('quit', 'exit', ':q')
 
 
-def main():
+def show(result):
+    """Echo a statement's value the way the REPL does: repr, so "1" and 1 differ."""
+    if result is None:
+        return
+    for value in (result if isinstance(result, list) else [result]):
+        print(repr(value))
+
+
+def main(symbol_table=None):
+    table = shit.global_symbol_table if symbol_table is None else symbol_table
     buffer = []
 
     while True:
@@ -19,15 +29,15 @@ def main():
             continue
         except EOFError:
             print('\nbye!')
-            return
+            return 0
 
         if not buffer:
             clean = line.strip()
             if not clean:
                 continue
-            if clean.lower() in ('quit', 'exit', ':q'):
+            if clean.lower() in QUIT_WORDS:
                 print('bye!')
-                return
+                return 0
 
         buffer.append(line)
         source = '\n'.join(buffer)
@@ -37,17 +47,15 @@ def main():
             continue
         buffer = []
 
-        result, error = shit.run('<stdin>', source)
+        result, error = shit.run('<stdin>', source, table)
 
+        if isinstance(error, shit.BounceError):
+            return error.code
         if error:
             print(error.as_string())
-        elif result is not None:
-            # repr, so a string echoes as "1" and a number as 1
-            if isinstance(result, list):
-                for value in result:
-                    print(repr(value))
-            else:
-                print(repr(result))
+        else:
+            show(result)
 
 
-main()
+if __name__ == '__main__':
+    raise SystemExit(main())

@@ -170,5 +170,5 @@ Builtin arg names carry prefixes: `?name` is optional and arrives as `None`,
 | | AST nodes, `ParseResult`, `Parser` |
 | | `RTResult`, `Value` and friends, builtins, `SymbolTable`, `Interpreter` |
 | | `run()`, `main()` |
-| `shell.py` | REPL loop, buffering until `wants_more` says the input is complete |
+| `shell.py` | REPL loop, buffering until `wants_more` says the input is complete. `main(symbol_table=None)` is importable, so the REPL is testable with a fake `input` |
 | `tests/` | one file per concern |
