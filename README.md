@@ -113,8 +113,8 @@ python shit.py --help
 - **Objects, sort of** — a chore returning a bag of chores over captured state, reached with `thing.name()`
 - **Imports** — `summon("lib.shit")`, with cycle detection
 - **Error handling** — `risky` / `whoops` / `oops`, with a `kind` on every error so you can branch instead of string-matching
-- **Errors** — returned as values with file/line/column and a call-stack traceback
-- **489 tests**, including a robustness sweep that asserts no input ever raises a Python error
+- **Errors** — returned as values, showing the offending line with a caret, plus a call-stack traceback
+- **500 tests**, including a robustness sweep that asserts no input ever raises a Python error
 
 ---
 

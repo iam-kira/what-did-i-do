@@ -32,8 +32,37 @@ class Error:
 
     def as_string(self):
         result = f'{self.error_name}: {self.details}\n'
-        result += f'File {self.pos_start.filename}, line {self.pos_start.line + 1}, col {self.pos_start.col + 1}'
+        result += (
+            f'File {self.pos_start.filename}, '
+            f'line {self.pos_start.line + 1}, col {self.pos_start.col + 1}'
+        )
+
+        excerpt = self.excerpt()
+        if excerpt:
+            result += '\n' + excerpt
         return result
+
+    def excerpt(self):
+        """The offending line with a caret under it, the way a compiler shows it."""
+        pos = self.pos_start
+        if pos is None or not getattr(pos, 'ftxt', None):
+            return ''
+
+        lines = pos.ftxt.splitlines()
+        if not 0 <= pos.line < len(lines):
+            return ''
+
+        raw = lines[pos.line]
+        # a tab is one column but shows as four, so re-measure the offset
+        shown = raw.replace('\t', '    ')
+        start = len(raw[:pos.col].replace('\t', '    '))
+
+        end = start + 1
+        if self.pos_end is not None and self.pos_end.line == pos.line:
+            end = max(end, len(raw[:self.pos_end.col].replace('\t', '    ')))
+        width = max(1, min(end - start, max(1, len(shown) - start)))
+
+        return '  ' + shown + '\n' + '  ' + ' ' * start + '^' * width
 
 
 class IllegalCharError(Error):

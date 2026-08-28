@@ -475,14 +475,26 @@ Errors are values, not exceptions. Every stage returns `(result, error)`.
 | `InvalidSyntaxError` | grammar broke |
 | `RTError` | undefined name, `/ 0`, bad index, wrong arg count, `bail` outside a loop |
 
-Runtime errors inside chores carry a traceback:
+Every error names the file, line and column, and shows the line with a caret
+under the offending part:
+
+```text
+Runtime Error: 'nope' is not defined
+File prog.shit, line 3, col 14
+      total += nope
+               ^^^^
+```
+
+Runtime errors inside chores carry a traceback as well:
 
 ```text
 Traceback (most recent call last):
-  File prog.shit, line 9, in outer
-  File prog.shit, line 6, in inner
+  File prog.shit, line 7, in outer
+  File prog.shit, line 5, in inner
 Runtime Error: Division by zero
-File prog.shit, line 2, col 16
+File prog.shit, line 2, col 14
+      yeet n / 0
+               ^
 ```
 
 ---

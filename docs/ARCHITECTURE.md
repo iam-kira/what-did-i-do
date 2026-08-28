@@ -40,10 +40,12 @@ skip every position-tracking and traceback mechanism in the file.
 
 ## Positions
 
-`Position` tracks index, line, and column, and every token, node, and value
-carries `pos_start` / `pos_end`. That is the only reason errors can say
-`line 4, col 12`. When you build a node, thread the positions through; when you
-build a value, `set_pos` it.
+`Position` tracks index, line, and column, and carries `ftxt`, the whole source
+text. Every token, node, and value carries `pos_start` / `pos_end`. That is the
+only reason errors can say `line 4, col 12` *and* print the line itself with a
+caret under it — `Error.excerpt()` slices `ftxt` by those positions. When you
+build a node, thread the positions through; when you build a value, `set_pos`
+it, or its errors will point at nothing.
 
 ---
 
