@@ -31,3 +31,5 @@ jobs:
           python aura.py example.aura
           python aura.py examples/calc.aura
           python aura.py examples/wc.aura README.md
+          printf '{"ok": true, "n": null}' > /tmp/ci.json
+          python aura.py examples/json.aura /tmp/ci.json

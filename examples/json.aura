@@ -1,0 +1,175 @@
+# A JSON parser, written in aura.
+#
+#   python aura.py examples/json.aura somefile.json
+#
+# Shows most of the language doing real work: closures holding the read
+# position, bags and piles being built, sus/whoops for failure, and yap holes
+# for the report. JSON null becomes ghosted, which is why ghosted exists.
+
+chore new_reader(text) ong
+    stash at = 0
+
+    chore peek() ong
+        fr at >= howmany(text) ong
+            yeet ""
+        bet
+        yeet text[at]
+    bet
+
+    chore next() ong
+        stash c = text[at]
+        at += 1
+        yeet c
+    bet
+
+    chore skip_space() ong
+        keep at < howmany(text) also gotit(" \t\n", text[at]) ong
+            at += 1
+        bet
+    bet
+
+    yeet {"peek": peek, "next": next, "skip": skip_space}
+bet
+
+chore parse_string(r) ong
+    r.next()
+    stash out = ""
+    keep based ong
+        stash c = r.next()
+        fr c == "\"" ong
+            bail
+        bet
+        fr c == "\\" ong
+            stash esc = r.next()
+            fr esc == "n" ong
+                out += "\n"
+            orfr esc == "t" ong
+                out += "\t"
+            whatever
+                out += esc
+            bet
+            skip
+        bet
+        out += c
+    bet
+    yeet out
+bet
+
+chore parse_number(r) ong
+    stash out = ""
+    keep gotit("0123456789.-+eE", r.peek()) ong
+        out += r.next()
+    bet
+    yeet mathify(out)
+bet
+
+chore parse_value(r) ong
+    r.skip()
+    stash c = r.peek()
+
+    fr c == "\"" ong
+        yeet parse_string(r)
+    bet
+
+    fr c == "[" ong
+        r.next()
+        stash items = []
+        r.skip()
+        fr r.peek() == "]" ong
+            r.next()
+            yeet items
+        bet
+        keep based ong
+            items = stuff(items, parse_value(r))
+            r.skip()
+            stash sep = r.next()
+            fr sep == "]" ong
+                bail
+            bet
+        bet
+        yeet items
+    bet
+
+    fr c == "\{" ong
+        r.next()
+        stash out = {}
+        r.skip()
+        fr r.peek() == "\}" ong
+            r.next()
+            yeet out
+        bet
+        keep based ong
+            r.skip()
+            stash key = parse_string(r)
+            r.skip()
+            r.next()
+            out[key] = parse_value(r)
+            r.skip()
+            stash sep = r.next()
+            fr sep == "\}" ong
+                bail
+            bet
+        bet
+        yeet out
+    bet
+
+    fr gotit("0123456789-", c) ong
+        yeet parse_number(r)
+    bet
+
+    # true / false / null
+    stash word = ""
+    keep gotit("truefalsn", r.peek()) ong
+        word += r.next()
+    bet
+    fr word == "true" ong
+        yeet based
+    bet
+    fr word == "false" ong
+        yeet cringe
+    bet
+    fr word == "null" ong
+        yeet ghosted
+    bet
+
+    oops "unexpected '{c}'"
+bet
+
+chore parse(text) ong
+    yeet parse_value(new_reader(text))
+bet
+
+# ---- try it ----
+
+fr howmany(handed()) == 0 ong
+    cook("give me a .json file")
+    bounce(2)
+bet
+
+stash path = handed()[0]
+
+sus ong
+    stash got = parse(slurp(path))
+whoops e ong
+    cook("{path}: {e.why}")
+    bounce(1)
+bet
+
+cook(got)
+
+fr is_pile(got) orelse whatis(got) != "bag" ong
+    bounce(0)
+bet
+
+cook("")
+cook("{howmany(got)} top-level labels:")
+grind label, value among got ong
+    stash kind = whatis(value)
+    fr is_ghosted(value) ong
+        cook("  {label}: null")
+    orfr kind == "pile" ong
+        cook("  {label}: {kind} of {howmany(value)}")
+    whatever
+        cook("  {label}: {kind} = {value}")
+    bet
+bet

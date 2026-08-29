@@ -70,3 +70,51 @@ def test_word_count_example_survives_a_missing_file(tmp_path, capsys):
 
     assert exit_code == 0
     assert 'not there' in capsys.readouterr().out
+
+
+# --- the JSON parser ---
+
+def test_json_example_parses_a_document(tmp_path, capsys):
+    doc = tmp_path / 'doc.json'
+    doc.write_text('{"name": "ana", "score": 42, "tags": ["a", "b"], '
+                   '"ok": true, "nil": null}', encoding='utf-8')
+
+    exit_code = aura.main([os.path.join(REPO, 'examples', 'json.aura'), str(doc)])
+    out = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert '"name": "ana"' in out
+    assert '"nil": ghosted' in out      # JSON null survives as ghosted
+    assert 'score: math = 42' in out
+    assert 'tags: pile of 2' in out
+    assert 'nil: null' in out
+
+
+def test_json_example_handles_nesting(tmp_path, capsys):
+    doc = tmp_path / 'nested.json'
+    doc.write_text('{"a": [1, [2, {"b": 3}]]}', encoding='utf-8')
+
+    assert aura.main([os.path.join(REPO, 'examples', 'json.aura'), str(doc)]) == 0
+    assert '[1, [2, {"b": 3}]]' in capsys.readouterr().out
+
+
+def test_json_example_reports_bad_input(tmp_path, capsys):
+    doc = tmp_path / 'bad.json'
+    doc.write_text('{"a": }', encoding='utf-8')
+
+    exit_code = aura.main([os.path.join(REPO, 'examples', 'json.aura'), str(doc)])
+    assert exit_code == 1
+    assert 'unexpected' in capsys.readouterr().out
+
+
+def test_json_example_wants_a_file(capsys):
+    exit_code = aura.main([os.path.join(REPO, 'examples', 'json.aura')])
+    assert exit_code == 2
+    assert 'give me a .json file' in capsys.readouterr().out
+
+
+def test_json_example_reports_a_missing_file(tmp_path, capsys):
+    exit_code = aura.main([os.path.join(REPO, 'examples', 'json.aura'),
+                           str(tmp_path / 'gone.json')])
+    assert exit_code == 1
+    assert 'Cannot slurp' in capsys.readouterr().out

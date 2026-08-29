@@ -143,8 +143,10 @@ File prog.aura, line 3, col 14
 
 **Programs written in aura:** [example.aura](example.aura) tours the language,
 [examples/calc.aura](examples/calc.aura) is a calculator with its own tokeniser
-and precedence-climbing parser, and [examples/wc.aura](examples/wc.aura) is a
-word counter that walks folders.
+and precedence-climbing parser, [examples/wc.aura](examples/wc.aura) is a word
+counter that walks folders, and [examples/json.aura](examples/json.aura) is a
+JSON parser — closures hold the read position, `sus` handles bad input, and
+JSON `null` arrives as `ghosted`.
 
 ---
 
