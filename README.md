@@ -174,9 +174,13 @@ Python traceback, a checker that executes every code snippet in these docs, and
 a test that diffs the syntax highlighting against the real keyword list.
 
 ```bash
+python -m venv .venv
+.venv/Scripts/activate       # Windows; use source .venv/bin/activate elsewhere
 pip install pytest
 python -m pytest -q
 ```
+
+Running aura needs nothing installed. The venv is only for `pytest`.
 
 ---
 

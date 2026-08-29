@@ -10,8 +10,16 @@ Python 3.9+, no runtime dependencies.
 ```bash
 git clone https://github.com/iam-kira/what-did-i-do
 cd what-did-i-do
+
+python -m venv .venv
+.venv/Scripts/activate       # Windows
+source .venv/bin/activate    # macOS and Linux
+
 pip install pytest
 ```
+
+aura itself needs nothing installed — the venv is only so `pytest` does not
+land in your system Python. `.venv/` is gitignored.
 
 ## Run it
 
