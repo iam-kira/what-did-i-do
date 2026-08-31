@@ -3627,6 +3627,9 @@ PROMPT = 'shell :> '
 CONTINUED = '   ...  > '
 QUIT_WORDS = ('quit', 'exit', ':q')
 
+# 'bet' closes every block in aura, so it closes the session too
+FAREWELL = 'aight bet\naura by Vijay Biradar (iam-kira)'
+
 HELP = """aura - a language with regrettable keywords
 
   stash x = 1        declare            chore f(a) ong ... bet     define
@@ -3691,7 +3694,7 @@ def repl(symbol_table=None):
                 print("\nInterrupted. Type 'exit' to quit.")
             continue
         except EOFError:
-            print('\nbye!')
+            print('\n' + FAREWELL)
             return 0
 
         if not buffer:
@@ -3714,7 +3717,7 @@ def repl(symbol_table=None):
                 continue
 
             if clean.lower() in QUIT_WORDS:
-                print('bye!')
+                print(FAREWELL)
                 return 0
 
         buffer.append(line)

@@ -1,5 +1,7 @@
 """The REPL as a person actually meets it."""
 
+CREDIT = 'aura by Vijay Biradar (iam-kira)'
+
 
 import aura
 import shell
@@ -51,7 +53,7 @@ def test_a_defined_name_beats_the_shell_command(monkeypatch, capsys):
 def test_quit_words_all_leave(monkeypatch, capsys):
     for word in ('exit', 'quit', ':q'):
         out = drive([word, 'cook("never")'], monkeypatch, capsys)
-        assert 'bye!' in out
+        assert 'aight bet' in out
         assert 'never' not in out
 
 
@@ -79,7 +81,7 @@ def test_values_echo_with_repr_so_types_are_visible(monkeypatch, capsys):
 
 def test_state_persists_between_lines(monkeypatch, capsys):
     out = drive(['stash n = 1', 'n += 1', 'n'], monkeypatch, capsys)
-    printed = [line for line in out.splitlines() if line and line != 'bye!']
+    printed = [line for line in out.splitlines() if line and line not in ('aight bet', CREDIT)]
     assert printed == ['1', '2', '2']
 
 
@@ -126,9 +128,9 @@ def test_ctrl_c_drops_the_buffer_without_quitting(monkeypatch, capsys):
 
     assert 'Dropped that' in out
     assert '42' in out
-    assert 'bye!' in out
+    assert 'aight bet' in out
 
 
 def test_eof_says_goodbye(monkeypatch, capsys):
     out = drive([], monkeypatch, capsys)
-    assert 'bye!' in out
+    assert 'aight bet' in out
