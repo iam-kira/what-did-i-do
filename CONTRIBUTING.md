@@ -85,6 +85,23 @@ Known smaller things, good first issues:
       (`math`, `yap`), the surrounding sentence is plain English so errors stay
       readable. Keep that split if you add messages.
 
+## Releasing
+
+aura ships as a single module, so a release is short:
+
+```bash
+pip install build twine
+python -m build            # writes dist/*.whl and dist/*.tar.gz
+twine check dist/*
+twine upload dist/*        # needs a PyPI token
+```
+
+Bump `version` in `pyproject.toml` first. PyPI never lets a version be
+reused, so test with `twine upload --repository testpypi dist/*` if in doubt.
+
+The distribution is named `auralang`; the module and the command are both
+`aura`.
+
 ## Pull requests
 
 - One feature per PR

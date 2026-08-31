@@ -41,6 +41,13 @@ load-bearing.
 Python 3.9 or newer. Nothing else to install.
 
 ```bash
+pip install auralang
+aura
+```
+
+Or straight from the source, with nothing installed at all:
+
+```bash
 git clone https://github.com/iam-kira/what-did-i-do
 cd what-did-i-do
 python aura.py
