@@ -10,14 +10,14 @@ version = "0.1.0"
 description = "A small interpreted language with deliberately terrible keywords"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Vijay Biradar" }]
 keywords = ["language", "interpreter", "toy-language", "repl", "parser"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",

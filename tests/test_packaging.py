@@ -62,9 +62,31 @@ def test_the_declared_python_floor_matches_the_classifiers():
         'no classifier for the minimum Python %s' % lowest
 
 
-def test_the_licence_file_is_the_one_that_exists():
-    assert config()['project']['license']['file'] == 'LICENSE'
+def test_the_licence_is_an_spdx_expression_not_a_licence_body():
+    """PyPI rejects a whole licence text in the License field with a 400.
+
+    `license = { file = "LICENSE" }` inlines the entire file into the
+    metadata; under Metadata-Version 2.4 that is invalid and the upload fails
+    with an unexplained Bad Request. It has to be a short SPDX expression.
+    """
+    licence = config()['project']['license']
+
+    assert isinstance(licence, str), 'license must be an SPDX string, not a table'
+    assert '\n' not in licence, 'license looks like a licence body, not an expression'
+    assert len(licence) < 40, 'license looks like a licence body, not an expression'
+    assert licence == 'MIT'
+
+
+def test_the_licence_file_is_shipped_and_exists():
+    assert config()['project']['license-files'] == ['LICENSE']
     assert os.path.exists(os.path.join(REPO, 'LICENSE'))
+
+
+def test_no_licence_classifier_alongside_the_expression():
+    """PEP 639 replaces the classifier; carrying both is rejected."""
+    classifiers = config()['project']['classifiers']
+    assert not [c for c in classifiers if c.startswith('License ::')], \
+        'drop the License :: classifier when using a license expression'
 
 
 def test_the_readme_referenced_is_the_real_one():
