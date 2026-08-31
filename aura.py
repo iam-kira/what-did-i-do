@@ -14,8 +14,8 @@ __author__ = 'Vijay Biradar'
 __handle__ = 'iam-kira'
 __url__ = 'https://github.com/iam-kira/what-did-i-do'
 
-BANNER = 'aura %s - by %s (%s)' % (__version__, __author__, __handle__)
-CREDIT = 'aura by %s (%s)' % (__author__, __handle__)
+BANNER = 'aura %s - by %s' % (__version__, __author__)
+CREDIT = 'aura by %s' % __author__
 
 # A aura-level call costs roughly 20 Python frames, so MAX_CALL_DEPTH calls need
 # headroom above CPython's default 1000 or its limit fires before ours does.
@@ -3635,8 +3635,8 @@ PROMPT = 'shell :> '
 CONTINUED = '   ...  > '
 QUIT_WORDS = ('quit', 'exit', ':q')
 
-# 'bet' closes every block in aura, so it closes the session too
-FAREWELL = 'aight bet\n' + CREDIT
+# an actual goodbye - 'bet' only ever meant agreement
+FAREWELL = 'aight imma head out\n' + CREDIT
 
 HELP = """aura - a language with regrettable keywords
 

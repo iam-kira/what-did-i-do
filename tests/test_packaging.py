@@ -144,7 +144,7 @@ def test_help_credits_the_author_and_links_the_source(capsys):
     assert aura.main(['--help']) == 0
     out = capsys.readouterr().out
 
-    assert 'aura by Vijay Biradar (iam-kira)' in out
+    assert 'aura by Vijay Biradar' in out
     assert 'github.com/iam-kira/what-did-i-do' in out
     assert '--version' in out
 
