@@ -3,6 +3,11 @@
 CREDIT = 'aura by Vijay Biradar'
 
 
+def said_goodbye(out):
+    """The sign-off is picked at random, so assert the pool, not one phrase."""
+    return any(bye in out for bye in aura.FAREWELLS)
+
+
 import aura
 import shell
 
@@ -53,7 +58,7 @@ def test_a_defined_name_beats_the_shell_command(monkeypatch, capsys):
 def test_quit_words_all_leave(monkeypatch, capsys):
     for word in ('exit', 'quit', ':q'):
         out = drive([word, 'cook("never")'], monkeypatch, capsys)
-        assert 'aight imma head out' in out
+        assert said_goodbye(out)
         assert 'never' not in out
 
 
@@ -83,6 +88,7 @@ def test_state_persists_between_lines(monkeypatch, capsys):
     out = drive(['stash n = 1', 'n += 1', 'n'], monkeypatch, capsys)
     printed = [line for line in out.splitlines()
                if line and line not in ('aight imma head out', CREDIT)
+               and line not in aura.FAREWELLS
                and not line.startswith(('aura ', "type 'help'"))]
     assert printed == ['1', '2', '2']
 
@@ -101,14 +107,14 @@ def test_the_farewell_credits_the_author(monkeypatch, capsys):
     out = drive(['exit'], monkeypatch, capsys)
     lines = out.strip().splitlines()
 
-    assert lines[-2] == 'aight imma head out'
+    assert lines[-2] in aura.FAREWELLS
     assert lines[-1] == 'aura by Vijay Biradar'
 
 
 def test_every_way_out_credits_the_author(monkeypatch, capsys):
     for typed in (['exit'], ['quit'], [':q'], []):
         out = drive(typed, monkeypatch, capsys)
-        assert 'aight imma head out' in out, typed
+        assert said_goodbye(out), typed
         assert 'Vijay Biradar' in out, typed
 
 
@@ -155,9 +161,99 @@ def test_ctrl_c_drops_the_buffer_without_quitting(monkeypatch, capsys):
 
     assert 'Dropped that' in out
     assert '42' in out
-    assert 'aight imma head out' in out
+    assert said_goodbye(out)
 
 
 def test_eof_says_goodbye(monkeypatch, capsys):
     out = drive([], monkeypatch, capsys)
-    assert 'aight imma head out' in out
+    assert said_goodbye(out)
+
+
+# --- the send-off animation ---
+
+class FakeTerminal:
+    """Stands in for a real terminal, so the animation actually runs."""
+
+    def __init__(self, tty=True):
+        self.tty = tty
+        self.written = []
+
+    def isatty(self):
+        return self.tty
+
+    def write(self, text):
+        self.written.append(text)
+
+    def flush(self):
+        pass
+
+    def text(self):
+        return ''.join(self.written)
+
+
+def test_the_walk_off_animates_on_a_terminal(monkeypatch):
+    monkeypatch.delenv('AURA_NO_MOTION', raising=False)
+    monkeypatch.setattr(aura, 'WALK_DELAY', 0)
+
+    screen = FakeTerminal()
+    assert aura.walk_off(screen) is True
+
+    drawn = screen.text()
+    assert drawn.count(chr(13)) == aura.WALK_FRAMES + 2, 'a redraw per frame, then the wipe'
+    assert 'o/' in drawn and chr(92) + 'o' in drawn, 'the arm should alternate'
+    assert drawn.endswith(chr(13)), 'it should clear the line on the way out'
+
+
+def test_the_walk_off_is_ascii_only(monkeypatch):
+    """Windows consoles choke on anything else."""
+    monkeypatch.delenv('AURA_NO_MOTION', raising=False)
+    monkeypatch.setattr(aura, 'WALK_DELAY', 0)
+
+    screen = FakeTerminal()
+    aura.walk_off(screen)
+    screen.text().encode('ascii')
+
+
+def test_the_walk_off_is_skipped_when_output_is_not_a_terminal(monkeypatch):
+    """Otherwise carriage returns end up in pipes, files and CI logs."""
+    monkeypatch.delenv('AURA_NO_MOTION', raising=False)
+
+    screen = FakeTerminal(tty=False)
+    assert aura.walk_off(screen) is False
+    assert screen.text() == ''
+
+
+def test_aura_no_motion_switches_it_off(monkeypatch):
+    monkeypatch.setenv('AURA_NO_MOTION', '1')
+
+    screen = FakeTerminal()
+    assert aura.walk_off(screen) is False
+    assert screen.text() == ''
+
+
+def test_the_farewell_pool_is_all_lowercase_ascii():
+    for bye in aura.FAREWELLS:
+        bye.encode('ascii')
+        assert bye == bye.lower(), bye
+        assert bye.strip() == bye
+
+
+def test_the_pool_includes_auras_own_words():
+    """Half the joke is that the shell says goodbye in its own vocabulary."""
+    assert 'ghosted' in aura.FAREWELLS
+    for word in ('ghosted', 'based', 'bounce', 'yeet'):
+        assert any(word in bye for bye in aura.FAREWELLS), word
+
+
+def test_farewell_always_carries_the_credit():
+    for _ in range(30):
+        text = aura.farewell()
+        first, _, second = text.partition('\n')
+        assert first in aura.FAREWELLS
+        assert second == CREDIT
+
+
+def test_the_sign_off_actually_varies():
+    seen = {aura.farewell().split('\n')[0] for _ in range(200)}
+    assert len(seen) > 1, 'the sign-off should not always be the same'
+    assert seen <= set(aura.FAREWELLS)

@@ -30,7 +30,7 @@ def test_no_runtime_dependencies_are_imported():
     with open(os.path.join(REPO, 'aura.py'), encoding='utf-8') as handle:
         tree = ast.parse(handle.read())
 
-    stdlib = {'sys', 'os', 'math'}
+    stdlib = {'sys', 'os', 'math', 'time', 'random'}
     imported = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):

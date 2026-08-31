@@ -3635,8 +3635,57 @@ PROMPT = 'shell :> '
 CONTINUED = '   ...  > '
 QUIT_WORDS = ('quit', 'exit', ':q')
 
-# an actual goodbye - 'bet' only ever meant agreement
-FAREWELL = 'aight imma head out\n' + CREDIT
+# Sign-offs. Half of them are aura's own words: you ghosted the shell,
+# bounce is how a program exits, based is true, and yeet is return.
+FAREWELLS = (
+    'ghosted',
+    'aight imma head out',
+    'we bounce',
+    'stay based',
+    'yeeted',
+    'peace',
+    'cya',
+    'later, gamer',
+)
+
+WALK_FRAMES = 16          # how far the little guy gets before he is gone
+WALK_DELAY = 0.045        # seconds a frame stays on screen
+
+
+def farewell():
+    """A random sign-off, with the credit under it."""
+    import random
+
+    return random.choice(FAREWELLS) + '\n' + CREDIT
+
+
+def walk_off(stream=None):
+    """The meme, animated: a stick figure waves and walks out of frame.
+
+    Skipped unless stdout is a real terminal, so piped output, redirected
+    files and the test suite never see carriage returns. AURA_NO_MOTION
+    turns it off anywhere.
+    """
+    import os
+    import time
+
+    stream = stream or sys.stdout
+    if os.environ.get('AURA_NO_MOTION'):
+        return False
+    if not hasattr(stream, 'isatty') or not stream.isatty():
+        return False
+
+    width = WALK_FRAMES + 4
+    for step in range(WALK_FRAMES):
+        # the arm alternates, so he looks like he is waving on the way out
+        walker = 'o/' if step % 2 else '\\o'
+        stream.write('\r' + ' ' * step + walker + ' ' * (width - step))
+        stream.flush()
+        time.sleep(WALK_DELAY)
+
+    stream.write('\r' + ' ' * (width + 2) + '\r')
+    stream.flush()
+    return True
 
 HELP = """aura - a language with regrettable keywords
 
@@ -3706,7 +3755,9 @@ def repl(symbol_table=None):
                 print("\nInterrupted. Type 'exit' to quit.")
             continue
         except EOFError:
-            print('\n' + FAREWELL)
+            print()
+            walk_off()
+            print(farewell())
             return 0
 
         if not buffer:
@@ -3729,7 +3780,8 @@ def repl(symbol_table=None):
                 continue
 
             if clean.lower() in QUIT_WORDS:
-                print(FAREWELL)
+                walk_off()
+                print(farewell())
                 return 0
 
         buffer.append(line)
