@@ -48,8 +48,16 @@ def test_no_runtime_dependencies():
     assert config()['project']['dependencies'] == []
 
 
-def test_the_version_looks_like_a_version():
-    assert re.fullmatch(r'\d+\.\d+\.\d+', config()['project']['version'])
+def test_the_version_comes_from_the_module():
+    """The banner and the release must never disagree about the version."""
+    project = config()['project']
+
+    assert 'version' not in project, 'version should be dynamic, read from aura'
+    assert project['dynamic'] == ['version']
+
+    source = config()['tool']['setuptools']['dynamic']['version']
+    assert source == {'attr': 'aura.__version__'}
+    assert re.fullmatch(r'\d+\.\d+\.\d+', aura.__version__)
 
 
 def test_the_declared_python_floor_matches_the_classifiers():
@@ -114,3 +122,33 @@ def test_the_readme_has_no_relative_links():
 
     relative = re.findall(r'\]\((?!https?://|#)([^)]+)\)', readme)
     assert not relative, 'relative links break on PyPI: %s' % relative
+
+
+# --- credit on the command line ---
+
+def test_version_flag_reports_version_and_author(capsys):
+    assert aura.main(['--version']) == 0
+    out = capsys.readouterr().out.strip()
+
+    assert out == aura.BANNER
+    assert aura.__version__ in out
+    assert 'Vijay Biradar' in out
+
+
+def test_short_version_flag(capsys):
+    assert aura.main(['-V']) == 0
+    assert 'Vijay Biradar' in capsys.readouterr().out
+
+
+def test_help_credits_the_author_and_links_the_source(capsys):
+    assert aura.main(['--help']) == 0
+    out = capsys.readouterr().out
+
+    assert 'aura by Vijay Biradar (iam-kira)' in out
+    assert 'github.com/iam-kira/what-did-i-do' in out
+    assert '--version' in out
+
+
+def test_the_author_facts_agree_with_the_packaging():
+    assert aura.__author__ == config()['project']['authors'][0]['name']
+    assert aura.__url__ == config()['project']['urls']['Source']

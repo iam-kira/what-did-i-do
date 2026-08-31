@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 # The import name and the command are both `aura`; the distribution is
 # `auralang` because `aura` is unlikely to be free on PyPI.
 name = "auralang"
-version = "0.1.1"
+dynamic = ["version"]
 description = "A small interpreted language with deliberately terrible keywords"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -43,6 +43,10 @@ dev = ["pytest>=7"]
 
 [tool.setuptools]
 py-modules = ["aura"]
+
+[tool.setuptools.dynamic]
+# read from aura.__version__, so the REPL banner and the release agree
+version = { attr = "aura.__version__" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

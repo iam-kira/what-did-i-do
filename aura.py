@@ -9,6 +9,14 @@ products, but the copyright notice above must travel with every copy.
 
 import sys
 
+__version__ = '0.1.1'
+__author__ = 'Vijay Biradar'
+__handle__ = 'iam-kira'
+__url__ = 'https://github.com/iam-kira/what-did-i-do'
+
+BANNER = 'aura %s - by %s (%s)' % (__version__, __author__, __handle__)
+CREDIT = 'aura by %s (%s)' % (__author__, __handle__)
+
 # A aura-level call costs roughly 20 Python frames, so MAX_CALL_DEPTH calls need
 # headroom above CPython's default 1000 or its limit fires before ours does.
 sys.setrecursionlimit(max(sys.getrecursionlimit(), 8000))
@@ -3628,7 +3636,7 @@ CONTINUED = '   ...  > '
 QUIT_WORDS = ('quit', 'exit', ':q')
 
 # 'bet' closes every block in aura, so it closes the session too
-FAREWELL = 'aight bet\naura by Vijay Biradar (iam-kira)'
+FAREWELL = 'aight bet\n' + CREDIT
 
 HELP = """aura - a language with regrettable keywords
 
@@ -3680,6 +3688,10 @@ def show(result):
 
 
 def repl(symbol_table=None):
+    print(BANNER)
+    print("type 'help' for the vocabulary, 'exit' to leave")
+    print()
+
     table = global_symbol_table if symbol_table is None else symbol_table
     buffer = []
 
@@ -3747,7 +3759,11 @@ usage:
   python aura.py --tokens FILE   show the token stream, then stop
   python aura.py --ast FILE      show the parse tree, then stop
   python aura.py --help          this
-"""
+  python aura.py --version       which aura this is
+
+%s
+%s
+""" % (CREDIT, __url__)
 
 
 def main(argv=None):
@@ -3759,11 +3775,16 @@ def main(argv=None):
     flags = [arg for arg in argv if arg.startswith('--')]
     paths = [arg for arg in argv if not arg.startswith('--')]
 
+    if '--version' in flags or '-V' in argv:
+        print(BANNER)
+        return 0
+
     if '--help' in flags or '-h' in argv:
         print(USAGE, end='')
         return 0
 
-    unknown = [flag for flag in flags if flag not in ('--tokens', '--ast', '--help')]
+    unknown = [flag for flag in flags
+               if flag not in ('--tokens', '--ast', '--help', '--version')]
     if unknown:
         print(f"aura: unknown option {unknown[0]}")
         print(USAGE, end='')

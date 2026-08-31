@@ -81,8 +81,35 @@ def test_values_echo_with_repr_so_types_are_visible(monkeypatch, capsys):
 
 def test_state_persists_between_lines(monkeypatch, capsys):
     out = drive(['stash n = 1', 'n += 1', 'n'], monkeypatch, capsys)
-    printed = [line for line in out.splitlines() if line and line not in ('aight bet', CREDIT)]
+    printed = [line for line in out.splitlines()
+               if line and line not in ('aight bet', CREDIT)
+               and not line.startswith(('aura ', "type 'help'"))]
     assert printed == ['1', '2', '2']
+
+
+# --- the author is credited where people actually look ---
+
+def test_the_repl_greets_you_with_version_and_author(monkeypatch, capsys):
+    out = drive([], monkeypatch, capsys)
+    assert aura.BANNER in out
+    assert aura.__version__ in out
+    assert 'Vijay Biradar' in out
+    assert "type 'help'" in out
+
+
+def test_the_farewell_credits_the_author(monkeypatch, capsys):
+    out = drive(['exit'], monkeypatch, capsys)
+    lines = out.strip().splitlines()
+
+    assert lines[-2] == 'aight bet'
+    assert lines[-1] == 'aura by Vijay Biradar (iam-kira)'
+
+
+def test_every_way_out_credits_the_author(monkeypatch, capsys):
+    for typed in (['exit'], ['quit'], [':q'], []):
+        out = drive(typed, monkeypatch, capsys)
+        assert 'aight bet' in out, typed
+        assert 'Vijay Biradar' in out, typed
 
 
 def test_an_error_does_not_end_the_session(monkeypatch, capsys):
