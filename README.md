@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml/badge.svg)](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/iam-kira/what-did-i-do/blob/master/LICENSE)
 [![Stars](https://img.shields.io/github/stars/iam-kira/what-did-i-do?style=flat)](https://github.com/iam-kira/what-did-i-do/stargazers)
 
 **A programming language with a serious name and no seriousness whatsoever.**
@@ -142,16 +142,16 @@ File prog.aura, line 3, col 14
 
 | | |
 |---|---|
-| **[docs/BOOK.md](docs/BOOK.md)** | **The book** — the whole language, then the whole interpreter, in the order you would learn them. Start here. |
-| [docs/LANGUAGE.md](docs/LANGUAGE.md) | Quick reference — vocabulary, operators, builtins, errors |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the interpreter works, and where to add things |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, workflow, and what needs doing |
-| [editors/](editors/) | VS Code syntax highlighting for `.aura` files |
+| **[docs/BOOK.md](https://github.com/iam-kira/what-did-i-do/blob/master/docs/BOOK.md)** | **The book** — the whole language, then the whole interpreter, in the order you would learn them. Start here. |
+| [docs/LANGUAGE.md](https://github.com/iam-kira/what-did-i-do/blob/master/docs/LANGUAGE.md) | Quick reference — vocabulary, operators, builtins, errors |
+| [docs/ARCHITECTURE.md](https://github.com/iam-kira/what-did-i-do/blob/master/docs/ARCHITECTURE.md) | How the interpreter works, and where to add things |
+| [CONTRIBUTING.md](https://github.com/iam-kira/what-did-i-do/blob/master/CONTRIBUTING.md) | Setup, workflow, and what needs doing |
+| [editors/](https://github.com/iam-kira/what-did-i-do/tree/master/editors/) | VS Code syntax highlighting for `.aura` files |
 
-**Programs written in aura:** [example.aura](example.aura) tours the language,
-[examples/calc.aura](examples/calc.aura) is a calculator with its own tokeniser
-and precedence-climbing parser, [examples/wc.aura](examples/wc.aura) is a word
-counter that walks folders, and [examples/json.aura](examples/json.aura) is a
+**Programs written in aura:** [example.aura](https://github.com/iam-kira/what-did-i-do/blob/master/example.aura) tours the language,
+[examples/calc.aura](https://github.com/iam-kira/what-did-i-do/blob/master/examples/calc.aura) is a calculator with its own tokeniser
+and precedence-climbing parser, [examples/wc.aura](https://github.com/iam-kira/what-did-i-do/blob/master/examples/wc.aura) is a word
+counter that walks folders, and [examples/json.aura](https://github.com/iam-kira/what-did-i-do/blob/master/examples/json.aura) is a
 JSON parser — closures hold the read position, `sus` handles bad input, and
 JSON `null` arrives as `ghosted`.
 
@@ -194,8 +194,8 @@ Running aura needs nothing installed. The venv is only for `pytest`.
 ## Status
 
 Works. Not finished — no type system, and no concern for speed. Rough edges are
-listed at the end of [docs/LANGUAGE.md](docs/LANGUAGE.md) and in
-[CONTRIBUTING.md](CONTRIBUTING.md).
+listed at the end of [docs/LANGUAGE.md](https://github.com/iam-kira/what-did-i-do/blob/master/docs/LANGUAGE.md) and in
+[CONTRIBUTING.md](https://github.com/iam-kira/what-did-i-do/blob/master/CONTRIBUTING.md).
 
 ---
 
@@ -203,7 +203,7 @@ listed at the end of [docs/LANGUAGE.md](docs/LANGUAGE.md) and in
 
 aura was created by **Vijay Biradar** ([iam-kira](https://github.com/iam-kira)).
 
-Released under the [MIT Licence](LICENSE), which lets anyone use, modify and
+Released under the [MIT Licence](https://github.com/iam-kira/what-did-i-do/blob/master/LICENSE), which lets anyone use, modify and
 sell it — including inside closed-source products — on one condition:
 
 > The above copyright notice and this permission notice shall be included in

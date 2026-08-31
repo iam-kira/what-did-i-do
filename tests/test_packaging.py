@@ -100,3 +100,17 @@ def test_shell_still_works_as_a_front_door():
 
     assert shell.repl is aura.repl
     assert shell.main is aura.repl
+
+
+def test_the_readme_has_no_relative_links():
+    """PyPI renders the README with relative links resolved against pypi.org.
+
+    `[CONTRIBUTING.md](CONTRIBUTING.md)` becomes
+    pypi.org/project/auralang/CONTRIBUTING.md/ and 404s for every visitor.
+    Absolute URLs behave identically on GitHub.
+    """
+    with open(os.path.join(REPO, 'README.md'), encoding='utf-8') as handle:
+        readme = handle.read()
+
+    relative = re.findall(r'\]\((?!https?://|#)([^)]+)\)', readme)
+    assert not relative, 'relative links break on PyPI: %s' % relative
