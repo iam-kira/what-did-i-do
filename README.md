@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml/badge.svg)](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/iam-kira/what-did-i-do?style=flat)](https://github.com/iam-kira/what-did-i-do/stargazers)
 
 **A programming language with a serious name and no seriousness whatsoever.**
@@ -203,14 +203,17 @@ listed at the end of [docs/LANGUAGE.md](docs/LANGUAGE.md) and in
 
 aura was created by **Vijay Biradar** ([iam-kira](https://github.com/iam-kira)).
 
-Released under the [MIT Licence](LICENSE), which lets anyone use, modify and
-sell it — including inside closed-source products — on one condition:
+Released under the [PolyForm Noncommercial Licence 1.0.0](LICENSE). aura is
+**source-available**, not open source, and the difference is one line:
 
-> The above copyright notice and this permission notice shall be included in
-> all copies or substantial portions of the Software.
+| | |
+|---|---|
+| **Anyone may** | use it, study it, modify it, share it, and contribute — for any noncommercial purpose |
+| **Only the copyright holder may** | sell it or license it commercially |
 
-So if you ship aura, or anything substantially built from it, the copyright
-notice comes with it. That is not optional, and it applies to commercial use
-too.
+Noncommercial covers personal projects, research, teaching, charities, and
+evaluating it at work. Selling aura, or shipping it inside something you sell,
+needs a separate licence — ask.
 
-Contributions are accepted under the same licence.
+Contributions are welcome under the same licence; see
+[CONTRIBUTING.md](CONTRIBUTING.md) for what opening a pull request means.
