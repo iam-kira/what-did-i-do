@@ -111,21 +111,9 @@ The distribution is named `auralang`; the module and the command are both
 
 ## Licensing
 
-aura is copyright iam-kira (Vijay Biradar) and licensed under the
-[PolyForm Noncommercial Licence 1.0.0](LICENSE): anyone may use, modify and
-share it for noncommercial purposes, and only the copyright holder may sell it
-or license it commercially.
-
-By opening a pull request you agree that:
-
-- your contribution is licensed under the same terms as the project, and
-- you grant Vijay Biradar the right to license your contribution commercially,
-  including under different terms.
-
-That second point is what keeps the commercial rights in one place. Without it,
-every merged contribution would add a copyright holder whose permission would
-be needed before aura could be licensed commercially — which would make the
-licence above unworkable within a few pull requests.
+aura is MIT licensed and copyright iam-kira (Vijay Biradar). By opening a pull request you agree
+your contribution is released under the same licence, and that the project's
+copyright notice stays intact.
 
 ## Bugs
 

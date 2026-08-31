@@ -1,11 +1,10 @@
 """aura - a small interpreted language.
 
 Copyright (c) 2026 iam-kira (Vijay Biradar)
-Licensed under the PolyForm Noncommercial License 1.0.0. See LICENSE.
+Licensed under the MIT License. See LICENSE for the full text.
 
-You may use, modify and share this software for any noncommercial purpose,
-and the copyright notice must travel with every copy. Commercial use needs a
-separate licence from the copyright holder.
+You may use, modify and sell this software, including inside closed-source
+products, but the copyright notice above must travel with every copy.
 """
 
 import sys

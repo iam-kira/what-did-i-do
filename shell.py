@@ -4,7 +4,7 @@ Kept so `python shell.py` still works. The REPL itself lives in aura.py, so a
 published package ships one module rather than claiming the name `shell`.
 
 Copyright (c) 2026 iam-kira (Vijay Biradar)
-Licensed under the PolyForm Noncommercial License 1.0.0. See LICENSE.
+Licensed under the MIT License. See LICENSE for the full text.
 """
 
 from aura import repl

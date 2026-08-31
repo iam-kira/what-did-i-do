@@ -1030,14 +1030,5 @@ And the one that catches everyone: `for i in range(3)` is
 
 ## Credit
 
-aura was created by **Vijay Biradar** (iam-kira), and is released under the
-PolyForm Noncommercial Licence 1.0.0.
-
-Use it, change it and share it for any noncommercial purpose — personal
-projects, research, teaching, or evaluating it at work — with the copyright
-notice travelling along. Selling aura, or shipping it inside something you
-sell, needs a separate licence from the copyright holder.
-
-That makes aura *source-available* rather than open source, which is a
-deliberate choice: everything is readable and hackable, and the commercial
-rights stay in one place.
+aura was created by **Vijay Biradar** (iam-kira), and is released under the MIT Licence. Use it,
+change it, sell it — but the copyright notice travels with every copy.
