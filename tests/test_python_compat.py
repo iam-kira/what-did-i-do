@@ -1,4 +1,8 @@
-"""The README promises Python 3.9+, and CI runs it there. Keep that honest."""
+"""The README promises Python 3.9+, and CI runs it there. Keep that honest.
+
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+Licensed under the MIT License. See LICENSE for the full text.
+"""
 
 import ast
 import glob

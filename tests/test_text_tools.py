@@ -1,4 +1,8 @@
-"""The text and pairing builtins, including the edges that bite."""
+"""The text and pairing builtins, including the edges that bite.
+
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+Licensed under the MIT License. See LICENSE for the full text.
+"""
 
 import aura
 

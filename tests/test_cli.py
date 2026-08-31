@@ -1,3 +1,6 @@
+# Copyright (c) 2026 iam-kira (Vijay Biradar)
+# Licensed under the MIT License. See LICENSE for the full text.
+
 import os
 
 import aura

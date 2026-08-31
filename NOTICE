@@ -1,0 +1,32 @@
+aura
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+
+This product includes software developed by Vijay Biradar
+(https://github.com/iam-kira).
+
+Licensed under the MIT License. You may obtain a copy of the licence in the
+LICENSE file distributed with this software, or at:
+
+    https://opensource.org/licenses/MIT
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the licence is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+
+THIRD-PARTY SOFTWARE
+--------------------
+
+aura has no runtime dependencies. It uses only the Python standard library,
+which is distributed under the Python Software Foundation License.
+
+The test suite uses pytest (MIT License), which is required only for
+development and is not distributed with the package.
+
+
+ATTRIBUTION
+-----------
+
+If you redistribute aura, or any substantial portion of it, the copyright
+notice above and the permission notice in LICENSE must be included. This
+applies to source and binary distributions alike, and to commercial use.

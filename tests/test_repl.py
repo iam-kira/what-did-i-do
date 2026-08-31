@@ -1,4 +1,8 @@
-"""The REPL as a person actually meets it."""
+"""The REPL as a person actually meets it.
+
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+Licensed under the MIT License. See LICENSE for the full text.
+"""
 
 CREDIT = 'aura by Vijay Biradar'
 

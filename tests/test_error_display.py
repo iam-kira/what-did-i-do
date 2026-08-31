@@ -1,4 +1,8 @@
-"""Errors should show the offending line, not just describe it."""
+"""Errors should show the offending line, not just describe it.
+
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+Licensed under the MIT License. See LICENSE for the full text.
+"""
 
 import aura
 

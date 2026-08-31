@@ -2,6 +2,9 @@
 
 A broken pyproject only shows up at release time, which is the worst moment to
 find out.
+
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+Licensed under the MIT License. See LICENSE for the full text.
 """
 
 import os

@@ -4,6 +4,9 @@ Docs drift silently; this makes them fail loudly instead.
 
 The convention: a ```text fence holds runnable aura, so it gets executed here.
 Notation - grammars, pipeline diagrams, word listings - uses a bare fence.
+
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+Licensed under the MIT License. See LICENSE for the full text.
 """
 
 import io

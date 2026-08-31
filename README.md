@@ -45,6 +45,17 @@ pip install auralang
 aura
 ```
 
+Or as a **standalone binary** — no Python, no pip, nothing installed:
+
+```bash
+pip install pyinstaller
+python build_exe.py
+```
+
+That writes `build-exe/aura` (or `aura.exe`), a single ~9 MB file you can copy
+to any machine and run. Python is how aura is *built*, not what you need to
+*use* it.
+
 Or straight from the source, with nothing installed at all:
 
 ```bash

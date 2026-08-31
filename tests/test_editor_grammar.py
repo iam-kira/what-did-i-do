@@ -2,6 +2,9 @@
 
 These tests fail the moment the language grows a word the grammar has not
 heard of, or the grammar keeps one the language dropped.
+
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+Licensed under the MIT License. See LICENSE for the full text.
 """
 
 import json

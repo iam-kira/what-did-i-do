@@ -1,4 +1,8 @@
-"""ghosted is a value of its own, not another spelling of 0."""
+"""ghosted is a value of its own, not another spelling of 0.
+
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+Licensed under the MIT License. See LICENSE for the full text.
+"""
 
 import aura
 

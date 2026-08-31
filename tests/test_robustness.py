@@ -2,6 +2,9 @@
 
 Every failure mode in aura is a returned error with a position. If a Python
 traceback reaches the user, that is a bug in the interpreter, not their program.
+
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+Licensed under the MIT License. See LICENSE for the full text.
 """
 
 import itertools

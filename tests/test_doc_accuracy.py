@@ -3,6 +3,9 @@
 test_docs.py proves the examples run. This proves the prose is not describing
 some earlier version of aura - a keyword nobody documented, a builtin that was
 renamed, or a count that drifted.
+
+Copyright (c) 2026 iam-kira (Vijay Biradar)
+Licensed under the MIT License. See LICENSE for the full text.
 """
 
 import os

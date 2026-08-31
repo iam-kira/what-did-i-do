@@ -30,3 +30,8 @@ Thumbs.db
 
 # uv lockfile - aura has no runtime dependencies, so pinning them helps nobody
 uv.lock
+
+# standalone executable builds
+build-exe/
+build-tmp/
+*.spec
