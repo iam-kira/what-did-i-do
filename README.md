@@ -1,6 +1,7 @@
 # aura
 
 [![tests](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml/badge.svg)](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml)
+[![PyPI](https://img.shields.io/pypi/v/auralang?logo=pypi&logoColor=white)](https://pypi.org/project/auralang/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/iam-kira/what-did-i-do/blob/master/LICENSE)
 [![Stars](https://img.shields.io/github/stars/iam-kira/what-did-i-do?style=flat)](https://github.com/iam-kira/what-did-i-do/stargazers)
@@ -9,7 +10,7 @@
 
 Written in Python from scratch — lexer, parser, tree-walking interpreter, zero
 dependencies. It has closures, dictionaries, string interpolation, error
-handling and a 42-function standard library.
+handling and a 50-function standard library.
 
 It also does not contain a single normal keyword.
 

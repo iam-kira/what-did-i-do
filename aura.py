@@ -9,7 +9,7 @@ products, but the copyright notice above must travel with every copy.
 
 import sys
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __author__ = 'Vijay Biradar'
 __handle__ = 'iam-kira'
 __url__ = 'https://github.com/iam-kira/what-did-i-do'

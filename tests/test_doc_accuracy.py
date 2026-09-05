@@ -65,7 +65,7 @@ def test_stated_counts_match_reality():
     joined = '\n'.join(read(name) for name in DOCS)
     wrong = []
 
-    for claimed in re.findall(r'(\d+) builtins', joined):
+    for claimed in re.findall(r'(\d+)[- ](?:builtins|function standard library)', joined):
         if int(claimed) != len(aura.BUILTINS):
             wrong.append('claims %s builtins, actual %d' % (claimed, len(aura.BUILTINS)))
 
