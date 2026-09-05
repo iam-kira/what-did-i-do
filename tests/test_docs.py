@@ -26,7 +26,7 @@ DOCS = ['README.md', 'CONTRIBUTING.md'] + sorted(
 FENCE = re.compile(r'```text\n(.*?)```', re.DOTALL)
 
 # Snippets that are output transcripts or deliberate fragments, not programs.
-SKIP_MARKERS = ('shell :>', 'Traceback (most recent call last):', 'File ',
+SKIP_MARKERS = ('aura :>', 'Traceback (most recent call last):', 'File ',
                 'statements ->', '# everything:', 'source text')
 
 

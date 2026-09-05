@@ -3631,7 +3631,7 @@ def run(filename, text, symbol_table=None):
 
 # REPL
 #######################################
-PROMPT = 'shell :> '
+PROMPT = 'aura :> '
 CONTINUED = '   ...  > '
 QUIT_WORDS = ('quit', 'exit', ':q')
 

@@ -58,7 +58,7 @@ python aura.py
 That opens the REPL. Type something:
 
 ```text
-shell :> 1 + 2 * 3
+aura :> 1 + 2 * 3
 7
 ```
 
@@ -67,12 +67,12 @@ can tell `1` from `"1"`. It also reads multi-line blocks — an unfinished one
 keeps prompting with `...  >` until it is complete:
 
 ```text
-shell :> chore double(n) ong
+aura :> chore double(n) ong
    ...  >     yeet n * 2
    ...  > bet
 <chore double>
 
-shell :> double(21)
+aura :> double(21)
 42
 ```
 

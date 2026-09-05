@@ -8,6 +8,8 @@
 
 **A programming language with a serious name and no seriousness whatsoever.**
 
+![aura in the REPL](https://raw.githubusercontent.com/iam-kira/what-did-i-do/master/docs/demo.svg)
+
 Written in Python from scratch — lexer, parser, tree-walking interpreter, zero
 dependencies. It has closures, dictionaries, string interpolation, error
 handling and a 50-function standard library.
@@ -68,18 +70,18 @@ python aura.py
 That opens the REPL, and it reads multi-line blocks:
 
 ```text
-shell :> stash xs = [1, 2, 3]
+aura :> stash xs = [1, 2, 3]
 [1, 2, 3]
 
-shell :> xs[-1] * 10
+aura :> xs[-1] * 10
 30
 
-shell :> chore sq(n) ong
+aura :> chore sq(n) ong
    ...  >     yeet n ^ 2
    ...  > bet
 <chore sq>
 
-shell :> sq(9)
+aura :> sq(9)
 81
 ```
 
