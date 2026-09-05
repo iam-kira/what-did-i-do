@@ -13,7 +13,11 @@ requires-python = ">=3.9"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Vijay Biradar" }]
-keywords = ["language", "interpreter", "toy-language", "repl", "parser"]
+keywords = [
+    "programming-language", "interpreter", "language", "toy-language",
+    "repl", "parser", "lexer", "compiler", "language-design",
+    "tree-walking-interpreter", "esolang", "shell",
+]
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -34,6 +38,7 @@ dependencies = []
 Homepage = "https://github.com/iam-kira/what-did-i-do"
 Source = "https://github.com/iam-kira/what-did-i-do"
 Issues = "https://github.com/iam-kira/what-did-i-do/issues"
+Documentation = "https://github.com/iam-kira/what-did-i-do/blob/master/docs/BOOK.md"
 
 [project.scripts]
 aura = "aura:main"
