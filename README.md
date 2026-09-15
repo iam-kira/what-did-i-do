@@ -1,4 +1,9 @@
-# aura
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/iam-kira/what-did-i-do/master/docs/logo/aura-lockup-dark.svg">
+    <img src="https://raw.githubusercontent.com/iam-kira/what-did-i-do/master/docs/logo/aura-lockup-light.svg" alt="aura" height="72">
+  </picture>
+</h1>
 
 [![tests](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml/badge.svg)](https://github.com/iam-kira/what-did-i-do/actions/workflows/tests.yml)
 [![PyPI](https://img.shields.io/pypi/v/auralang?logo=pypi&logoColor=white)](https://pypi.org/project/auralang/)
