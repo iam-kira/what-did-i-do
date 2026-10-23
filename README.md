@@ -176,7 +176,7 @@ JSON `null` arrives as `ghosted`.
 
 ---
 
-## Why "aura"
+## Why "aura" [aurabook](https://claude.ai/artifact/VicRNhXbKpgWRs5ir4JCYT)
 
 Every keyword in the language is a joke. The name is the straight man — it
 lets the contents be the punchline, and it will still read fine when the slang
